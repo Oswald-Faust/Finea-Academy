@@ -1,0 +1,60 @@
+2025-07-11 19:42:19.015: [INFO][Sync] Reset engine, reason: 8
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Bookmarks
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Preferences
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Passwords
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Autofill Profiles
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Autofill
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Extensions
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Sessions
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Extension settings
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: History Delete Directives
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Device Info
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: User Consents
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Send Tab To Self
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Web Apps
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: History
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Saved Tab Group
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: WebAuthn Credentials
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Collection
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Edge E Drop
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Edge Hub App Usage
+2025-07-11 19:42:19.015: [INFO][Sync] Stopped: Edge Wallet
+2025-07-11 19:42:19.015: [INFO][Sync] SyncState after authenticated was: NotSignedIn
+2025-07-11 19:42:19.552: [INFO][Sync] Reset engine, reason: 8
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Bookmarks
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Preferences
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Passwords
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Autofill Profiles
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Autofill
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Extensions
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Sessions
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Extension settings
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: History Delete Directives
+2025-07-11 19:42:19.552: [INFO][Sync] Stopped: Device Info
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: User Consents
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Send Tab To Self
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Web Apps
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: History
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Saved Tab Group
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: WebAuthn Credentials
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Collection
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Edge E Drop
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Edge Hub App Usage
+2025-07-11 19:42:19.553: [INFO][Sync] Stopped: Edge Wallet
+2025-07-11 19:42:22.036: [INFO][Sync] Try to start sync engine
+2025-07-11 19:42:22.037: [INFO][SyncManagerImpl::NudgeForInitialDownload] Initial download nudge for Encryption Keys
+2025-07-11 19:42:22.037: [INFO][SyncEngineBackend::LoadAndConnectNigoriController] Load and connect Nigori controller
+2025-07-11 19:42:22.037: [INFO][SyncEngineBackend::DoInitialize] Control Types added: Encryption Keys
+2025-07-11 19:42:22.037: [INFO][SyncManagerImpl::ConfigureSyncer] Types to download: Encryption Keys with reason: 3
+2025-07-11 19:42:22.037: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Configure job was blocked
+2025-07-11 19:42:22.103: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: None
+2025-07-11 19:42:22.103: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: None for account type: AAD
+2025-07-11 19:42:22.103: [INFO][Sync] Credentials changed for: EdgeSyncKeyDataScope
+2025-07-11 19:42:22.103: [INFO][SyncEngineBackend::DoUpdateKeyDataCredentials] Update key data credentials
+2025-07-11 19:42:22.104: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: None
+2025-07-11 19:42:22.104: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: None for account type: AAD
+2025-07-11 19:42:22.104: [INFO][Sync] Credentials changed for: EdgeSyncScopeNew
+2025-07-11 19:42:22.104: [INFO][SyncEngineBackend::DoUpdateCredentials] Update credentials
+2025-07-11 19:42:22.104: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Blocked types:  and types to download: Encryption Keys
+2025-07-11 19:42:28.477: [INFO][Sync] Reset engine, reason: 0
+2025-07-11 19:42:28.477: [INFO][Sync] Reset engine with reason: 0

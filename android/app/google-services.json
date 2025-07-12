@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "333586729053",
+    "project_id": "fineaacademy-55d60",
+    "storage_bucket": "fineaacademy-55d60.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333586729053:android:046c2ec8e22d84729d65b4",
+        "android_client_info": {
+          "package_name": "com.example.finea_academie"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMW8RBytTnr3EGMZdSpr-NmzD1rwlvxCw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

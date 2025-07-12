@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Finéa Push Sender</title>
+  <style>
+    body{font-family:sans-serif;max-width:500px;margin:auto;padding:2rem;background:#f5f6fa}
+    input,textarea{width:100%;margin:.3rem 0;padding:.6rem;font-size:1rem}
+    button{padding:.7rem 1.2rem;font-size:1rem;background:#000d64;color:#fff;border:none;border-radius:6px;cursor:pointer}
+    button:hover{opacity:.9}
+    pre{background:#eee;padding:1rem;margin-top:1rem;white-space:pre-wrap;word-wrap:break-word}
+  </style>
+</head>
+<body>
+<h2>Envoyer une notification</h2>
+<input id="token" placeholder="FCM Token ou /topics/monTopic">
+<input id="title" placeholder="Titre" value="Finéa">
+<textarea id="body" placeholder="Message" rows="4"></textarea>
+<button onclick="send()">Envoyer</button>
+<pre id="out"></pre>
+<script>
+async function send(){
+  const pass = prompt('Clé admin ?');
+  if(!pass) return;
+  const res = await fetch('/send',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Basic '+btoa('admin:'+pass)
+    },
+    body:JSON.stringify({
+      token: document.getElementById('token').value,
+      title: document.getElementById('title').value,
+      body:  document.getElementById('body').value,
+    })
+  });
+  document.getElementById('out').textContent = await res.text();
+}
+</script>
+</body>
+</html>
