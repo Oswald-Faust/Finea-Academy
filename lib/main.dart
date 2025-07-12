@@ -6,6 +6,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/personal_info_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/security_screen.dart';
 
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -59,7 +62,91 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       home: const OnboardingChecker(
-        child: HomeScreen(),
+        child: MainNavigationScreen(),
+      ),
+    );
+  }
+}
+
+class MainNavigationScreen extends StatefulWidget {
+  const MainNavigationScreen({super.key});
+
+  @override
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
+
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  int _currentIndex = 0;
+  
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const HomeScreen(),
+      const FormationPage(),
+      const PartnersPage(),
+      const ProfilePage(),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF000D64),
+          unselectedItemColor: Colors.grey,
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 12,
+          ),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              activeIcon: Icon(Icons.home, size: 28),
+              label: 'Accueil',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school),
+              activeIcon: Icon(Icons.school, size: 28),
+              label: 'Formations',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.business),
+              activeIcon: Icon(Icons.business, size: 28),
+              label: 'Partenaires',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              activeIcon: Icon(Icons.person, size: 28),
+              label: 'Profil',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -516,6 +603,301 @@ class AlerteEaPage extends StatelessWidget {
   const AlerteEaPage({super.key});
   @override
   Widget build(BuildContext context) => _placeholder('Alerte EA 🔒');
+}
+
+class PartnersPage extends StatelessWidget {
+  const PartnersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final partners = [
+      {'image': 'assets/images/AGBK.jpg', 'url': 'https://live.agbk-broker.com/signup/6vbWZAML'},
+      {'image': 'assets/images/TradeRepublic.jpg', 'url': 'https://refnocode.trade.re/s3t786nz'},
+      {'image': 'assets/images/Finary.jpg', 'url': 'https://finary.com/referral/7WTMM4'},
+      {'image': 'assets/images/Ufunded.jpg', 'url': 'https://ufunded.com/fr/prc?utm_medium=PRC'},
+      {'image': 'assets/images/Bitget.jpg', 'url': 'https://bonus.bitgetapp.com/50Z95Y'},
+      {'image': 'assets/images/Puprime.jpg', 'url': 'https://fr.puprime.partners/forex-trading-account/?affid=1560546'},
+    ];
+    
+    return Scaffold(
+      backgroundColor: const Color(0xFF000D64),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF000D64),
+        title: const Text('Nos Partenaires', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: partners.map((p) {
+            return Center(
+              child: Container(
+                width: 300,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image.asset(p['image']!, width: 300),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final uri = Uri.parse(p['url']!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF000D64),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Accéder'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF000D64),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF000D64),
+        title: const Text('Mon Profil', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            
+            // Avatar et logo
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                color: Colors.white.withOpacity(0.1),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo_finea.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Nom utilisateur
+            const Text(
+              'Membre Finéa',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            Text(
+              'Actif depuis Janvier 2025',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+            
+            const SizedBox(height: 40),
+            
+            // Options du profil
+            _profileOption(
+              icon: Icons.person,
+              title: 'Informations personnelles',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
+                );
+              },
+            ),
+            
+            _profileOption(
+              icon: Icons.notifications,
+              title: 'Notifications',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                );
+              },
+            ),
+            
+            _profileOption(
+              icon: Icons.security,
+              title: 'Sécurité',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SecurityScreen()),
+                );
+              },
+            ),
+            
+            _profileOption(
+              icon: Icons.help,
+              title: 'Aide & Support',
+              onTap: () async {
+                const url = 'https://www.finea-academie.fr';
+                final uri = Uri.parse(url);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
+            
+            _profileOption(
+              icon: Icons.info,
+              title: 'À propos',
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: const Color(0xFF000D64),
+                    title: const Text('À propos', style: TextStyle(color: Colors.white)),
+                    content: const Text(
+                      'Finéa Académie v1.0.0\n\nVotre plateforme d\'éducation financière et de trading.',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Fermer', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 40),
+            
+            // Bouton de déconnexion
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: const Color(0xFF000D64),
+                      title: const Text('Déconnexion', style: TextStyle(color: Colors.white)),
+                      content: const Text(
+                        'Êtes-vous sûr de vouloir vous déconnecter ?',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Annuler', style: TextStyle(color: Colors.white)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Déconnexion effectuée')),
+                            );
+                          },
+                          child: const Text('Déconnexion', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Se déconnecter',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _profileOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white.withOpacity(0.6),
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class PlaceholderPage extends StatelessWidget {
