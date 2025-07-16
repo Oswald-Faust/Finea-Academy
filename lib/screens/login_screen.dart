@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:provider/provider.dart';
 import '../main.dart';
+import '../services/auth_service.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,15 +31,35 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // Simuler un délai de connexion
-      await Future.delayed(const Duration(seconds: 2));
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      final success = await authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
       
       setState(() => _isLoading = false);
       
-      // Naviguer vers l'écran principal
-      if (mounted) {
+      if (success && mounted) {
+        // Afficher un message de succès
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Connexion réussie !'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Naviguer vers l'écran principal
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (mounted && authService.errorMessage != null) {
+        // Afficher le message d'erreur
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authService.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -198,10 +221,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Implémenter la récupération de mot de passe
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fonctionnalité à venir'),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPasswordScreen(),
                               ),
                             );
                           },

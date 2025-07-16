@@ -5,10 +5,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/personal_info_screen.dart';
-import 'screens/notifications_screen.dart';
+import 'screens/notifications_screen.dart'; 
 import 'screens/security_screen.dart';
+import 'services/api_service.dart';
+import 'services/auth_service.dart';
 
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -48,21 +53,64 @@ Future<void> main() async {
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final ApiService apiService;
+  late final AuthService authService;
+  late final Future<void> _initializationFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Créer les services
+    apiService = ApiService();
+    authService = AuthService(apiService);
+    
+    // Configurer la liaison entre les services
+    ApiService.setTokenProvider(authService);
+    
+    // Initialiser une seule fois au démarrage
+    _initializationFuture = authService.initialize();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Finéa App',
-      debugShowCheckedModeBanner: false,
-      navigatorKey: navigatorKey,
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF000D64),
-        fontFamily: 'Roboto',
-      ),
-      home: const OnboardingChecker(
-        child: MainNavigationScreen(),
+    return MultiProvider(
+      providers: [
+        Provider<ApiService>.value(value: apiService),
+        ChangeNotifierProvider<AuthService>.value(value: authService),
+      ],
+      child: MaterialApp(
+        title: 'Finéa App',
+        debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
+        theme: ThemeData(
+          scaffoldBackgroundColor: const Color(0xFF000D64),
+          fontFamily: 'Roboto',
+        ),
+        home: FutureBuilder(
+          future: _initializationFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                backgroundColor: Color(0xFF000D64),
+                body: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              );
+            }
+            
+            return const AppInitializer();
+          },
+        ),
       ),
     );
   }
@@ -818,11 +866,19 @@ class ProfilePage extends StatelessWidget {
                           child: const Text('Annuler', style: TextStyle(color: Colors.white)),
                         ),
                         TextButton(
-                          onPressed: () {
+                          onPressed: () async {
                             Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Déconnexion effectuée')),
-                            );
+                            
+                            // Déconnexion via AuthService
+                            final authService = Provider.of<AuthService>(context, listen: false);
+                            await authService.logout();
+                            
+                            // Afficher message de succès
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Déconnexion effectuée')),
+                              );
+                            }
                           },
                           child: const Text('Déconnexion', style: TextStyle(color: Colors.red)),
                         ),
@@ -1063,5 +1119,42 @@ Widget _placeholder(String title) {
         ),
       ),
     );
+  }
+}
+
+class AppInitializer extends StatelessWidget {
+  const AppInitializer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _checkOnboardingStatus(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF000D64),
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          );
+        }
+        
+        final hasCompletedOnboarding = snapshot.data ?? false;
+        
+        if (!hasCompletedOnboarding) {
+          return const OnboardingScreen();
+        }
+        
+        // Si l'onboarding est terminé, donner accès libre à l'app
+        return const MainNavigationScreen();
+      },
+    );
+  }
+
+  Future<bool> _checkOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('onboarding_completed') ?? false;
   }
 }

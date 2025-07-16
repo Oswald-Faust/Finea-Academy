@@ -107,32 +107,36 @@ class OnboardingPageWidget extends StatelessWidget {
                   ),
                 ),
                 
-                // Image centrée vers la droite
+                // Image positionnée à droite au bord
                 Expanded(
-                  child: Center(
-                    child: FadeInRight(
-                      duration: const Duration(milliseconds: 1000),
-                      delay: Duration(milliseconds: isVisible ? 1000 : 0),
-                      child: Container(
-                        constraints: const BoxConstraints(maxWidth: 300),
-                        child: Image.asset(
-                          page.imagePath,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 200,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Icon(
-                                Icons.image_not_supported,
-                                color: Colors.white,
-                                size: 80,
-                              ),
-                            );
-                          },
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 0),
+                      child: FadeInRight(
+                        duration: const Duration(milliseconds: 1000),
+                        delay: Duration(milliseconds: isVisible ? 1000 : 0),
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 250),
+                          child: Image.asset(
+                            page.imagePath,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 200,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.white,
+                                  size: 80,
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),

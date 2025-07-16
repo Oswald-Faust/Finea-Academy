@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:provider/provider.dart';
 import '../main.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -33,26 +35,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    if (_formKey.currentState!.validate() && _acceptTerms) {
-      setState(() => _isLoading = true);
-      
-      // Simuler un délai d'inscription
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      // Naviguer vers l'écran principal
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } else if (!_acceptTerms) {
+    if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez accepter les conditions d\'utilisation'),
+          backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      final success = await authService.register(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phone: null, // Vous pouvez ajouter un champ téléphone si nécessaire
+      );
+      
+      setState(() => _isLoading = false);
+      
+      if (success && mounted) {
+        // Afficher un message de succès
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Inscription réussie ! Vérifiez votre email.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Naviguer vers l'écran principal
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (mounted && authService.errorMessage != null) {
+        // Afficher le message d'erreur
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authService.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

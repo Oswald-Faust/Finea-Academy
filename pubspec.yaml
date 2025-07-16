@@ -25,11 +25,28 @@ dependencies:
   
   # Shared preferences pour sauvegarder l'état de l'onboarding
   shared_preferences: ^2.2.2
+  
+  # API et HTTP
+  http: ^1.1.0
+  dio: ^5.4.0
+  
+  # JSON et modèles
+  json_annotation: ^4.8.1
+  
+  # Gestion d'état et authentification
+  provider: ^6.1.1
+  
+  # Stockage sécurisé
+  flutter_secure_storage: ^9.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  
+  # Code generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
 
 flutter:
   uses-material-design: true
