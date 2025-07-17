@@ -14,6 +14,9 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const emailRoutes = require('./routes/email');
+const courseRoutes = require('./routes/courses');
+const analyticsRoutes = require('./routes/analytics');
+const notificationsRoutes = require('./routes/notifications');
 
 // Import des middlewares
 const errorHandler = require('./middleware/errorHandler');
@@ -23,7 +26,36 @@ const app = express();
 
 // Configuration CORS
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Liste des origines autorisées
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:61386',
+      'http://localhost:8080',
+      'http://localhost:4200',
+      'http://localhost:49673',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:61386',
+      'http://127.0.0.1:8080',
+      'http://127.0.0.1:4200',
+      'http://localhost:56430',
+      process.env.FRONTEND_URL
+    ].filter(Boolean); // Enlever les valeurs null/undefined
+
+    // Autoriser les requêtes sans origine (comme les apps mobiles)
+    if (!origin) return callback(null, true);
+    
+    // En développement, autoriser toutes les origines localhost
+    if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Non autorisé par la politique CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -45,18 +77,10 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
-// Rate limiting spécifique pour l'authentification
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limite à 5 tentatives de connexion par IP
-  message: {
-    error: 'Trop de tentatives de connexion, veuillez réessayer plus tard.',
-  },
-});
-
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/forgot-password', authLimiter);
+// Rate limiting supprimé pour l'authentification - les comptes ne doivent jamais être verrouillés
+// app.use('/api/auth/login', authLimiter);
+// app.use('/api/auth/register', authLimiter);
+// app.use('/api/auth/forgot-password', authLimiter);
 
 // Middlewares de parsing
 app.use(express.json({ limit: '10kb' }));
@@ -71,6 +95,9 @@ app.use(hpp());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Route de test
 app.get('/api/health', (req, res) => {

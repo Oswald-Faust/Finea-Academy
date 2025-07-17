@@ -1,18 +1,16 @@
 const express = require('express');
 const { sendEmail } = require('../services/emailService');
-const { protect, authorize } = require('../middleware/auth');
 const { validateSendEmail } = require('../middleware/validation');
 const { validationResult } = require('express-validator');
 
 const router = express.Router();
 
-// Routes avec authentification requise
-router.use(protect);
+// Routes publiques - aucune authentification requise
 
 // @desc    Envoyer un email générique
 // @route   POST /api/email/send
-// @access  Private/Admin
-router.post('/send', authorize('admin'), validateSendEmail, async (req, res, next) => {
+// @access  Public
+router.post('/send', validateSendEmail, async (req, res, next) => {
   try {
     // Vérifier les erreurs de validation
     const errors = validationResult(req);
@@ -68,8 +66,8 @@ router.post('/send', authorize('admin'), validateSendEmail, async (req, res, nex
 
 // @desc    Envoyer un email de newsletter
 // @route   POST /api/email/newsletter
-// @access  Private/Admin
-router.post('/newsletter', authorize('admin'), async (req, res, next) => {
+// @access  Public
+router.post('/newsletter', async (req, res, next) => {
   try {
     const { subject, message, targetUsers } = req.body;
 
@@ -139,6 +137,73 @@ router.post('/newsletter', authorize('admin'), async (req, res, next) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de l\'envoi de la newsletter',
+    });
+  }
+});
+
+// @desc    Récupérer l'historique des newsletters
+// @route   GET /api/email/newsletter/history
+// @access  Public
+router.get('/newsletter/history', async (req, res) => {
+  try {
+    // Pour l'instant, retourner des données fictives
+    // TODO: Implémenter un modèle de newsletter pour stocker l'historique
+    res.status(200).json({
+      success: true,
+      data: [
+        {
+          id: 1,
+          subject: 'Bienvenue dans Finéa Académie',
+          sentAt: new Date(Date.now() - 86400000).toISOString(),
+          recipientCount: 150,
+          status: 'sent'
+        },
+        {
+          id: 2,
+          subject: 'Nouvelles formations disponibles',
+          sentAt: new Date(Date.now() - 172800000).toISOString(),
+          recipientCount: 142,
+          status: 'sent'
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'historique:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération de l\'historique'
+    });
+  }
+});
+
+// @desc    Récupérer les templates d'email
+// @route   GET /api/email/templates
+// @access  Public
+router.get('/templates', async (req, res) => {
+  try {
+    // Templates d'email prédéfinis
+    res.status(200).json({
+      success: true,
+      data: [
+        {
+          id: 1,
+          name: 'Newsletter de bienvenue',
+          subject: 'Bienvenue dans Finéa Académie',
+          content: 'Bonjour {firstName},\n\nNous sommes ravis de vous accueillir dans la communauté Finéa Académie !\n\nCordialement,\nL\'équipe Finéa'
+        },
+        {
+          id: 2,
+          name: 'Nouvelle formation',
+          subject: 'Nouvelle formation disponible !',
+          content: 'Cher {firstName},\n\nUne nouvelle formation vient d\'être ajoutée à notre catalogue.\n\nDécouvrez-la dès maintenant sur notre plateforme.\n\nÀ bientôt !'
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des templates:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des templates'
     });
   }
 });

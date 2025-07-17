@@ -18,3 +18,9 @@
 2025-07-11 19:42:22.010: [INFO] OnPrimaryAccountChanged PrimaryAccountChangeEvent::Type::kSet
 2025-07-11 19:42:22.018: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
 2025-07-11 19:42:22.105: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2025-07-17 01:39:18.176: [INFO] VisibilityChanged: 0
+2025-07-17 01:39:18.260: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2025-07-17 01:39:18.260: [INFO] OnDoneLoading sync enabled: 0
+2025-07-17 04:12:28.052: [INFO] VisibilityChanged: 0
+2025-07-17 04:12:28.131: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2025-07-17 04:12:28.131: [INFO] OnDoneLoading sync enabled: 0

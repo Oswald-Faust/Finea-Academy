@@ -41,7 +41,7 @@ const register = async (req, res, next) => {
       });
     }
 
-    const { firstName, lastName, email, password, phone } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
@@ -58,7 +58,6 @@ const register = async (req, res, next) => {
       lastName,
       email,
       password,
-      phone,
     });
 
     // Générer un token de vérification d'email
@@ -108,21 +107,10 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Vérifier si le compte est verrouillé
-    if (user.isLocked) {
-      return res.status(423).json({
-        success: false,
-        error: 'Compte temporairement verrouillé en raison de trop nombreuses tentatives de connexion',
-      });
-    }
-
     // Vérifier le mot de passe
     const isMatch = await user.comparePassword(password);
     
     if (!isMatch) {
-      // Incrémenter les tentatives de connexion
-      await user.incLoginAttempts();
-      
       return res.status(401).json({
         success: false,
         error: 'Identifiants invalides',
@@ -135,11 +123,6 @@ const login = async (req, res, next) => {
         success: false,
         error: 'Compte désactivé',
       });
-    }
-
-    // Réinitialiser les tentatives de connexion
-    if (user.loginAttempts > 0) {
-      await user.resetLoginAttempts();
     }
 
     // Mettre à jour la dernière connexion

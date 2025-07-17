@@ -81,14 +81,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  loginAttempts: {
-    type: Number,
-    default: 0,
-  },
-  lockUntil: {
-    type: Date,
-    default: null,
-  },
+  // loginAttempts et lockUntil supprimés - les comptes ne doivent jamais être verrouillés
   emailVerificationToken: {
     type: String,
     default: null,
@@ -153,10 +146,7 @@ userSchema.virtual('fullName').get(function() {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Virtual pour vérifier si le compte est verrouillé
-userSchema.virtual('isLocked').get(function() {
-  return !!(this.lockUntil && this.lockUntil > Date.now());
-});
+// Virtual supprimé - les comptes ne doivent jamais être verrouillés
 
 // Middleware pour hasher le mot de passe avant sauvegarde
 userSchema.pre('save', async function(next) {
@@ -173,23 +163,7 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Middleware pour incrémenter les tentatives de connexion
-userSchema.pre('save', function(next) {
-  // Si ce n'est pas une nouvelle tentative de connexion, continuer
-  if (!this.isModified('loginAttempts') && !this.isModified('lockUntil')) {
-    return next();
-  }
-
-  // Si nous avons une date de verrouillage précédente et qu'elle est expirée, supprimer
-  if (this.lockUntil && this.lockUntil < Date.now()) {
-    return this.updateOne({
-      $unset: { lockUntil: 1 },
-      $set: { loginAttempts: 1 }
-    }, next);
-  }
-
-  next();
-});
+// Middleware supprimé - les comptes ne doivent jamais être verrouillés
 
 // Méthode pour comparer les mots de passe
 userSchema.methods.comparePassword = async function(candidatePassword) {
@@ -211,28 +185,7 @@ userSchema.methods.generateAuthToken = function() {
   );
 };
 
-// Méthode pour incrémenter les tentatives de connexion
-userSchema.methods.incLoginAttempts = function() {
-  const maxAttempts = 5;
-  const lockTime = 2 * 60 * 60 * 1000; // 2 heures
-
-  // Si nous avons une date de verrouillage précédente et qu'elle est expirée
-  if (this.lockUntil && this.lockUntil < Date.now()) {
-    return this.updateOne({
-      $unset: { lockUntil: 1 },
-      $set: { loginAttempts: 1 }
-    });
-  }
-
-  const updates = { $inc: { loginAttempts: 1 } };
-  
-  // Si nous avons atteint le nombre maximal de tentatives et nous ne sommes pas encore verrouillés
-  if (this.loginAttempts + 1 >= maxAttempts && !this.isLocked) {
-    updates.$set = { lockUntil: Date.now() + lockTime };
-  }
-
-  return this.updateOne(updates);
-};
+// Méthode supprimée - les comptes ne doivent jamais être verrouillés
 
 // Méthode pour générer un token de réinitialisation de mot de passe
 userSchema.methods.generatePasswordResetToken = function() {
@@ -262,12 +215,7 @@ userSchema.methods.generateEmailVerificationToken = function() {
   return verificationToken;
 };
 
-// Méthode pour réinitialiser les tentatives de connexion
-userSchema.methods.resetLoginAttempts = function() {
-  return this.updateOne({
-    $unset: { loginAttempts: 1, lockUntil: 1 }
-  });
-};
+// Méthode supprimée - les comptes ne doivent jamais être verrouillés
 
 // Méthode pour convertir en objet JSON sûr (sans données sensibles)
 userSchema.methods.toSafeObject = function() {
@@ -280,8 +228,6 @@ userSchema.methods.toSafeObject = function() {
   delete userObject.emailVerificationToken;
   delete userObject.emailVerificationExpires;
   delete userObject.twoFactorSecret;
-  delete userObject.loginAttempts;
-  delete userObject.lockUntil;
   
   return userObject;
 };
