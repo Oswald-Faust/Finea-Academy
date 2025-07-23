@@ -1,15 +1,26 @@
 const mongoose = require('mongoose');
 
 const newsletterSchema = new mongoose.Schema({
-  subject: {
+  // Champs pour les articles de blog
+  title: {
     type: String,
     required: true,
     trim: true,
     maxlength: 300
   },
+  coverImage: {
+    type: String, // URL de l'image de présentation
+    required: false
+  },
   content: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed, // JSON Editor.js
     required: true
+  },
+  // Champs pour les newsletters (rétrocompatibilité)
+  subject: {
+    type: String,
+    trim: true,
+    maxlength: 300
   },
   htmlContent: {
     type: String
@@ -18,15 +29,24 @@ const newsletterSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EmailTemplate'
   },
+  // Champs communs
+  type: {
+    type: String,
+    enum: ['newsletter', 'article', 'blog'],
+    default: 'article'
+  },
   status: {
     type: String,
-    enum: ['draft', 'scheduled', 'sending', 'sent', 'failed', 'cancelled'],
+    enum: ['draft', 'scheduled', 'sending', 'sent', 'failed', 'cancelled', 'published'],
     default: 'draft'
   },
   scheduledFor: {
     type: Date
   },
   sentAt: {
+    type: Date
+  },
+  publishedAt: {
     type: Date
   },
   targetUsers: [{

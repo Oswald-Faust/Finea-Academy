@@ -13,6 +13,7 @@ require('dotenv').config();
 // Import des routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const newsletterRoutes = require('./routes/newsletters');
 const emailRoutes = require('./routes/email');
 const courseRoutes = require('./routes/courses');
 const analyticsRoutes = require('./routes/analytics');
@@ -23,6 +24,17 @@ const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 
 const app = express();
+
+// Créer les dossiers d'upload s'ils n'existent pas
+const fs = require('fs');
+const path = require('path');
+
+const uploadDirs = ['./uploads', './uploads/avatars', './uploads/articles'];
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Configuration CORS
 const corsOptions = {
@@ -94,6 +106,7 @@ app.use(hpp());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/newsletters', newsletterRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/analytics', analyticsRoutes);

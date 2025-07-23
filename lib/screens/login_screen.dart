@@ -5,6 +5,7 @@ import '../main.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+import 'main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -51,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         
         // Naviguer vers l'écran principal
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
         );
       } else if (mounted && authService.errorMessage != null) {
         // Afficher le message d'erreur

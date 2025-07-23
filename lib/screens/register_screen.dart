@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'main_navigation_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -71,7 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         
         // Naviguer vers l'écran principal
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
         );
       } else if (mounted && authService.errorMessage != null) {
         // Afficher le message d'erreur

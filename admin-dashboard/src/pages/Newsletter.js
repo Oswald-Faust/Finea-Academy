@@ -23,9 +23,12 @@ import {
   BookmarkIcon,
   EnvelopeIcon,
   UserGroupIcon,
+  XCircleIcon,
 } from '@heroicons/react/24/outline';
-import { emailAPI, userAPI } from '../services/api';
+import { emailAPI, userAPI, articleAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import ArticleEditor from '../components/ArticleEditor';
+import ArticlePreview from '../components/ArticlePreview';
 
 const Newsletter = () => {
   const [activeTab, setActiveTab] = useState('campaigns');
@@ -72,79 +75,48 @@ const Newsletter = () => {
     status: 'draft',
   });
   
-  const [campaigns, setCampaigns] = useState([
-    {
-      _id: '1',
-      title: 'Newsletter de bienvenue',
-      subject: 'Bienvenue dans Finéa Académie !',
-      status: 'sent',
-      sentAt: new Date().toISOString(),
-      recipients: 150,
-      openRate: 65,
-      clickRate: 12,
-    },
-    {
-      _id: '2',
-      title: 'Nouvelles fonctionnalités',
-      subject: 'Découvrez nos nouvelles fonctionnalités',
-      status: 'draft',
-      recipients: 200,
-      scheduledFor: new Date(Date.now() + 86400000).toISOString(),
-    },
-  ]);
-  
-  const [templates, setTemplates] = useState([
-    {
-      _id: '1',
-      name: 'Template par défaut',
-      description: 'Template moderne avec header gradient',
-      thumbnail: '',
-      content: newsletterData.content,
-      category: 'general',
-      isDefault: true,
-    },
-    {
-      _id: '2',
-      name: 'Template promotionnel',
-      description: 'Parfait pour les offres spéciales',
-      thumbnail: '',
-      content: '<div>Template promotionnel...</div>',
-      category: 'promo',
-    },
-    {
-      _id: '3',
-      name: 'Template newsletter',
-      description: 'Template pour les newsletters régulières',
-      thumbnail: '',
-      content: '<div>Template newsletter...</div>',
-      category: 'newsletter',
-    },
-  ]);
-  
+  const [articles, setArticles] = useState([]);
   const [userStats, setUserStats] = useState({ totalUsers: 250, activeUsers: 180 });
   const [loading, setLoading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [editorMode, setEditorMode] = useState('visual'); // visual ou code
+  const [editorMode, setEditorMode] = useState('visual');
+  const [articleTitle, setArticleTitle] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [articleContent, setArticleContent] = useState();
+  const [showPreview, setShowPreview] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, filterStatus, searchTerm]);
 
   const fetchData = async () => {
     try {
-      // Données mockées pour la démo
-      const mockCampaigns = campaigns;
-      const mockTemplates = templates;
-      const mockStats = { totalUsers: 250, activeUsers: 180 };
+      setLoading(true);
+      
+      // Récupérer les articles depuis l'API
+      const articlesResponse = await articleAPI.getArticles({
+        page: currentPage,
+        limit: 10,
+        status: filterStatus === 'all' ? undefined : filterStatus,
+        search: searchTerm || undefined,
+        type: 'article'
+      });
 
-      setCampaigns(mockCampaigns);
-      setTemplates(mockTemplates);
-      setUserStats(mockStats);
+      setArticles(articlesResponse.data || []);
+      setTotalPages(articlesResponse.pagination?.pages || 1);
+
+      // Récupérer les stats utilisateurs
+      const statsResponse = await userAPI.getUserStats();
+      setUserStats(statsResponse.data || { totalUsers: 0, activeUsers: 0 });
     } catch (error) {
-      console.error('Error fetching newsletter data:', error);
+      console.error('Error fetching data:', error);
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,82 +128,136 @@ const Newsletter = () => {
     }));
   };
 
-  const handleSendNewsletter = async () => {
-    if (!newsletterData.subject || !newsletterData.content) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+  const handlePublishArticle = async () => {
+    if (!articleTitle || !articleContent) {
+      toast.error('Veuillez remplir le titre et le contenu de l\'article');
       return;
     }
 
     try {
       setLoading(true);
       
-      // Créer une nouvelle campagne
-      const newCampaign = {
-        _id: Date.now().toString(),
-        title: newsletterData.title || newsletterData.subject,
-        subject: newsletterData.subject,
-        content: newsletterData.content,
-        status: newsletterData.scheduledFor ? 'scheduled' : 'sent',
-        sentAt: newsletterData.scheduledFor || new Date().toISOString(),
-        recipients: userStats.totalUsers,
-        openRate: Math.floor(Math.random() * 40) + 40, // 40-80%
-        clickRate: Math.floor(Math.random() * 20) + 5,  // 5-25%
+      const articleData = {
+        title: articleTitle,
+        content: articleContent,
+        type: 'article',
+        status: 'published',
+        tags: [],
+        isGlobal: true,
+        priority: 'normal'
       };
 
-      setCampaigns(prev => [newCampaign, ...prev]);
+      // Si on a une image de présentation, l'ajouter
+      if (coverImage && coverImage.startsWith('data:')) {
+        articleData.coverImage = coverImage;
+      }
+
+      const response = await articleAPI.createArticle(articleData);
       
-      toast.success('Newsletter programmée avec succès !');
-      setNewsletterData(prev => ({ ...prev, title: '', subject: '', content: '' }));
+      toast.success('Article publié avec succès !');
+      
+      // Réinitialiser le formulaire
+      setArticleTitle('');
+      setCoverImage('');
+      setArticleContent(null);
+      setShowPreview(false);
+      
+      // Recharger la liste des articles
+      fetchData();
+      
+      // Aller à l'onglet campagnes
       setActiveTab('campaigns');
     } catch (error) {
-      toast.error('Erreur lors de l\'envoi de la newsletter');
+      console.error('Error publishing article:', error);
+      toast.error('Erreur lors de la publication de l\'article');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveDraft = () => {
-    const draftCampaign = {
-      _id: Date.now().toString(),
-      title: newsletterData.title || 'Brouillon sans titre',
-      subject: newsletterData.subject,
-      content: newsletterData.content,
+  const handleSaveDraft = async () => {
+    if (!articleTitle || !articleContent) {
+      toast.error('Veuillez remplir le titre et le contenu de l\'article');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const articleData = {
+        title: articleTitle,
+        content: articleContent,
+        type: 'article',
       status: 'draft',
-      recipients: userStats.totalUsers,
-    };
+        tags: [],
+        isGlobal: true,
+        priority: 'normal'
+      };
 
-    setCampaigns(prev => [draftCampaign, ...prev]);
+      if (coverImage && coverImage.startsWith('data:')) {
+        articleData.coverImage = coverImage;
+      }
+
+      await articleAPI.createArticle(articleData);
+      
     toast.success('Brouillon sauvegardé !');
+      
+      // Réinitialiser le formulaire
+      setArticleTitle('');
+      setCoverImage('');
+      setArticleContent(null);
+      setShowPreview(false);
+      
+      // Recharger la liste des articles
+      fetchData();
+      
+      // Aller à l'onglet campagnes
+      setActiveTab('campaigns');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Erreur lors de la sauvegarde du brouillon');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const applyTemplate = (template) => {
-    setNewsletterData(prev => ({
-      ...prev,
-      content: template.content,
-      template: template._id,
-    }));
-    setSelectedTemplate(template);
-    setActiveTab('compose');
-    toast.success(`Template "${template.name}" appliqué !`);
+  const deleteArticle = async (id) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+      return;
+    }
+
+    try {
+      await articleAPI.deleteArticle(id);
+      toast.success('Article supprimé avec succès');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      toast.error('Erreur lors de la suppression de l\'article');
+    }
   };
 
-  const deleteCampaign = (id) => {
-    setCampaigns(prev => prev.filter(c => c._id !== id));
-    toast.success('Campagne supprimée');
+  const publishArticle = async (id) => {
+    try {
+      await articleAPI.publishArticle(id);
+      toast.success('Article publié avec succès');
+      fetchData();
+    } catch (error) {
+      console.error('Error publishing article:', error);
+      toast.error('Erreur lors de la publication de l\'article');
+    }
   };
 
   const tabs = [
-    { id: 'campaigns', name: 'Campagnes', icon: CalendarIcon },
+    { id: 'campaigns', name: 'Articles', icon: CalendarIcon },
     { id: 'compose', name: 'Composer', icon: DocumentTextIcon },
-    { id: 'templates', name: 'Templates', icon: PaintBrushIcon },
     { id: 'analytics', name: 'Analytics', icon: ChartBarIcon },
   ];
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      sent: { bg: 'bg-green-100', text: 'text-green-800', label: 'Envoyée' },
+      published: { bg: 'bg-green-100', text: 'text-green-800', label: 'Publié' },
       draft: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Brouillon' },
-      scheduled: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Programmée' },
+      scheduled: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Programmé' },
       sending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'En cours' },
     };
     const config = statusConfig[status] || statusConfig.draft;
@@ -242,10 +268,9 @@ const Newsletter = () => {
     );
   };
 
-  const filteredCampaigns = campaigns.filter(campaign => {
-    const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         campaign.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || campaign.status === filterStatus;
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || article.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -257,10 +282,10 @@ const Newsletter = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
               <EnvelopeIcon className="h-8 w-8 text-primary-600 mr-3" />
-              Newsletter & Email Marketing
+              Articles de Blog
             </h1>
             <p className="mt-2 text-gray-600">
-              Créez et gérez vos campagnes email comme un pro avec notre éditeur avancé
+              Créez et gérez vos articles de blog avec notre éditeur avancé
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -273,7 +298,7 @@ const Newsletter = () => {
               className="btn-primary flex items-center hover:shadow-lg transition-all duration-200"
             >
               <PlusIcon className="h-5 w-5 mr-2" />
-              Nouvelle Campagne
+              Nouvel Article
             </button>
           </div>
         </div>
@@ -305,7 +330,7 @@ const Newsletter = () => {
           <div className="flex items-center">
             <UserGroupIcon className="h-8 w-8 text-blue-200" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-blue-100">Abonnés Totaux</p>
+              <p className="text-sm font-medium text-blue-100">Utilisateurs Totaux</p>
               <p className="text-2xl font-bold">{userStats.totalUsers}</p>
             </div>
           </div>
@@ -314,17 +339,17 @@ const Newsletter = () => {
           <div className="flex items-center">
             <CheckCircleIcon className="h-8 w-8 text-green-200" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-green-100">Abonnés Actifs</p>
+              <p className="text-sm font-medium text-green-100">Utilisateurs Actifs</p>
               <p className="text-2xl font-bold">{userStats.activeUsers}</p>
             </div>
           </div>
         </div>
         <div className="card bg-gradient-to-r from-purple-500 to-purple-600 text-white">
           <div className="flex items-center">
-            <PaperAirplaneIcon className="h-8 w-8 text-purple-200" />
+            <DocumentTextIcon className="h-8 w-8 text-purple-200" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-purple-100">Campagnes Envoyées</p>
-              <p className="text-2xl font-bold">{campaigns.filter(c => c.status === 'sent').length}</p>
+              <p className="text-sm font-medium text-purple-100">Articles Publiés</p>
+              <p className="text-2xl font-bold">{articles.filter(a => a.status === 'published').length}</p>
             </div>
           </div>
         </div>
@@ -332,13 +357,8 @@ const Newsletter = () => {
           <div className="flex items-center">
             <EyeIcon className="h-8 w-8 text-orange-200" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-orange-100">Taux d'Ouverture Moyen</p>
-              <p className="text-2xl font-bold">
-                {campaigns.filter(c => c.openRate).length > 0 
-                  ? Math.round(campaigns.filter(c => c.openRate).reduce((sum, c) => sum + c.openRate, 0) / campaigns.filter(c => c.openRate).length)
-                  : 0
-                }%
-              </p>
+              <p className="text-sm font-medium text-orange-100">Brouillons</p>
+              <p className="text-2xl font-bold">{articles.filter(a => a.status === 'draft').length}</p>
             </div>
           </div>
         </div>
@@ -346,11 +366,11 @@ const Newsletter = () => {
 
       {/* Contenu des tabs */}
       <div className="bg-white shadow-sm rounded-lg">
-        {/* Tab Campagnes */}
+        {/* Tab Articles */}
         {activeTab === 'campaigns' && (
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Toutes les Campagnes</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Tous les Articles</h3>
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -368,28 +388,30 @@ const Newsletter = () => {
                   onChange={(e) => setFilterStatus(e.target.value)}
                 >
                   <option value="all">Tous les statuts</option>
-                  <option value="sent">Envoyées</option>
+                  <option value="published">Publiés</option>
                   <option value="draft">Brouillons</option>
-                  <option value="scheduled">Programmées</option>
+                  <option value="scheduled">Programmés</option>
                 </select>
               </div>
             </div>
 
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Campagne
+                        Article
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Statut
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Destinataires
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Performance
+                        Auteur
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
@@ -400,44 +422,47 @@ const Newsletter = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredCampaigns.map((campaign) => (
-                    <tr key={campaign._id} className="hover:bg-gray-50">
+                    {filteredArticles.map((article) => (
+                      <tr key={article._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{campaign.title}</div>
-                          <div className="text-sm text-gray-500">{campaign.subject}</div>
+                            <div className="text-sm font-medium text-gray-900">{article.title}</div>
+                            <div className="text-sm text-gray-500">
+                              {article.coverImage ? '📷 Avec image' : '📝 Texte seulement'}
+                            </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(campaign.status)}
+                          {getStatusBadge(article.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {campaign.recipients} abonnés
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {campaign.openRate ? (
-                          <div className="text-sm">
-                            <div className="text-gray-900">📧 {campaign.openRate}% ouvertures</div>
-                            <div className="text-gray-500">🖱️ {campaign.clickRate}% clics</div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                          {article.createdBy?.firstName} {article.createdBy?.lastName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {campaign.sentAt ? new Date(campaign.sentAt).toLocaleDateString('fr-FR') : 
-                         campaign.scheduledFor ? new Date(campaign.scheduledFor).toLocaleDateString('fr-FR') : '-'}
+                          {article.publishedAt 
+                            ? new Date(article.publishedAt).toLocaleDateString('fr-FR')
+                            : new Date(article.createdAt).toLocaleDateString('fr-FR')
+                          }
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button className="text-primary-600 hover:text-primary-900" title="Voir">
                             <EyeIcon className="h-5 w-5" />
                           </button>
-                          <button className="text-blue-600 hover:text-blue-900" title="Dupliquer">
-                            <DocumentTextIcon className="h-5 w-5" />
+                            {article.status === 'draft' && (
+                              <button 
+                                onClick={() => publishArticle(article._id)}
+                                className="text-green-600 hover:text-green-900" 
+                                title="Publier"
+                              >
+                                <CheckCircleIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                            <button className="text-blue-600 hover:text-blue-900" title="Éditer">
+                              <PencilIcon className="h-5 w-5" />
                           </button>
                           <button 
-                            onClick={() => deleteCampaign(campaign._id)}
+                              onClick={() => deleteArticle(article._id)}
                             className="text-red-600 hover:text-red-900" 
                             title="Supprimer"
                           >
@@ -450,6 +475,7 @@ const Newsletter = () => {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         )}
 
@@ -457,192 +483,52 @@ const Newsletter = () => {
         {activeTab === 'compose' && (
           <div className="p-6">
             <div className="max-w-4xl mx-auto">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Composer une Nouvelle Campagne</h3>
-              
-              {/* Informations de la campagne */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Créer un Article de Blog</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Titre de la campagne
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={newsletterData.title}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="Ma nouvelle campagne"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sujet de l'email *</label>
+                  <input type="text" name="subject" value={newsletterData.subject} onChange={handleInputChange} className="input-field" placeholder="Objet de votre email" required />
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sujet de l'email *
-                  </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={newsletterData.subject}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="Objet de votre email"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Expéditeur</label>
+                  <input type="text" name="senderName" value={newsletterData.senderName} onChange={handleInputChange} className="input-field" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Expéditeur
-                  </label>
-                  <input
-                    type="text"
-                    name="senderName"
-                    value={newsletterData.senderName}
-                    onChange={handleInputChange}
-                    className="input-field"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email expéditeur
-                  </label>
-                  <input
-                    type="email"
-                    name="senderEmail"
-                    value={newsletterData.senderEmail}
-                    onChange={handleInputChange}
-                    className="input-field"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Destinataires
-                  </label>
-                  <select
-                    name="recipients"
-                    value={newsletterData.recipients}
-                    onChange={handleInputChange}
-                    className="input-field"
-                  >
-                    <option value="all">Tous les utilisateurs ({userStats.totalUsers})</option>
-                    <option value="active">Utilisateurs actifs ({userStats.activeUsers})</option>
-                    <option value="new">Nouveaux utilisateurs</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Programmer l'envoi (optionnel)
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="scheduledFor"
-                    value={newsletterData.scheduledFor}
-                    onChange={handleInputChange}
-                    className="input-field"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email expéditeur</label>
+                  <input type="email" name="senderEmail" value={newsletterData.senderEmail} onChange={handleInputChange} className="input-field" />
                 </div>
               </div>
-
-              {/* Éditeur */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Contenu de l'email *
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setEditorMode('visual')}
-                      className={`px-3 py-1 text-sm rounded ${
-                        editorMode === 'visual' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      Visuel
-                    </button>
-                    <button
-                      onClick={() => setEditorMode('code')}
-                      className={`px-3 py-1 text-sm rounded ${
-                        editorMode === 'code' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      Code HTML
-                    </button>
-                    <button
-                      onClick={() => setPreviewMode(!previewMode)}
-                      className="btn-secondary flex items-center"
-                    >
-                      <EyeIcon className="h-4 w-4 mr-2" />
-                      Aperçu
-                    </button>
-                  </div>
-                </div>
-
-                {editorMode === 'code' ? (
-                  <textarea
-                    name="content"
-                    value={newsletterData.content}
-                    onChange={handleInputChange}
-                    className="input-field font-mono text-sm"
-                    rows={20}
-                    placeholder="Contenu HTML de votre newsletter..."
-                  />
-                ) : (
-                  <div className="border border-gray-300 rounded-lg">
-                    <div className="border-b bg-gray-50 p-3 flex items-center space-x-2">
-                      <button className="p-2 hover:bg-gray-200 rounded" title="Gras">
-                        <strong>B</strong>
-                      </button>
-                      <button className="p-2 hover:bg-gray-200 rounded" title="Italique">
-                        <em>I</em>
-                      </button>
-                      <button className="p-2 hover:bg-gray-200 rounded" title="Lien">
-                        <LinkIcon className="h-4 w-4" />
-                      </button>
-                      <button className="p-2 hover:bg-gray-200 rounded" title="Image">
-                        <PhotoIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <textarea
-                      name="content"
-                      value={newsletterData.content}
-                      onChange={handleInputChange}
-                      className="w-full p-4 border-0 focus:ring-0 resize-none"
-                      rows={20}
-                      placeholder="Écrivez votre newsletter ici..."
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Aperçu */}
-              {previewMode && (
-                <div className="mb-6 p-6 border border-gray-200 rounded-lg bg-gray-50">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Aperçu de l'email</h4>
-                  <div 
-                    className="bg-white p-4 rounded border"
-                    dangerouslySetInnerHTML={{ __html: newsletterData.content }}
-                  />
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex justify-between items-center pt-6 border-t">
+              <ArticleEditor
+                value={articleContent}
+                onChange={setArticleContent}
+                title={articleTitle}
+                setTitle={setArticleTitle}
+                coverImage={coverImage}
+                setCoverImage={setCoverImage}
+              />
+              <div className="flex justify-between items-center pt-6 border-t mt-8">
                 <button
-                  onClick={handleSaveDraft}
+                  onClick={() => setShowPreview(!showPreview)}
                   className="btn-secondary flex items-center"
                 >
-                  <BookmarkIcon className="h-4 w-4 mr-2" />
-                  Sauvegarder brouillon
+                  <EyeIcon className="h-4 w-4 mr-2" />
+                  Aperçu
                 </button>
-                
                 <div className="flex space-x-3">
-                  <button className="btn-secondary">
-                    Envoyer un test
+                  <button
+                    onClick={handleSaveDraft}
+                    disabled={loading}
+                    className="btn-secondary flex items-center"
+                  >
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    ) : (
+                      <BookmarkIcon className="h-4 w-4 mr-2" />
+                    )}
+                    Sauvegarder brouillon
                   </button>
                   <button
-                    onClick={handleSendNewsletter}
+                    onClick={handlePublishArticle}
                     disabled={loading}
                     className="btn-primary flex items-center"
                   >
@@ -651,53 +537,32 @@ const Newsletter = () => {
                     ) : (
                       <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                     )}
-                    {newsletterData.scheduledFor ? 'Programmer' : 'Envoyer maintenant'}
+                    Publier l'article
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Templates */}
-        {activeTab === 'templates' && (
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Templates Email</h3>
-              <button className="btn-primary flex items-center">
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Nouveau Template
+              
+              {/* Aperçu de l'article */}
+              {showPreview && (
+                <div className="mt-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-lg font-medium text-gray-900">Aperçu de l'article</h4>
+                    <button
+                      onClick={() => setShowPreview(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <XCircleIcon className="h-6 w-6" />
               </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {templates.map((template) => (
-                <div key={template._id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <DocumentTextIcon className="h-16 w-16 text-gray-400" />
                   </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">{template.name}</h4>
-                      {template.isDefault && (
-                        <StarIcon className="h-4 w-4 text-yellow-400 fill-current" />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{template.description}</p>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => applyTemplate(template)}
-                        className="flex-1 btn-primary text-sm"
-                      >
-                        Utiliser
-                      </button>
-                      <button className="btn-secondary text-sm">
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                    </div>
+                  <div className="bg-white p-6 rounded-lg shadow">
+                    <ArticlePreview 
+                      title={articleTitle}
+                      coverImage={coverImage}
+                      content={articleContent}
+                    />
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -705,62 +570,48 @@ const Newsletter = () => {
         {/* Tab Analytics */}
         {activeTab === 'analytics' && (
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Statistiques des Campagnes</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Statistiques des Articles</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div className="card text-center">
-                <ChartBarIcon className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                <DocumentTextIcon className="h-8 w-8 text-blue-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900">
-                  {campaigns.filter(c => c.openRate).length > 0 
-                    ? Math.round(campaigns.filter(c => c.openRate).reduce((sum, c) => sum + c.openRate, 0) / campaigns.filter(c => c.openRate).length)
-                    : 0
-                  }%
+                  {articles.length}
                 </div>
-                <div className="text-sm text-gray-500">Taux d'ouverture moyen</div>
+                <div className="text-sm text-gray-500">Total d'articles</div>
               </div>
               
               <div className="card text-center">
-                <EyeIcon className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                <CheckCircleIcon className="h-8 w-8 text-green-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900">
-                  {campaigns.filter(c => c.clickRate).length > 0 
-                    ? Math.round(campaigns.filter(c => c.clickRate).reduce((sum, c) => sum + c.clickRate, 0) / campaigns.filter(c => c.clickRate).length)
-                    : 0
-                  }%
+                  {articles.filter(a => a.status === 'published').length}
                 </div>
-                <div className="text-sm text-gray-500">Taux de clic moyen</div>
+                <div className="text-sm text-gray-500">Articles publiés</div>
               </div>
               
               <div className="card text-center">
-                <UserGroupIcon className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                <BookmarkIcon className="h-8 w-8 text-orange-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900">
-                  {campaigns.reduce((sum, c) => sum + (c.recipients || 0), 0)}
+                  {articles.filter(a => a.status === 'draft').length}
                 </div>
-                <div className="text-sm text-gray-500">Emails envoyés total</div>
+                <div className="text-sm text-gray-500">Brouillons</div>
               </div>
             </div>
 
             <div className="card">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Performance par Campagne</h4>
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Articles récents</h4>
               <div className="space-y-4">
-                {campaigns.filter(c => c.status === 'sent').map((campaign) => (
-                  <div key={campaign._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                {articles.slice(0, 5).map((article) => (
+                  <div key={article._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <div className="font-medium text-gray-900">{campaign.title}</div>
-                      <div className="text-sm text-gray-500">{campaign.subject}</div>
+                      <div className="font-medium text-gray-900">{article.title}</div>
+                      <div className="text-sm text-gray-500">
+                        {article.createdBy?.firstName} {article.createdBy?.lastName} • 
+                        {new Date(article.createdAt).toLocaleDateString('fr-FR')}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-6 text-sm">
-                      <div className="text-center">
-                        <div className="font-medium text-gray-900">{campaign.recipients}</div>
-                        <div className="text-gray-500">Envoyés</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium text-green-600">{campaign.openRate}%</div>
-                        <div className="text-gray-500">Ouvertures</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium text-blue-600">{campaign.clickRate}%</div>
-                        <div className="text-gray-500">Clics</div>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      {getStatusBadge(article.status)}
                     </div>
                   </div>
                 ))}

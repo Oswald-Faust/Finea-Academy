@@ -7,6 +7,7 @@ import '../widgets/onboarding_widgets.dart';
 import '../main.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'main_navigation_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -90,11 +91,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     // Animation de sortie
     await _animationController.reverse();
     
-    // Naviguer vers l'écran principal
+    // Naviguer vers l'écran de connexion
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
           transitionDuration: const Duration(milliseconds: 800),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(1.0, 0.0);

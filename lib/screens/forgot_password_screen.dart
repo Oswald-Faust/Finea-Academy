@@ -320,11 +320,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Vous vous souvenez de votre mot de passe ? ',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 14,
+                    Expanded(
+                      child: Text(
+                        'Vous vous souvenez de votre mot de passe ? ',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     TextButton(

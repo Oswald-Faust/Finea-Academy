@@ -30,9 +30,18 @@ const validateRegister = [
     .withMessage('Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'),
   
   body('phone')
-    .optional()
-    .isMobilePhone('fr-FR')
-    .withMessage('Veuillez entrer un numéro de téléphone français valide'),
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === undefined || value === '') {
+        return true; // Permettre les valeurs vides
+      }
+      // Validation optionnelle du téléphone français
+      const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
+      if (!phoneRegex.test(value)) {
+        throw new Error('Veuillez entrer un numéro de téléphone français valide');
+      }
+      return true;
+    }),
 ];
 
 // Validation pour la connexion
@@ -188,6 +197,57 @@ const validateSendEmail = [
     .withMessage('Le message doit contenir entre 1 et 5000 caractères'),
 ];
 
+// Validation pour les articles de blog
+const validateNewsletter = (req, res, next) => {
+  const { title, content, type } = req.body;
+
+  if (!title || title.trim().length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le titre est requis'
+    });
+  }
+
+  if (title.length > 300) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le titre ne peut pas dépasser 300 caractères'
+    });
+  }
+
+  if (!content) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le contenu est requis'
+    });
+  }
+
+  // Vérifier que le contenu est un JSON valide pour Editor.js
+  try {
+    const parsedContent = JSON.parse(content);
+    if (!parsedContent.blocks || !Array.isArray(parsedContent.blocks)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Le contenu doit être au format Editor.js valide'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le contenu doit être un JSON valide'
+    });
+  }
+
+  if (type && !['newsletter', 'article', 'blog'].includes(type)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le type doit être newsletter, article ou blog'
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   validateRegister,
   validateLogin,
@@ -197,4 +257,5 @@ module.exports = {
   validateUpdateProfile,
   validateUpdatePreferences,
   validateSendEmail,
+  validateNewsletter
 }; 
