@@ -114,11 +114,11 @@ const Dashboard = () => {
             Bienvenue dans votre espace d'administration
           </p>
           <div className="mt-4 flex items-center space-x-4 text-sm text-primary-200">
-            <span>📊 Données en temps réel</span>
+            <span>📊 Vue d'ensemble</span>
             <span>•</span>
-            <span>🚀 Performances optimisées</span>
+            <span>🚀 Gestion simplifiée</span>
             <span>•</span>
-            <span>✨ Interface moderne</span>
+            <span>✨ Interface intuitive</span>
           </div>
         </div>
         {/* Motif décoratif */}
@@ -298,8 +298,8 @@ const Dashboard = () => {
                     <ChartBarIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">Voir les statistiques</p>
-                    <p className="text-sm text-gray-500">Analyser les données et tendances détaillées</p>
+                    <p className="text-sm font-bold text-gray-900">Voir les statistiques détaillées</p>
+                    <p className="text-sm text-gray-500">Analyser les données et tendances en temps réel</p>
                   </div>
                 </div>
                 <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-green-500 transform group-hover:translate-x-1 transition-all duration-300" />

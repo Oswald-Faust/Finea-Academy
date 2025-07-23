@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
+import '../models/newsletter_model.dart';
+import '../models/notification_model.dart';
 
 // Interface pour la gestion des tokens
 abstract class TokenProvider {
@@ -13,7 +15,7 @@ class ApiService {
   late final Dio _dio;
   static const String baseUrl = kDebugMode 
       ? 'http://localhost:5000/api'  // URL pour le développement
-      : 'https://your-production-api.com/api';  // URL pour la production
+      : 'https://finea-backend.vercel.app/api';  // URL pour la production
 
   ApiService() {
     _dio = Dio(BaseOptions(
@@ -143,6 +145,162 @@ class ApiService {
   Future<ApiResponse<String>> resendVerificationEmail() async {
     try {
       final response = await _dio.post('/auth/resend-verification');
+      return ApiResponse<String>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // Méthodes pour les newsletters
+  Future<ApiResponse<List<NewsletterArticle>>> getNewsletterArticles({
+    int page = 1,
+    int limit = 10,
+    String? status,
+    String? search,
+    String sortBy = 'createdAt',
+    String sortOrder = 'desc',
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'type': 'article',
+        'sortBy': sortBy,
+        'sortOrder': sortOrder,
+      };
+      
+      if (status != null) queryParams['status'] = status;
+      if (search != null) queryParams['search'] = search;
+
+      final response = await _dio.get('/newsletters', queryParameters: queryParams);
+      
+      final List<dynamic> articlesData = response.data['data'] as List<dynamic>;
+      final articles = articlesData.map((json) => NewsletterArticle.fromJson(json as Map<String, dynamic>)).toList();
+      
+      return ApiResponse<List<NewsletterArticle>>.fromJson(
+        response.data, 
+        (json) => articles,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<NewsletterArticle>> getNewsletterArticleById(String id) async {
+    try {
+      final response = await _dio.get('/newsletters/$id');
+      
+      final articleData = response.data['data'] as Map<String, dynamic>;
+      final article = NewsletterArticle.fromJson(articleData);
+      
+      return ApiResponse<NewsletterArticle>.fromJson(
+        response.data, 
+        (json) => article,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<String>> toggleNewsletterBookmark(String articleId, bool isBookmarked) async {
+    try {
+      final response = await _dio.patch('/newsletters/$articleId/bookmark', data: {
+        'isBookmarked': isBookmarked,
+      });
+      return ApiResponse<String>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // Méthodes pour les notifications
+  Future<ApiResponse<List<NotificationModel>>> getNotifications({
+    int page = 1,
+    int limit = 20,
+    bool unreadOnly = false,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'unreadOnly': unreadOnly,
+      };
+
+      final response = await _dio.get('/notifications', queryParameters: queryParams);
+      
+      final List<dynamic> notificationsData = response.data['data'] as List<dynamic>;
+      final notifications = notificationsData.map((json) => NotificationModel.fromJson(json as Map<String, dynamic>)).toList();
+      
+      return ApiResponse<List<NotificationModel>>.fromJson(
+        response.data, 
+        (json) => notifications,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<List<NotificationModel>>> getUserNotifications({
+    required String userId,
+    int page = 1,
+    int limit = 20,
+    bool unreadOnly = false,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'unreadOnly': unreadOnly,
+      };
+
+      final response = await _dio.get('/notifications/user/$userId', queryParameters: queryParams);
+      
+      final List<dynamic> notificationsData = response.data['data'] as List<dynamic>;
+      final notifications = notificationsData.map((json) => NotificationModel.fromJson(json as Map<String, dynamic>)).toList();
+      
+      return ApiResponse<List<NotificationModel>>.fromJson(
+        response.data, 
+        (json) => notifications,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<String>> markNotificationAsRead(String notificationId, String userId) async {
+    try {
+      final response = await _dio.patch('/notifications/$notificationId/read', data: {
+        'userId': userId,
+      });
+      return ApiResponse<String>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<String>> createNotification({
+    required String title,
+    required String message,
+    String type = 'info',
+    String priority = 'medium',
+    String status = 'sent',
+    List<String> targetUsers = const [],
+    List<String> targetRoles = const [],
+    bool isGlobal = false,
+    Map<String, dynamic> metadata = const {},
+  }) async {
+    try {
+      final response = await _dio.post('/notifications', data: {
+        'title': title,
+        'message': message,
+        'type': type,
+        'priority': priority,
+        'status': status,
+        'targetUsers': targetUsers,
+        'targetRoles': targetRoles,
+        'isGlobal': isGlobal,
+        'metadata': metadata,
+      });
       return ApiResponse<String>.fromJson(response.data, null);
     } on DioException catch (e) {
       throw _handleDioError(e);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import '../models/newsletter_model.dart';
+import '../services/api_service.dart';
 
 class NewsletterDetailScreen extends StatefulWidget {
   final NewsletterArticle article;
@@ -16,11 +17,52 @@ class NewsletterDetailScreen extends StatefulWidget {
 
 class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
   bool _isBookmarked = false;
+  bool _isLoading = true;
+  NewsletterArticle? _fullArticle;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
     _isBookmarked = widget.article.isBookmarked;
+    _loadFullArticle();
+  }
+
+  Future<void> _loadFullArticle() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
+      final apiService = ApiService();
+      final response = await apiService.getNewsletterArticleById(widget.article.id);
+      
+      setState(() {
+        _fullArticle = response.data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  ImageProvider _getImageProvider(String imageUrl) {
+    if (imageUrl.startsWith('http')) {
+      return NetworkImage(imageUrl);
+    } else if (imageUrl.startsWith('/uploads/')) {
+      // URL relative vers l'API
+      return NetworkImage('http://localhost:5000$imageUrl');
+    } else if (imageUrl.isNotEmpty) {
+      // Asset local
+      return AssetImage(imageUrl);
+    } else {
+      // Image par défaut
+      return const AssetImage('assets/images/Bourse 1 .jpg');
+    }
   }
 
   @override
@@ -56,9 +98,15 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
                 fit: StackFit.expand,
                 children: [
                   // Image de l'article
-                  Image.asset(
-                    widget.article.imageUrl,
+                  Image(
+                    image: _getImageProvider(widget.article.imageUrl),
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        'assets/images/Bourse 1 .jpg',
+                        fit: BoxFit.cover,
+                      );
+                    },
                   ),
                   // Gradient overlay pour améliorer la lisibilité
                   Container(
@@ -147,19 +195,115 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // Contenu de l'article
-                  FadeInUp(
-                    duration: const Duration(milliseconds: 800),
-                    child: Text(
-                      widget.article.content,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        height: 1.6,
-                        fontFamily: 'Poppins',
+                  // État de chargement
+                  if (_isLoading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
                       ),
                     ),
-                  ),
+                  
+                  // État d'erreur
+                  if (!_isLoading && _errorMessage.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Erreur de chargement',
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _errorMessage,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                              fontFamily: 'Poppins',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                  // Contenu de l'article
+                  if (!_isLoading && _errorMessage.isEmpty)
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 800),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_fullArticle?.content != null && _fullArticle!.content.isNotEmpty)
+                            Text(
+                              _fullArticle!.content,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                height: 1.6,
+                                fontFamily: 'Poppins',
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: Colors.orange,
+                                    size: 32,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Contenu non disponible',
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Le contenu de cet article n\'est pas encore disponible.',
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 12,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   
                   const SizedBox(height: 40),
                   
@@ -168,37 +312,37 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
                     duration: const Duration(milliseconds: 900),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _shareArticle,
-                            icon: const Icon(Icons.share),
-                            label: const Text('Partager'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _readMore,
-                            icon: const Icon(Icons.article),
-                            label: const Text('Lire plus'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFF000D64),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
+                        // Expanded(
+                        //   child: OutlinedButton.icon(
+                        //     onPressed: _shareArticle,
+                        //     icon: const Icon(Icons.share),
+                        //     label: const Text('Partager'),
+                        //     style: OutlinedButton.styleFrom(
+                        //       foregroundColor: Colors.white,
+                        //       side: const BorderSide(color: Colors.white),
+                        //       padding: const EdgeInsets.symmetric(vertical: 16),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(12),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
+                        // const SizedBox(width: 16),
+                        // Expanded(
+                        //   child: ElevatedButton.icon(
+                        //     onPressed: _readMore,
+                        //     icon: const Icon(Icons.article),
+                        //     label: const Text('Lire plus'),
+                        //     style: ElevatedButton.styleFrom(
+                        //       backgroundColor: Colors.white,
+                        //       foregroundColor: const Color(0xFF000D64),
+                        //       padding: const EdgeInsets.symmetric(vertical: 16),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(12),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

@@ -29,6 +29,7 @@ import { emailAPI, userAPI, articleAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import ArticleEditor from '../components/ArticleEditor';
 import ArticlePreview from '../components/ArticlePreview';
+import ArticleViewer from '../components/ArticleViewer';
 
 const Newsletter = () => {
   const [activeTab, setActiveTab] = useState('campaigns');
@@ -88,6 +89,9 @@ const Newsletter = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [showViewer, setShowViewer] = useState(false);
+  const [editingArticle, setEditingArticle] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -152,15 +156,23 @@ const Newsletter = () => {
         articleData.coverImage = coverImage;
       }
 
-      const response = await articleAPI.createArticle(articleData);
-      
-      toast.success('Article publié avec succès !');
+      let response;
+      if (editingArticle) {
+        // Mise à jour d'un article existant
+        response = await articleAPI.updateArticle(editingArticle._id, articleData);
+        toast.success('Article mis à jour avec succès !');
+      } else {
+        // Création d'un nouvel article
+        response = await articleAPI.createArticle(articleData);
+        toast.success('Article publié avec succès !');
+      }
       
       // Réinitialiser le formulaire
       setArticleTitle('');
       setCoverImage('');
       setArticleContent(null);
       setShowPreview(false);
+      setEditingArticle(null);
       
       // Recharger la liste des articles
       fetchData();
@@ -188,7 +200,7 @@ const Newsletter = () => {
         title: articleTitle,
         content: articleContent,
         type: 'article',
-      status: 'draft',
+        status: 'draft',
         tags: [],
         isGlobal: true,
         priority: 'normal'
@@ -198,15 +210,22 @@ const Newsletter = () => {
         articleData.coverImage = coverImage;
       }
 
-      await articleAPI.createArticle(articleData);
-      
-    toast.success('Brouillon sauvegardé !');
+      if (editingArticle) {
+        // Mise à jour d'un article existant
+        await articleAPI.updateArticle(editingArticle._id, articleData);
+        toast.success('Brouillon mis à jour !');
+      } else {
+        // Création d'un nouvel article
+        await articleAPI.createArticle(articleData);
+        toast.success('Brouillon sauvegardé !');
+      }
       
       // Réinitialiser le formulaire
       setArticleTitle('');
       setCoverImage('');
       setArticleContent(null);
       setShowPreview(false);
+      setEditingArticle(null);
       
       // Recharger la liste des articles
       fetchData();
@@ -244,6 +263,31 @@ const Newsletter = () => {
     } catch (error) {
       console.error('Error publishing article:', error);
       toast.error('Erreur lors de la publication de l\'article');
+    }
+  };
+
+  const viewArticle = async (id) => {
+    try {
+      const response = await articleAPI.getArticleById(id);
+      setSelectedArticle(response.data);
+      setShowViewer(true);
+    } catch (error) {
+      console.error('Error fetching article:', error);
+      toast.error('Erreur lors du chargement de l\'article');
+    }
+  };
+
+  const editArticle = async (id) => {
+    try {
+      const response = await articleAPI.getArticleById(id);
+      setEditingArticle(response.data);
+      setArticleTitle(response.data.title);
+      setArticleContent(response.data.content);
+      setCoverImage(response.data.coverImage || '');
+      setActiveTab('compose');
+    } catch (error) {
+      console.error('Error fetching article for edit:', error);
+      toast.error('Erreur lors du chargement de l\'article');
     }
   };
 
@@ -446,7 +490,11 @@ const Newsletter = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
-                          <button className="text-primary-600 hover:text-primary-900" title="Voir">
+                          <button 
+                            onClick={() => viewArticle(article._id)}
+                            className="text-primary-600 hover:text-primary-900" 
+                            title="Voir"
+                          >
                             <EyeIcon className="h-5 w-5" />
                           </button>
                             {article.status === 'draft' && (
@@ -458,9 +506,13 @@ const Newsletter = () => {
                                 <CheckCircleIcon className="h-5 w-5" />
                               </button>
                             )}
-                            <button className="text-blue-600 hover:text-blue-900" title="Éditer">
+                            <button 
+                              onClick={() => editArticle(article._id)}
+                              className="text-blue-600 hover:text-blue-900" 
+                              title="Éditer"
+                            >
                               <PencilIcon className="h-5 w-5" />
-                          </button>
+                            </button>
                           <button 
                               onClick={() => deleteArticle(article._id)}
                             className="text-red-600 hover:text-red-900" 
@@ -483,7 +535,9 @@ const Newsletter = () => {
         {activeTab === 'compose' && (
           <div className="p-6">
             <div className="max-w-4xl mx-auto">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Créer un Article de Blog</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                {editingArticle ? `Modifier l'article: ${editingArticle.title}` : 'Créer un Article de Blog'}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Sujet de l'email *</label>
@@ -507,13 +561,29 @@ const Newsletter = () => {
                 setCoverImage={setCoverImage}
               />
               <div className="flex justify-between items-center pt-6 border-t mt-8">
-                <button
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="btn-secondary flex items-center"
-                >
-                  <EyeIcon className="h-4 w-4 mr-2" />
-                  Aperçu
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="btn-secondary flex items-center"
+                  >
+                    <EyeIcon className="h-4 w-4 mr-2" />
+                    Aperçu
+                  </button>
+                  {editingArticle && (
+                    <button
+                      onClick={() => {
+                        setEditingArticle(null);
+                        setArticleTitle('');
+                        setArticleContent(null);
+                        setCoverImage('');
+                      }}
+                      className="btn-secondary flex items-center"
+                    >
+                      <XCircleIcon className="h-4 w-4 mr-2" />
+                      Annuler l'édition
+                    </button>
+                  )}
+                </div>
                 <div className="flex space-x-3">
                   <button
                     onClick={handleSaveDraft}
@@ -525,7 +595,7 @@ const Newsletter = () => {
                     ) : (
                       <BookmarkIcon className="h-4 w-4 mr-2" />
                     )}
-                    Sauvegarder brouillon
+                    {editingArticle ? 'Mettre à jour' : 'Sauvegarder brouillon'}
                   </button>
                   <button
                     onClick={handlePublishArticle}
@@ -537,7 +607,7 @@ const Newsletter = () => {
                     ) : (
                       <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                     )}
-                    Publier l'article
+                    {editingArticle ? 'Mettre à jour et publier' : 'Publier l\'article'}
                   </button>
                 </div>
               </div>
@@ -620,6 +690,17 @@ const Newsletter = () => {
           </div>
         )}
       </div>
+
+      {/* Article Viewer Modal */}
+      {showViewer && selectedArticle && (
+        <ArticleViewer
+          article={selectedArticle}
+          onClose={() => {
+            setShowViewer(false);
+            setSelectedArticle(null);
+          }}
+        />
+      )}
     </div>
   );
 };

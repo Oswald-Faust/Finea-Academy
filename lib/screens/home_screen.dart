@@ -7,8 +7,11 @@ import '../widgets/alerts_section.dart';
 import '../widgets/contest_winner_card.dart';
 import '../widgets/investor_profile_section.dart';
 import '../widgets/finea_vision_section.dart';
-import 'concours_screen.dart'; // Added import for ConcoursScreen
-import 'profile_screen.dart'; // Added import for ProfileScreen
+import '../models/newsletter_model.dart';
+import '../services/api_service.dart';
+import 'concours_screen.dart';
+import 'profile_screen.dart';
+import 'newsletter_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +21,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final ApiService _apiService = ApiService();
+  NewsletterArticle? _latestArticle;
+  bool _isLoadingArticle = true;
+  String _errorMessage = '';
+
   // Initialise FCM, request permissions et récupère le token
   Future<void> initFCM() async {
     try {
@@ -73,10 +81,44 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadLatestArticle() async {
+    try {
+      setState(() {
+        _isLoadingArticle = true;
+        _errorMessage = '';
+      });
+
+      final response = await _apiService.getNewsletterArticles(
+        status: 'published',
+        limit: 1,
+        sortBy: 'publishedAt',
+        sortOrder: 'desc',
+      );
+
+      if (response.data != null && response.data!.isNotEmpty) {
+        setState(() {
+          _latestArticle = response.data!.first;
+          _isLoadingArticle = false;
+        });
+      } else {
+        setState(() {
+          _latestArticle = null;
+          _isLoadingArticle = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoadingArticle = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     initFCM();
+    _loadLatestArticle();
   }
 
   @override
@@ -119,18 +161,76 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ARTICLE D'ACTUALITÉ EN VEDETTE
-            FeaturedArticleCard(
-              title: "La guerre commerciale de Donald Trump, un immense défi pour l'économie mondiale",
-              content: "La guerre commerciale lancée par Donald Trump, notamment contre la Chine, a marqué un tournant majeur dans l'économie mondiale. En imposant des droits de douane massifs sur des centaines de milliards de dollars de biens, son administration a cherché à réduire le déficit commercial américain et à rapatrier certaines industries.",
-              date: "Finéa app 3 Juillet 2025",
-              imagePath: 'assets/images/Bourse 1 .jpg',
-              onReadMore: () {
-                // Navigation vers l'article complet
-              },
-              onBookmark: () {
-                // Ajouter aux favoris
-              },
-            ),
+            if (_isLoadingArticle)
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              )
+            else if (_latestArticle != null)
+              FeaturedArticleCard(
+                title: _latestArticle!.title,
+                content: _latestArticle!.content.isNotEmpty 
+                    ? _latestArticle!.content 
+                    : _getTruncatedDescription(_latestArticle!.title),
+                date: "Finéa app ${_formatDate(_latestArticle!.date)}",
+                imagePath: _getImagePath(_latestArticle!.imageUrl),
+                onReadMore: () {
+                  // Navigation vers l'article complet
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => NewsletterDetailScreen(article: _latestArticle!),
+                    ),
+                  );
+                },
+                onBookmark: () {
+                  // Ajouter aux favoris
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Article ajouté aux favoris'),
+                      backgroundColor: Colors.blue,
+                    ),
+                  );
+                },
+              )
+            else
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.article_outlined,
+                        color: Colors.white54,
+                        size: 48,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Aucun article disponible',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 16,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             
             const SizedBox(height: 24),
             
@@ -190,5 +290,33 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  String _getImagePath(String imageUrl) {
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    } else if (imageUrl.startsWith('/uploads/')) {
+      return 'http://localhost:5000$imageUrl';
+    } else if (imageUrl.isNotEmpty) {
+      return imageUrl;
+    } else {
+      return 'assets/images/Bourse 1 .jpg';
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _getTruncatedDescription(String title) {
+    const maxLength = 100;
+    if (title.length <= maxLength) {
+      return title;
+    }
+    return '${title.substring(0, maxLength)}...';
   }
 } 

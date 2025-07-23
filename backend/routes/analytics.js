@@ -1,7 +1,141 @@
 const express = require('express');
 const router = express.Router();
+const User = require('../models/User');
 
 // Routes publiques pour les analyses et rapports
+
+// @desc    Récupérer les statistiques complètes du dashboard
+// @route   GET /api/analytics/dashboard
+// @access  Public
+router.get('/dashboard', async (req, res) => {
+  try {
+    // Statistiques utilisateurs
+    const totalUsers = await User.countDocuments();
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const verifiedUsers = await User.countDocuments({ emailVerified: true });
+    
+    // Nouveaux utilisateurs ce mois
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const newUsersThisMonth = await User.countDocuments({
+      createdAt: { $gte: startOfMonth }
+    });
+    
+    // Nouveaux utilisateurs le mois dernier pour calculer la croissance
+    const startOfLastMonth = new Date(startOfMonth);
+    startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+    const endOfLastMonth = new Date(startOfMonth);
+    endOfLastMonth.setDate(0);
+    endOfLastMonth.setHours(23, 59, 59, 999);
+    
+    const newUsersLastMonth = await User.countDocuments({
+      createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+    });
+    
+    // Calcul de la croissance
+    const userGrowth = newUsersLastMonth > 0 
+      ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth * 100).toFixed(1)
+      : newUsersThisMonth > 0 ? 100 : 0;
+    
+    // Statistiques newsletters (simulées pour l'instant)
+    const newslettersSent = 0; // À remplacer quand le modèle Newsletter sera disponible
+    const newslettersLastMonth = 0;
+    const newsletterGrowth = 0;
+    
+    // Taux d'engagement (utilisateurs actifs / total)
+    const engagementRate = totalUsers > 0 
+      ? ((activeUsers / totalUsers) * 100).toFixed(1)
+      : 0;
+    
+    // Utilisateurs par jour pour les 7 derniers jours
+    const last7Days = new Date();
+    last7Days.setDate(last7Days.getDate() - 7);
+    
+    const usersByDay = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: last7Days }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$createdAt'
+            }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id': 1 }
+      }
+    ]);
+    
+    // Remplir les jours manquants avec 0
+    const filledUsersByDay = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const existingData = usersByDay.find(item => item._id === dateStr);
+      filledUsersByDay.push({
+        date: dateStr,
+        count: existingData ? existingData.count : 0
+      });
+    }
+    
+    // Statistiques par rôle
+    const usersByRole = await User.aggregate([
+      { $group: { _id: '$role', count: { $sum: 1 } } }
+    ]);
+    
+    const roleStats = usersByRole.reduce((acc, curr) => {
+      acc[curr._id] = curr.count;
+      return acc;
+    }, {});
+    
+    // Derniers utilisateurs inscrits
+    const recentUsers = await User.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('firstName lastName email createdAt isActive');
+    
+    // Statistiques de notifications (simulées pour l'instant)
+    const totalNotifications = 0; // À remplacer quand le modèle Notification sera disponible
+    const notificationsThisMonth = 0;
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        activeUsers,
+        verifiedUsers,
+        newUsersThisMonth,
+        userGrowth: parseFloat(userGrowth),
+        newslettersSent,
+        newsletterGrowth: parseFloat(newsletterGrowth),
+        engagementRate: parseFloat(engagementRate),
+        usersByDay: filledUsersByDay,
+        roleStats,
+        recentUsers,
+        notifications: {
+          total: totalNotifications,
+          thisMonth: notificationsThisMonth
+        }
+      },
+      generatedAt: new Date()
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques du dashboard:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des statistiques du dashboard'
+    });
+  }
+});
 
 // @desc    Récupérer le rapport d'activité générale
 // @route   GET /api/analytics/activity

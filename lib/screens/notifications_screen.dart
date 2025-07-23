@@ -3,6 +3,8 @@ import 'package:animate_do/animate_do.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
+import '../widgets/custom_bottom_navigation.dart';
+import 'main_navigation_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -80,10 +82,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         final user = authService.currentUser;
         
         return Scaffold(
-          backgroundColor: const Color(0xFF000D64),
+          backgroundColor: const Color(0xFF0f0f23),
           appBar: AppBar(
-            backgroundColor: const Color(0xFF000D64),
-            title: const Text('Notifications', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.transparent,
+            title: const Text(
+              'Notifications',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
             centerTitle: true,
             elevation: 0,
             leading: IconButton(
@@ -102,238 +112,212 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                )
-              else
-                TextButton(
-                  onPressed: _savePreferences,
-                  child: const Text(
-                    'Sauvegarder',
-                    style: TextStyle(color: Colors.white),
-                  ),
                 ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: FadeInUp(
-              duration: const Duration(milliseconds: 600),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  
-                  // Notifications générales
-                  const Text(
-                    'Notifications générales',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  _buildNotificationTile(
-                    title: 'Notifications push',
-                    subtitle: 'Recevoir les notifications sur votre appareil',
-                    value: _pushNotifications,
-                    onChanged: (value) {
-                      setState(() {
-                        _pushNotifications = value;
-                      });
-                    },
-                    icon: Icons.notifications,
-                  ),
-                  
-                  _buildNotificationTile(
-                    title: 'Notifications email',
-                    subtitle: 'Recevoir les notifications par email',
-                    value: _emailNotifications,
-                    onChanged: (value) {
-                      setState(() {
-                        _emailNotifications = value;
-                      });
-                    },
-                    icon: Icons.email,
-                  ),
-                  
-                  _buildNotificationTile(
-                    title: 'Notifications marketing',
-                    subtitle: 'Recevoir les offres et promotions',
-                    value: _marketingNotifications,
-                    onChanged: (value) {
-                      setState(() {
-                        _marketingNotifications = value;
-                      });
-                    },
-                    icon: Icons.local_offer,
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Paramètres de notification
-                  const Text(
-                    'Paramètres de notification',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  _buildNotificationTile(
-                    title: 'Son',
-                    subtitle: 'Activer le son des notifications',
-                    value: _soundEnabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _soundEnabled = value;
-                      });
-                    },
-                    icon: Icons.volume_up,
-                  ),
-                  
-                  _buildNotificationTile(
-                    title: 'Vibration',
-                    subtitle: 'Activer la vibration des notifications',
-                    value: _vibrationEnabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _vibrationEnabled = value;
-                      });
-                    },
-                    icon: Icons.vibration,
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Sélection du son
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                    ),
+          body: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: FadeInUp(
+                    duration: const Duration(milliseconds: 600),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.music_note,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 16),
-                            const Text(
-                              'Son de notification',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 20),
+                        
+                        // Types de notifications
+                        const Text(
+                          'Types de notifications',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: _selectedSound,
-                          items: _soundOptions.map((sound) {
-                            return DropdownMenuItem(
-                              value: sound,
-                              child: Text(sound),
-                            );
-                          }).toList(),
-                          onChanged: _soundEnabled ? (value) {
+                        
+                        const SizedBox(height: 20),
+                        
+                        _buildNotificationTile(
+                          title: 'Notifications push',
+                          subtitle: 'Recevoir des notifications sur votre appareil',
+                          value: _pushNotifications,
+                          onChanged: (value) {
                             setState(() {
-                              _selectedSound = value!;
+                              _pushNotifications = value;
                             });
-                          } : null,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.1),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
+                          },
+                          icon: Icons.notifications_active,
+                        ),
+                        
+                        _buildNotificationTile(
+                          title: 'Notifications par email',
+                          subtitle: 'Recevoir des notifications par email',
+                          value: _emailNotifications,
+                          onChanged: (value) {
+                            setState(() {
+                              _emailNotifications = value;
+                            });
+                          },
+                          icon: Icons.email,
+                        ),
+                        
+                        _buildNotificationTile(
+                          title: 'Notifications marketing',
+                          subtitle: 'Recevoir des offres et promotions',
+                          value: _marketingNotifications,
+                          onChanged: (value) {
+                            setState(() {
+                              _marketingNotifications = value;
+                            });
+                          },
+                          icon: Icons.campaign,
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Paramètres de notification
+                        const Text(
+                          'Paramètres',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+                        
+                        _buildNotificationTile(
+                          title: 'Son',
+                          subtitle: 'Activer le son pour les notifications',
+                          value: _soundEnabled,
+                          onChanged: (value) {
+                            setState(() {
+                              _soundEnabled = value;
+                            });
+                          },
+                          icon: Icons.volume_up,
+                        ),
+                        
+                        if (_soundEnabled) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Son de notification',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                DropdownButtonFormField<String>(
+                                  value: _selectedSound,
+                                  dropdownColor: const Color(0xFF1a1a2e),
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.white30),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.blue),
+                                    ),
+                                  ),
+                                  items: _soundOptions.map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _selectedSound = newValue!;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          dropdownColor: const Color(0xFF000D64),
-                          style: const TextStyle(color: Colors.white),
+                        ],
+                        
+                        _buildNotificationTile(
+                          title: 'Vibration',
+                          subtitle: 'Activer la vibration pour les notifications',
+                          value: _vibrationEnabled,
+                          onChanged: (value) {
+                            setState(() {
+                              _vibrationEnabled = value;
+                            });
+                          },
+                          icon: Icons.vibration,
+                        ),
+                        
+                        const SizedBox(height: 40),
+                        
+                        // Bouton de sauvegarde
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _savePreferences,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Sauvegarder',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // Boutons d'action
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // Tester les notifications
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Notification de test envoyée !'),
-                                backgroundColor: Colors.blue,
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white, width: 2),
-                            minimumSize: const Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Tester',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Paramètres sauvegardés'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF000D64),
-                            minimumSize: const Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Sauvegarder',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
+              
+              // Barre de navigation en bas
+              CustomBottomNavigation(
+                currentIndex: 2, // Accueil est sélectionné par défaut
+                onTap: (index) {
+                  // Navigation vers les différentes pages
+                  if (index != 2) { // Si ce n'est pas la page actuelle
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const MainNavigationScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
         );
       },

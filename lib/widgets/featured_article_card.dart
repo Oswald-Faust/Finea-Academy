@@ -18,6 +18,14 @@ class FeaturedArticleCard extends StatelessWidget {
     this.onBookmark,
   });
 
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return NetworkImage(imagePath);
+    } else {
+      return AssetImage(imagePath);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -40,9 +48,29 @@ class FeaturedArticleCard extends StatelessWidget {
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
                   ),
-                  image: DecorationImage(
-                    image: AssetImage(imagePath),
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  child: Image(
+                    image: _getImageProvider(imagePath),
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/Bourse 1 .jpg'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -115,6 +143,8 @@ class FeaturedArticleCard extends StatelessWidget {
                     height: 1.5,
                     fontFamily: 'Poppins',
                   ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(

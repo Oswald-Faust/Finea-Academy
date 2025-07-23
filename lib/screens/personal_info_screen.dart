@@ -19,9 +19,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _postalCodeController = TextEditingController();
   
   bool _isLoading = false;
   bool _isSaving = false;
@@ -41,12 +38,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       _lastNameController.text = user.lastName;
       _emailController.text = user.email;
       _phoneController.text = user.phone ?? '';
-      
-      if (user.address != null) {
-        _addressController.text = user.address!.street ?? '';
-        _cityController.text = user.address!.city ?? '';
-        _postalCodeController.text = user.address!.postalCode ?? '';
-      }
     }
   }
 
@@ -56,9 +47,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
-    _postalCodeController.dispose();
     super.dispose();
   }
 
@@ -249,51 +237,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                             label: 'Téléphone (optionnel)',
                             icon: Icons.phone,
                             keyboardType: TextInputType.phone,
-                          ),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Adresse
-                          const Text(
-                            'Adresse',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 20),
-                          
-                          // Adresse complète
-                          _buildTextField(
-                            controller: _addressController,
-                            label: 'Adresse',
-                            icon: Icons.location_on,
-                          ),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // Ville et Code postal
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _cityController,
-                                  label: 'Ville',
-                                  icon: Icons.location_city,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _postalCodeController,
-                                  label: 'Code postal',
-                                  icon: Icons.pin_drop,
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                            ],
                           ),
                           
                           const SizedBox(height: 40),

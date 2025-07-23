@@ -80,6 +80,15 @@ export const emailAPI = {
   deleteEmailTemplate: (id) => api.delete(`/email/templates/${id}`),
 };
 
+// Service pour les statistiques du dashboard
+export const dashboardAPI = {
+  getDashboardStats: () => api.get('/analytics/dashboard'),
+  getActivityStats: (period = '30d') => api.get(`/analytics/activity?period=${period}`),
+  getRevenueStats: (period = '12m') => api.get(`/analytics/revenue?period=${period}`),
+  getCoursePerformance: () => api.get('/analytics/courses/performance'),
+  getUserDemographics: () => api.get('/analytics/users/demographics'),
+};
+
 // API pour les articles de blog
 export const articleAPI = {
   // Créer un nouvel article

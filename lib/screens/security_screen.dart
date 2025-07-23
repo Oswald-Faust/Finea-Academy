@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import '../widgets/custom_bottom_navigation.dart';
+import 'main_navigation_screen.dart';
 
 class SecurityScreen extends StatefulWidget {
   const SecurityScreen({super.key});
@@ -21,10 +23,18 @@ class _SecurityScreenState extends State<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000D64),
+      backgroundColor: const Color(0xFF0f0f23),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF000D64),
-        title: const Text('Sécurité', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          'Sécurité',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
@@ -32,276 +42,230 @@ class _SecurityScreenState extends State<SecurityScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: FadeInUp(
-          duration: const Duration(milliseconds: 600),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              
-              // Authentification
-              const Text(
-                'Authentification',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              _buildSecurityTile(
-                title: 'Authentification biométrique',
-                subtitle: 'Utiliser l\'empreinte digitale ou Face ID',
-                value: _biometricAuth,
-                onChanged: (value) {
-                  setState(() {
-                    _biometricAuth = value;
-                  });
-                },
-                icon: Icons.fingerprint,
-              ),
-              
-              _buildSecurityTile(
-                title: 'Authentification à deux facteurs',
-                subtitle: 'Sécurité renforcée avec code SMS',
-                value: _twoFactorAuth,
-                onChanged: (value) {
-                  setState(() {
-                    _twoFactorAuth = value;
-                  });
-                },
-                icon: Icons.security,
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Gestion de mot de passe
-              const Text(
-                'Mot de passe',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              _buildActionTile(
-                title: 'Changer le mot de passe',
-                subtitle: 'Mettre à jour votre mot de passe',
-                icon: Icons.lock_reset,
-                onTap: () {
-                  _showChangePasswordDialog();
-                },
-              ),
-              
-              _buildActionTile(
-                title: 'Historique des connexions',
-                subtitle: 'Voir les dernières connexions',
-                icon: Icons.history,
-                onTap: () {
-                  _showLoginHistoryDialog();
-                },
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Notifications de sécurité
-              const Text(
-                'Notifications de sécurité',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              _buildSecurityTile(
-                title: 'Alertes de connexion',
-                subtitle: 'Être notifié des nouvelles connexions',
-                value: _loginNotifications,
-                onChanged: (value) {
-                  setState(() {
-                    _loginNotifications = value;
-                  });
-                },
-                icon: Icons.notifications_active,
-              ),
-              
-              _buildSecurityTile(
-                title: 'Suivi des appareils',
-                subtitle: 'Suivre les appareils connectés',
-                value: _deviceTracking,
-                onChanged: (value) {
-                  setState(() {
-                    _deviceTracking = value;
-                  });
-                },
-                icon: Icons.devices,
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Session et déconnexion
-              const Text(
-                'Session',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              _buildSecurityTile(
-                title: 'Déconnexion automatique',
-                subtitle: 'Se déconnecter après inactivité',
-                value: _autoLogout,
-                onChanged: (value) {
-                  setState(() {
-                    _autoLogout = value;
-                  });
-                },
-                icon: Icons.timer,
-              ),
-              
-              // Temps de déconnexion automatique
-              if (_autoLogout) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.schedule,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 16),
-                          const Text(
-                            'Délai de déconnexion',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: FadeInUp(
+                duration: const Duration(milliseconds: 600),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    
+                    // Authentification
+                    const Text(
+                      'Authentification',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _autoLogoutTime,
-                        items: _logoutOptions.map((time) {
-                          return DropdownMenuItem(
-                            value: time,
-                            child: Text(time),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _autoLogoutTime = value!;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    _buildSecurityTile(
+                      title: 'Authentification biométrique',
+                      subtitle: 'Utiliser l\'empreinte digitale ou Face ID',
+                      value: _biometricAuth,
+                      onChanged: (value) {
+                        setState(() {
+                          _biometricAuth = value;
+                        });
+                      },
+                      icon: Icons.fingerprint,
+                    ),
+                    
+                    _buildSecurityTile(
+                      title: 'Authentification à deux facteurs',
+                      subtitle: 'Sécurité renforcée avec code SMS',
+                      value: _twoFactorAuth,
+                      onChanged: (value) {
+                        setState(() {
+                          _twoFactorAuth = value;
+                        });
+                      },
+                      icon: Icons.security,
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Gestion de mot de passe
+                    const Text(
+                      'Mot de passe',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    _buildActionTile(
+                      title: 'Changer le mot de passe',
+                      subtitle: 'Mettre à jour votre mot de passe',
+                      icon: Icons.lock_reset,
+                      onTap: () {
+                        _showChangePasswordDialog();
+                      },
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Paramètres de sécurité
+                    const Text(
+                      'Paramètres de sécurité',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    _buildSecurityTile(
+                      title: 'Notifications de connexion',
+                      subtitle: 'Recevoir une notification à chaque connexion',
+                      value: _loginNotifications,
+                      onChanged: (value) {
+                        setState(() {
+                          _loginNotifications = value;
+                        });
+                      },
+                      icon: Icons.notifications,
+                    ),
+                    
+                    _buildSecurityTile(
+                      title: 'Déconnexion automatique',
+                      subtitle: 'Se déconnecter automatiquement après inactivité',
+                      value: _autoLogout,
+                      onChanged: (value) {
+                        setState(() {
+                          _autoLogout = value;
+                        });
+                      },
+                      icon: Icons.timer,
+                    ),
+                    
+                    if (_autoLogout) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
-                        dropdownColor: const Color(0xFF000D64),
-                        style: const TextStyle(color: Colors.white),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Délai de déconnexion',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              value: _autoLogoutTime,
+                              dropdownColor: const Color(0xFF1a1a2e),
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.white30),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.blue),
+                                ),
+                              ),
+                              items: _logoutOptions.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _autoLogoutTime = newValue!;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ],
-              
-              const SizedBox(height: 32),
-              
-              // Actions dangereuses
-              const Text(
-                'Actions avancées',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              _buildDangerTile(
-                title: 'Déconnecter tous les appareils',
-                subtitle: 'Forcer la déconnexion sur tous les appareils',
-                icon: Icons.exit_to_app,
-                onTap: () {
-                  _showLogoutAllDialog();
-                },
-              ),
-              
-              _buildDangerTile(
-                title: 'Supprimer le compte',
-                subtitle: 'Supprimer définitivement votre compte',
-                icon: Icons.delete_forever,
-                onTap: () {
-                  _showDeleteAccountDialog();
-                },
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Bouton de sauvegarde
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Paramètres de sécurité sauvegardés'),
-                        backgroundColor: Colors.green,
+                    
+                    _buildSecurityTile(
+                      title: 'Suivi des appareils',
+                      subtitle: 'Voir les appareils connectés à votre compte',
+                      value: _deviceTracking,
+                      onChanged: (value) {
+                        setState(() {
+                          _deviceTracking = value;
+                        });
+                      },
+                      icon: Icons.devices,
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Actions de sécurité
+                    const Text(
+                      'Actions de sécurité',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF000D64),
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 8,
-                    shadowColor: Colors.white.withOpacity(0.3),
-                  ),
-                  child: const Text(
-                    'Sauvegarder les paramètres',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    
+                    const SizedBox(height: 20),
+                    
+                    _buildActionTile(
+                      title: 'Déconnecter tous les appareils',
+                      subtitle: 'Forcer la déconnexion sur tous les appareils',
+                      icon: Icons.logout,
+                      onTap: () {
+                        _showLogoutAllDialog();
+                      },
                     ),
-                  ),
+                    
+                    _buildActionTile(
+                      title: 'Historique de connexion',
+                      subtitle: 'Voir l\'historique des connexions',
+                      icon: Icons.history,
+                      onTap: () {
+                        _showLoginHistoryDialog();
+                      },
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          
+          // Barre de navigation en bas
+          CustomBottomNavigation(
+            currentIndex: 2, // Accueil est sélectionné par défaut
+            onTap: (index) {
+              // Navigation vers les différentes pages
+              if (index != 2) { // Si ce n'est pas la page actuelle
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const MainNavigationScreen(),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }

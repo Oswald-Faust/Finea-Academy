@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../widgets/custom_bottom_navigation.dart';
 import '../models/newsletter_model.dart';
-import 'main_navigation_screen.dart';
+import '../services/api_service.dart';
 import 'newsletter_detail_screen.dart';
 
 class NewsletterScreen extends StatefulWidget {
@@ -13,161 +12,260 @@ class NewsletterScreen extends StatefulWidget {
 }
 
 class _NewsletterScreenState extends State<NewsletterScreen> {
-  final List<NewsletterArticle> _articles = [
-    NewsletterArticle(
-      id: '1',
-      title: 'La guerre commerciale de Donald Trump, un immense défi pour l\'économie mondiale',
-      content: 'La guerre commerciale initiée par Donald Trump en 2018 visait à réduire le déficit commercial américain, notamment avec la Chine. Cette politique protectionniste a bouleversé les équilibres économiques mondiaux, entraînant une hausse des droits de douane, des représailles économiques et des tensions sur les chaînes d\'approvisionnement. Cette politique a perturbé les équilibres économiques mondiaux, provoquant un ralentissement du commerce international, des incertitudes pour les entreprises et un impact direct sur les consommateurs, marquant un tournant majeur dans la mondialisation.',
-      imageUrl: 'assets/images/Bourse 1 .jpg',
-      source: 'Finéa app',
-      date: DateTime(2025, 7, 3),
-      isBookmarked: false,
-    ),
-    NewsletterArticle(
-      id: '2',
-      title: 'Les pays pauvres étranglés par le poids de la dette',
-      content: 'Les pays en développement font face à une crise de la dette sans précédent. L\'accumulation de dettes publiques et privées, combinée à la hausse des taux d\'intérêt et à la dépréciation des monnaies locales, plonge de nombreux pays dans une situation économique critique. Cette crise menace la stabilité financière mondiale et remet en question les mécanismes de financement du développement international.',
-      imageUrl: 'assets/images/Bourse 2 .jpg',
-      source: 'Finéa app',
-      date: DateTime(2025, 7, 1),
-      isBookmarked: false,
-    ),
-    NewsletterArticle(
-      id: '3',
-      title: 'L\'impact des cryptomonnaies sur l\'économie traditionnelle',
-      content: 'L\'émergence des cryptomonnaies bouleverse les systèmes financiers traditionnels. Bitcoin, Ethereum et autres monnaies numériques créent de nouveaux paradigmes économiques, remettant en question le rôle des banques centrales et des institutions financières établies.',
-      imageUrl: 'assets/images/Trading 1.jpg',
-      source: 'Finéa app',
-      date: DateTime(2025, 6, 28),
-      isBookmarked: true,
-    ),
-    NewsletterArticle(
-      id: '4',
-      title: 'Les enjeux de la transition énergétique pour l\'économie mondiale',
-      content: 'La transition vers les énergies renouvelables représente un défi économique majeur. Cette transformation nécessite des investissements massifs dans les infrastructures vertes tout en gérant la transition des industries polluantes vers des modèles durables.',
-      imageUrl: 'assets/images/Bourse 3 .jpg',
-      source: 'Finéa app',
-      date: DateTime(2025, 6, 25),
-      isBookmarked: false,
-    ),
-  ];
+  final ApiService _apiService = ApiService();
+  List<NewsletterArticle> _articles = [];
+  bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadArticles();
+  }
+
+  Future<void> _loadArticles() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
+
+      final response = await _apiService.getNewsletterArticles(
+        status: 'published',
+        limit: 20,
+      );
+
+      setState(() {
+        _articles = response.data ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _toggleBookmark(NewsletterArticle article) async {
+    try {
+      await _apiService.toggleNewsletterBookmark(article.id, !article.isBookmarked);
+      
+      setState(() {
+        article.isBookmarked = !article.isBookmarked;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            article.isBookmarked ? 'Article ajouté aux favoris' : 'Article retiré des favoris',
+          ),
+          backgroundColor: Colors.blue,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f23),
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                // Header avec logo et titre
-                SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+      body: CustomScrollView(
+        slivers: [
+          // Header avec logo et titre
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Logo et titre
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF000D64),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Logo et titre
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF000D64),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.public,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'finéa',
-                              style: TextStyle(
-                                color: Color(0xFF000D64),
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            const Spacer(),
-                            // Graphique en ligne
-                            Container(
-                              width: 60,
-                              height: 30,
-                              child: CustomPaint(
-                                painter: LineChartPainter(),
-                              ),
-                            ),
-                          ],
+                        child: const Icon(
+                          Icons.public,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Newsletter',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontFamily: 'Poppins',
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'finéa',
+                        style: TextStyle(
+                          color: Color(0xFF000D64),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
                         ),
-                      ],
+                      ),
+                      const Spacer(),
+                      // Graphique en ligne
+                      Container(
+                        width: 60,
+                        height: 30,
+                        child: CustomPaint(
+                          painter: LineChartPainter(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Newsletter',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-                
-                // Liste des articles
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final article = _articles[index];
-                      return FadeInUp(
-                        duration: Duration(milliseconds: 600 + (index * 100)),
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: _buildArticleCard(article),
-                        ),
-                      );
-                    },
-                    childCount: _articles.length,
-                  ),
-                ),
-                
-                // Espace en bas
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 100),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           
-          // Barre de navigation en bas
-          CustomBottomNavigation(
-            currentIndex: 0, // Newsletter est sélectionné
-            onTap: (index) {
-              // Navigation vers les différentes pages
-              if (index != 0) { // Si ce n'est pas la page actuelle
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const MainNavigationScreen(),
+          // État de chargement
+          if (_isLoading)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-                );
-              }
-            },
+                ),
+              ),
+            ),
+          
+          // État d'erreur
+          if (_hasError)
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Erreur de chargement',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _errorMessage,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadArticles,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          
+          // Liste des articles
+          if (!_isLoading && !_hasError)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final article = _articles[index];
+                  return FadeInUp(
+                    duration: Duration(milliseconds: 600 + (index * 100)),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: _buildArticleCard(article),
+                    ),
+                  );
+                },
+                childCount: _articles.length,
+              ),
+            ),
+          
+          // Message si aucun article
+          if (!_isLoading && !_hasError && _articles.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.article_outlined,
+                        color: Colors.white54,
+                        size: 64,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Aucun article disponible',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 18,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          
+          // Espace en bas
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 100),
           ),
         ],
       ),
@@ -197,7 +295,7 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     image: DecorationImage(
-                      image: AssetImage(article.imageUrl),
+                      image: _getImageProvider(article.imageUrl),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -253,26 +351,25 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
     );
   }
 
+  ImageProvider _getImageProvider(String imageUrl) {
+    if (imageUrl.startsWith('http')) {
+      return NetworkImage(imageUrl);
+    } else if (imageUrl.startsWith('/uploads/')) {
+      // URL relative vers l'API
+      return NetworkImage('http://localhost:5000$imageUrl');
+    } else if (imageUrl.isNotEmpty) {
+      // Asset local
+      return AssetImage(imageUrl);
+    } else {
+      // Image par défaut
+      return const AssetImage('assets/images/Bourse 1 .jpg');
+    }
+  }
+
   void _openArticle(NewsletterArticle article) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => NewsletterDetailScreen(article: article),
-      ),
-    );
-  }
-
-  void _toggleBookmark(NewsletterArticle article) {
-    setState(() {
-      article.isBookmarked = !article.isBookmarked;
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          article.isBookmarked ? 'Article ajouté aux favoris' : 'Article retiré des favoris',
-        ),
-        backgroundColor: Colors.blue,
-        duration: const Duration(seconds: 1),
       ),
     );
   }
