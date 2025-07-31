@@ -103,18 +103,77 @@ app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
 
-// Route de test pour vérifier que l'API fonctionne
+// Middleware pour vérifier la connexion MongoDB
+const checkMongoDB = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      status: 'error',
+      message: 'Service de base de données indisponible',
+      error: 'MongoDB connection not ready'
+    });
+  }
+  next();
+};
+
+// Route de test améliorée pour vérifier que l'API fonctionne
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
+  const mongoState = mongoose.connection.readyState;
+  const mongoStatus = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting', 
+    3: 'disconnecting'
+  };
+
+  const healthCheck = {
     status: 'success',
     message: 'API Finéa Académie fonctionne correctement',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb: {
+      status: mongoStatus[mongoState] || 'unknown',
+      readyState: mongoState,
+      host: mongoose.connection.host || 'not connected'
+    },
+    server: {
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: process.version,
+      platform: process.platform
+    },
+    vercel: !!process.env.VERCEL
+  };
+
+  // Si MongoDB n'est pas connecté, retourner un statut d'avertissement
+  if (mongoState !== 1) {
+    healthCheck.status = 'warning';
+    healthCheck.message = 'API fonctionne mais base de données non connectée';
+  }
+
+  res.status(200).json(healthCheck);
+});
+
+// Route de base pour rediriger vers la documentation
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'API Finéa Académie',
+    version: '1.0.0',
+    documentation: '/api/health',
+    endpoints: [
+      '/api/health',
+      '/api/auth',
+      '/api/users',
+      '/api/newsletters',
+      '/api/email',
+      '/api/courses',
+      '/api/analytics',
+      '/api/notifications',
+      '/api/contests'
+    ]
   });
 });
 
-// Routes
+// Routes avec middleware de vérification MongoDB (optionnel pour certaines routes)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/newsletters', newsletterRoutes);
@@ -134,7 +193,7 @@ app.use(errorHandler);
 let isConnected = false;
 
 const connectDB = async () => {
-  if (isConnected) {
+  if (isConnected && mongoose.connection.readyState === 1) {
     console.log('MongoDB déjà connecté');
     return;
   }
@@ -143,25 +202,30 @@ const connectDB = async () => {
     const mongoUri = process.env.MONGODB_URI;
     if (!mongoUri) {
       console.error('MONGODB_URI non définie dans les variables d\'environnement');
-      return;
+      throw new Error('MONGODB_URI environment variable is required');
     }
 
     const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout de 5 secondes
-      socketTimeoutMS: 45000, // Timeout socket de 45 secondes
+      serverSelectionTimeoutMS: 10000, // Timeout de 10 secondes pour Vercel
+      socketTimeoutMS: 60000, // Timeout socket de 60 secondes
+      maxPoolSize: 10, // Maintenir jusqu'à 10 connexions socket
+      bufferCommands: false, // Désactiver mongoose buffering
+      bufferMaxEntries: 0 // Désactiver mongoose buffering
     });
     
     isConnected = true;
     console.log(`MongoDB connecté: ${conn.connection.host}`);
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error.message);
-    // Ne pas arrêter le processus en production
+    isConnected = false;
+    
+    // En production, continuer sans base de données mais avec un message d'erreur
     if (process.env.NODE_ENV === 'production') {
-      console.log('Continuing without MongoDB connection...');
+      console.warn('Continuing without MongoDB connection in production...');
     } else {
-      process.exit(1);
+      throw error;
     }
   }
 };
@@ -177,42 +241,75 @@ mongoose.connection.on('disconnected', () => {
   isConnected = false;
 });
 
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB reconnecté');
+  isConnected = true;
+});
+
 // Démarrage du serveur
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
+    // Initialiser la connexion MongoDB
     await connectDB();
     
     // Démarrer le serveur seulement si on n'est pas sur Vercel
     if (!process.env.VERCEL) {
-      app.listen(PORT, () => {
+      const server = app.listen(PORT, () => {
         console.log(`🚀 Serveur démarré sur le port ${PORT}`);
         console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
         console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
       });
+
+      // Fermeture gracieuse
+      process.on('SIGTERM', () => {
+        console.log('SIGTERM reçu. Fermeture gracieuse...');
+        server.close(() => {
+          console.log('Processus terminé.');
+        });
+      });
+    } else {
+      console.log('🚀 Application initialisée pour Vercel');
+      console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
     }
   } catch (error) {
     console.error('Erreur lors du démarrage du serveur:', error);
-    if (process.env.NODE_ENV !== 'production') {
+    
+    // En production sur Vercel, ne pas arrêter le processus
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+      console.warn('Continuing startup despite errors on Vercel...');
+    } else {
       process.exit(1);
     }
   }
 };
 
-// Gestion des erreurs non gérées
+// Gestion des erreurs non gérées avec amélioration pour Vercel
 process.on('unhandledRejection', (err) => {
   console.error('UNHANDLED REJECTION! 💥');
-  console.error(err.name, err.message);
-  if (process.env.NODE_ENV !== 'production') {
+  console.error('Error name:', err.name);
+  console.error('Error message:', err.message);
+  console.error('Stack trace:', err.stack);
+  
+  // En production sur Vercel, log mais ne pas arrêter
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+    console.warn('Unhandled rejection in production - continuing...');
+  } else {
     process.exit(1);
   }
 });
 
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION! 💥');
-  console.error(err.name, err.message);
-  if (process.env.NODE_ENV !== 'production') {
+  console.error('Error name:', err.name);
+  console.error('Error message:', err.message);
+  console.error('Stack trace:', err.stack);
+  
+  // En production sur Vercel, log mais ne pas arrêter
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+    console.warn('Uncaught exception in production - continuing...');
+  } else {
     process.exit(1);
   }
 });
