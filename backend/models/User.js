@@ -138,7 +138,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index pour optimiser les requêtes
-userSchema.index({ email: 1 });
+// L'index sur email est déjà créé par unique: true
 userSchema.index({ createdAt: -1 });
 
 // Virtual pour le nom complet
