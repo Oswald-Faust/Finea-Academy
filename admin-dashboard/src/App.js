@@ -7,6 +7,7 @@ import Users from './pages/Users';
 import UserDetail from './pages/UserDetail';
 import Newsletter from './pages/Newsletter';
 import Notifications from './pages/Notifications';
+import Contests from './pages/Contests';
 import Settings from './pages/Settings';
 import Stats from './pages/Stats';
 
@@ -40,6 +41,7 @@ function App() {
             <Route path="/users/:id" element={<UserDetail />} />
             <Route path="/newsletter" element={<Newsletter />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/contests" element={<Contests />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>

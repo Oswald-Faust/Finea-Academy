@@ -107,6 +107,44 @@ class AuthService extends ChangeNotifier implements TokenProvider {
     }
   }
 
+  // Connexion automatique avec identifiants en dur
+  Future<bool> autoLogin() async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      // Identifiants en dur pour la connexion automatique
+      const String autoLoginEmail = 'faustfrank370@gmail.com';
+      const String autoLoginPassword = 'test2FF';
+
+      final request = LoginRequest(
+        email: autoLoginEmail,
+        password: autoLoginPassword,
+      );
+
+      final response = await _apiService.login(request);
+      
+      if (response.success) {
+        await _saveAuthData(response.token, response.user);
+        _currentUser = response.user;
+        _isLoggedIn = true;
+        notifyListeners();
+        return true;
+      } else {
+        _setError('Erreur lors de la connexion automatique');
+        return false;
+      }
+    } on ApiException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Une erreur inattendue est survenue');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Connexion
   Future<bool> login({
     required String email,

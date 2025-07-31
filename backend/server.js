@@ -18,6 +18,7 @@ const emailRoutes = require('./routes/email');
 const courseRoutes = require('./routes/courses');
 const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
+const contestsRoutes = require('./routes/contests');
 
 // Import des middlewares
 const errorHandler = require('./middleware/errorHandler');
@@ -25,16 +26,18 @@ const notFound = require('./middleware/notFound');
 
 const app = express();
 
-// Créer les dossiers d'upload s'ils n'existent pas
-const fs = require('fs');
-const path = require('path');
+// Créer les dossiers d'upload s'ils n'existent pas (uniquement en développement)
+if (process.env.NODE_ENV !== 'production') {
+  const fs = require('fs');
+  const path = require('path');
 
-const uploadDirs = ['./uploads', './uploads/avatars', './uploads/articles'];
-uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+  const uploadDirs = ['./uploads', './uploads/avatars', './uploads/articles'];
+  uploadDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+}
 
 // Configuration CORS
 const corsOptions = {
@@ -51,7 +54,9 @@ const corsOptions = {
       'http://127.0.0.1:8080',
       'http://127.0.0.1:4200',
       'http://localhost:56430',
-      process.env.FRONTEND_URL
+      process.env.FRONTEND_URL,
+      'https://finea-admin.vercel.app',
+      'https://finea-academie.vercel.app'
     ].filter(Boolean); // Enlever les valeurs null/undefined
 
     // Autoriser les requêtes sans origine (comme les apps mobiles)
@@ -89,11 +94,6 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
-// Rate limiting supprimé pour l'authentification - les comptes ne doivent jamais être verrouillés
-// app.use('/api/auth/login', authLimiter);
-// app.use('/api/auth/register', authLimiter);
-// app.use('/api/auth/forgot-password', authLimiter);
-
 // Middlewares de parsing
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
@@ -103,6 +103,17 @@ app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
 
+// Route de test pour vérifier que l'API fonctionne
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'API Finéa Académie fonctionne correctement',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -111,15 +122,7 @@ app.use('/api/email', emailRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationsRoutes);
-
-// Route de test
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'API Finéa Académie fonctionne correctement',
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use('/api/contests', contestsRoutes);
 
 // Middleware pour les routes non trouvées
 app.use(notFound);
@@ -127,19 +130,52 @@ app.use(notFound);
 // Middleware de gestion d'erreurs
 app.use(errorHandler);
 
-// Connexion à MongoDB
+// Connexion à MongoDB avec gestion d'erreur améliorée
+let isConnected = false;
+
 const connectDB = async () => {
+  if (isConnected) {
+    console.log('MongoDB déjà connecté');
+    return;
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finea-academie', {
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      console.error('MONGODB_URI non définie dans les variables d\'environnement');
+      return;
+    }
+
+    const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // Timeout de 5 secondes
+      socketTimeoutMS: 45000, // Timeout socket de 45 secondes
     });
+    
+    isConnected = true;
     console.log(`MongoDB connecté: ${conn.connection.host}`);
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error.message);
-    process.exit(1);
+    // Ne pas arrêter le processus en production
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Continuing without MongoDB connection...');
+    } else {
+      process.exit(1);
+    }
   }
 };
+
+// Gestion des erreurs de connexion MongoDB
+mongoose.connection.on('error', (err) => {
+  console.error('Erreur MongoDB:', err);
+  isConnected = false;
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB déconnecté');
+  isConnected = false;
+});
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 5000;
@@ -147,30 +183,41 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
-    });
+    
+    // Démarrer le serveur seulement si on n'est pas sur Vercel
+    if (!process.env.VERCEL) {
+      app.listen(PORT, () => {
+        console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+        console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
+      });
+    }
   } catch (error) {
     console.error('Erreur lors du démarrage du serveur:', error);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   }
 };
 
 // Gestion des erreurs non gérées
 process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION! 💥 Arrêt du serveur...');
+  console.error('UNHANDLED REJECTION! 💥');
   console.error(err.name, err.message);
-  process.exit(1);
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION! 💥 Arrêt du serveur...');
+  console.error('UNCAUGHT EXCEPTION! 💥');
   console.error(err.name, err.message);
-  process.exit(1);
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });
 
+// Démarrer le serveur
 startServer();
 
 module.exports = app; 

@@ -145,15 +145,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: user.isEmailVerified ? Colors.green : Colors.orange,
                                     size: 16,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    user.isEmailVerified ? 'Email vérifié' : 'Email non vérifié',
-                                    style: TextStyle(
-                                      color: user.isEmailVerified ? Colors.green : Colors.orange,
-                                      fontSize: 12,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
+                                  // const SizedBox(width: 4),
+                                  // Text(
+                                  //   user.isEmailVerified ? 'Email vérifié' : 'Email non vérifié',
+                                  //   style: TextStyle(
+                                  //     color: user.isEmailVerified ? Colors.green : Colors.orange,
+                                  //     fontSize: 12,
+                                  //     fontFamily: 'Poppins',
+                                  //   ),
+                                  // ),
                                 ],
                               ),
                             ],

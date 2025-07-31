@@ -11,9 +11,19 @@ import {
   UserIcon,
   ShieldCheckIcon,
   PhotoIcon,
+  BellIcon,
+  ChartBarIcon,
+  CogIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { userAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import SendNotificationModal from '../components/SendNotificationModal';
+import NotificationHistoryModal from '../components/NotificationHistoryModal';
 
 const UserDetail = () => {
   const { id } = useParams();
@@ -27,9 +37,21 @@ const UserDetail = () => {
     role: 'user',
     isActive: true,
   });
+  const [notifications, setNotifications] = useState([]);
+  const [notificationStats, setNotificationStats] = useState({
+    total: 0,
+    read: 0,
+    unread: 0,
+    sent: 0,
+    failed: 0,
+  });
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     fetchUser();
+    fetchUserNotifications();
   }, [id]);
 
   const fetchUser = async () => {
@@ -89,6 +111,47 @@ const UserDetail = () => {
       fetchUser();
     } catch (error) {
       toast.error('Erreur lors de la modification du statut');
+    }
+  };
+
+  const fetchUserNotifications = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/notifications/user/${id}?limit=50`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setNotifications(data.data || []);
+        
+        // Calculer les statistiques
+        const stats = {
+          total: data.data.length,
+          read: data.data.filter(n => n.readBy?.some(r => r.user === id)).length,
+          unread: data.data.filter(n => !n.readBy?.some(r => r.user === id)).length,
+          sent: data.data.filter(n => n.status === 'sent').length,
+          failed: data.data.filter(n => n.status === 'failed').length,
+        };
+        setNotificationStats(stats);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const handleNotificationSent = () => {
+    fetchUserNotifications();
+    toast.success('Notification envoyée avec succès !');
+  };
+
+  const getNotificationTypeIcon = (type) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      case 'warning':
+        return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
+      case 'error':
+        return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />;
+      default:
+        return <InformationCircleIcon className="h-5 w-5 text-blue-500" />;
     }
   };
 

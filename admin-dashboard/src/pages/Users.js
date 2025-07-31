@@ -9,10 +9,12 @@ import {
   UserPlusIcon,
   CheckCircleIcon,
   XCircleIcon,
+  BellIcon,
 } from '@heroicons/react/24/outline';
 import { userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import CreateUserModal from '../components/CreateUserModal';
+import SendNotificationModal from '../components/SendNotificationModal';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -23,6 +25,8 @@ const Users = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchParams] = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     const filter = searchParams.get('filter');
@@ -65,6 +69,17 @@ const Users = () => {
     setUsers(prevUsers => [newUser, ...prevUsers]);
     // Recharger la liste pour avoir les dernières données
     fetchUsers();
+  };
+
+  const handleSendNotification = (user) => {
+    setSelectedUser(user);
+    setIsNotificationModalOpen(true);
+  };
+
+  const handleNotificationSent = () => {
+    toast.success('Notification envoyée avec succès !');
+    setIsNotificationModalOpen(false);
+    setSelectedUser(null);
   };
 
   const handleStatusToggle = async (userId, currentStatus) => {
@@ -226,6 +241,13 @@ const Users = () => {
                             <EyeIcon className="h-5 w-5" />
                           </Link>
                           <button
+                            onClick={() => handleSendNotification(user)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Envoyer une notification"
+                          >
+                            <BellIcon className="h-5 w-5" />
+                          </button>
+                          <button
                             onClick={() => handleStatusToggle(user._id, user.isActive)}
                             className={`${
                               user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
@@ -323,6 +345,17 @@ const Users = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onUserCreated={handleUserCreated}
+      />
+
+      {/* Modal d'envoi de notification */}
+      <SendNotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => {
+          setIsNotificationModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        onNotificationSent={handleNotificationSent}
       />
     </div>
   );
