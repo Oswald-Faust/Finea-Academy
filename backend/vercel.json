@@ -23,5 +23,7 @@
   },
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "regions": ["cdg1"],
+  "public": false
 } 
