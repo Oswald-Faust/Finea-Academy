@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   SparklesIcon,
   BellIcon,
+  TrophyIcon,
 } from '@heroicons/react/24/outline';
 import NotificationMenu from './NotificationMenu';
 
@@ -22,6 +23,7 @@ const Layout = ({ children }) => {
     { name: 'Utilisateurs', href: '/users', icon: UsersIcon },
     { name: 'Newsletter', href: '/newsletter', icon: EnvelopeIcon },
     { name: 'Notifications', href: '/notifications', icon: BellIcon },
+    { name: 'Concours', href: '/contests', icon: TrophyIcon },
     { name: 'Statistiques', href: '/stats', icon: ChartBarIcon },
     { name: 'Paramètres', href: '/settings', icon: Cog6ToothIcon },
   ];
