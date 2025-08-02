@@ -34,4 +34,25 @@ Thumbs.db
 *.swo
 
 # Node modules (seront installés par Vercel)
-node_modules/ 
+node_modules/
+
+# Autres dossiers du projet
+backend/
+lib/
+android/
+ios/
+web/
+windows/
+linux/
+macos/
+assets/
+notification_sender/
+test/
+*.md
+*.yaml
+*.yml
+*.ps1
+*.sh
+*.dart
+*.lock
+pubspec.* 
