@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   UsersIcon,
   EnvelopeIcon,
@@ -14,6 +14,7 @@ import { userAPI, emailAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -25,29 +26,55 @@ const Dashboard = () => {
   const [recentUsers, setRecentUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return 'à l\'instant';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `il y a ${minutes} minute${minutes > 1 ? 's' : ''}`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `il y a ${hours} heure${hours > 1 ? 's' : ''}`;
+    } else if (diffInSeconds < 2592000) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `il y a ${days} jour${days > 1 ? 's' : ''}`;
+    } else {
+      const months = Math.floor(diffInSeconds / 2592000);
+      return `il y a ${months} mois`;
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-      const [statsResponse, usersResponse] = await Promise.all([
-        userAPI.getUserStats(),
-        userAPI.getUsers({ limit: 5, sort: 'createdAt', order: 'desc' })
-      ]);
-
-      console.log('Stats Response:', statsResponse);
-      console.log('Users Response:', usersResponse);
-
-      // Le backend retourne les données dans data.data
-      const statsData = statsResponse.data.data || statsResponse.data;
-      console.log('Stats Data:', statsData);
+      setLoading(true);
       
+      // Récupérer les statistiques
+      const statsResponse = await userAPI.getUserStats();
+      const statsData = statsResponse.data.data || statsResponse.data;
       setStats(statsData);
-      setRecentUsers(usersResponse.data.users || []);
+
+      // Récupérer les récents utilisateurs directement via fetch pour plus de contrôle
+      const usersResponse = await fetch('http://localhost:5000/api/users?limit=8&sort=createdAt&order=desc');
+      const usersData = await usersResponse.json();
+      
+      if (usersData.success) {
+        setRecentUsers(usersData.data.users || usersData.data || []);
+      } else {
+        console.error('Erreur lors de la récupération des utilisateurs:', usersData.error);
+        setRecentUsers([]);
+      }
     } catch (error) {
       toast.error('Erreur lors du chargement des données');
       console.error('Dashboard data fetch error:', error);
+      setRecentUsers([]);
     } finally {
       setLoading(false);
     }
@@ -201,35 +228,67 @@ const Dashboard = () => {
               <ArrowRightIcon className="h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-200" />
             </Link>
           </div>
-          <div className="space-y-4">
-            {recentUsers.length > 0 ? recentUsers.map((user, index) => (
-              <div key={user._id} className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-colors duration-200 group">
-                <div className="flex-shrink-0">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow duration-200">
-                    <span className="text-sm font-bold text-white">
-                      {user.firstName?.charAt(0)?.toUpperCase() || user.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </span>
+          <div className="space-y-3">
+            {recentUsers.length > 0 ? recentUsers.map((user, index) => {
+              const isNew = new Date(user.createdAt) > new Date(Date.now() - 24 * 60 * 60 * 1000); // Nouveau dans les 24h
+              const timeAgo = getTimeAgo(user.createdAt);
+              
+              return (
+                <div key={user._id} className="group relative">
+                  <div 
+                    className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200 cursor-pointer"
+                    onClick={() => navigate(`/users/${user._id}`)}
+                  >
+                    <div className="flex-shrink-0 relative">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow duration-200">
+                        <span className="text-sm font-bold text-white">
+                          {user.firstName?.charAt(0)?.toUpperCase() || user.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                      {isNew && (
+                        <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-white font-bold">N</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.name || 'Utilisateur'}
+                        </p>
+                        {user.isActive ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Actif
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Inactif
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Inscrit {timeAgo}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-medium text-gray-900">
+                        {new Date(user.createdAt).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short'
+                        })}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(user.createdAt).toLocaleTimeString('fr-FR', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.name || 'Utilisateur'}
-                  </p>
-                  <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-medium text-gray-900">
-                    {new Date(user.createdAt).toLocaleDateString('fr-FR')}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date(user.createdAt).toLocaleTimeString('fr-FR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </div>
-                </div>
-              </div>
-            )) : (
+              );
+            }) : (
               <div className="text-center py-12">
                 <UsersIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 font-medium">Aucun nouvel utilisateur</p>
