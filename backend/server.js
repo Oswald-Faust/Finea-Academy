@@ -41,40 +41,16 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Configuration CORS
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Liste des origines autorisées
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:61386',
-      'http://localhost:8080',
-      'http://localhost:4200',
-      'http://localhost:49673',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:61386',
-      'http://127.0.0.1:8080',
-      'http://127.0.0.1:4200',
-      'http://localhost:56430',
-      process.env.FRONTEND_URL,
-      'https://finea-admin.vercel.app',
-      'https://finea-academie.vercel.app'
-    ].filter(Boolean); // Enlever les valeurs null/undefined
-
-    // Autoriser les requêtes sans origine (comme les apps mobiles)
-    if (!origin) return callback(null, true);
-    
-    // En développement, autoriser toutes les origines localhost
-    if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Non autorisé par la politique CORS'));
-    }
-  },
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL || 'http://localhost:3000'
+  ].filter(Boolean),
   credentials: true,
   optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
+  exposedHeaders: ['*', 'Authorization']
 };
 
 // Middlewares de sécurité
@@ -130,46 +106,43 @@ app.use(notFound);
 // Middleware de gestion d'erreurs
 app.use(errorHandler);
 
-// Connexion à MongoDB avec gestion d'erreur améliorée
-let isConnected = false;
-
+// Configuration de la base de données
 const connectDB = async () => {
-  if (isConnected) {
-    console.log('MongoDB déjà connecté');
-    return;
-  }
-
   try {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-      console.error('MONGODB_URI non définie dans les variables d\'environnement');
-      // Sur Vercel, continuer sans MongoDB
-      if (process.env.VERCEL) {
-        console.log('Continuing without MongoDB on Vercel...');
-        return;
-      }
-      return;
-    }
-
-    const conn = await mongoose.connect(mongoUri, {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 10000, // Timeout de 10 secondes
-      socketTimeoutMS: 45000, // Timeout socket de 45 secondes
       maxPoolSize: 10,
-      minPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+      bufferMaxEntries: 0
     });
+
+    console.log(`✅ MongoDB connecté: ${conn.connection.host}`);
     
-    isConnected = true;
-    console.log(`MongoDB connecté: ${conn.connection.host}`);
+    // Gestion des événements de connexion
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ Erreur MongoDB:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('⚠️ MongoDB déconnecté');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB reconnecté');
+    });
+
+    return conn;
   } catch (error) {
-    console.error('Erreur de connexion MongoDB:', error.message);
-    // Sur Vercel, continuer sans MongoDB
-    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-      console.log('Continuing without MongoDB connection...');
-    } else {
-      process.exit(1);
+    console.error('❌ Erreur de connexion MongoDB:', error.message);
+    // En production, continuer sans MongoDB pour le debugging
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Continuing without MongoDB in production...');
+      return null;
     }
+    process.exit(1);
   }
 };
 
@@ -185,27 +158,27 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // Démarrage du serveur
-const PORT = process.env.PORT || 5000;
-
 const startServer = async () => {
   try {
-    // Sur Vercel, on ne démarre pas le serveur HTTP
-    if (!process.env.VERCEL) {
-      await connectDB();
-      app.listen(PORT, () => {
-        console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-        console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
+    await connectDB();
+    
+    const PORT = process.env.PORT || 5000;
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+      console.log(`📱 Mode: ${process.env.NODE_ENV || 'development'}`);
+      console.log('✅ Application prête');
+    });
+
+    // Gestion gracieuse de l'arrêt
+    process.on('SIGTERM', () => {
+      console.log('💤 SIGTERM reçu');
+      server.close(() => {
+        console.log('🔥 Processus terminé');
       });
-    } else {
-      // Sur Vercel, juste se connecter à la DB
-      await connectDB();
-      console.log('✅ Application prête sur Vercel');
-    }
+    });
   } catch (error) {
-    console.error('Erreur lors du démarrage du serveur:', error);
-    // Ne pas arrêter le processus sur Vercel
-    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    console.error('❌ Erreur de démarrage:', error);
+    if (process.env.NODE_ENV !== 'production') {
       process.exit(1);
     }
   }

@@ -7,46 +7,25 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { protect: auth } = require('../middleware/auth');
 const { validateNewsletter } = require('../middleware/validation');
+const { getUploadConfig } = require('../middleware/uploads');
 
 const router = express.Router();
 
-// Configuration du dossier uploads (adapté pour Vercel)
-const uploadsDir = process.env.VERCEL ? '/tmp/uploads/articles' : './uploads/articles';
+// Configuration du dossier uploads
+const uploadsDir = './uploads/articles';
 
-// Créer le dossier seulement si on n'est pas sur Vercel
-if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
+// Créer le dossier s'il n'existe pas
+if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configuration multer pour l'upload d'images
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seuls les fichiers image sont autorisés'), false);
-    }
-  },
-});
+// Configuration de l'upload d'images
+const uploadImages = getUploadConfig('articles');
 
 // @desc    Créer un nouvel article
 // @route   POST /api/newsletters
 // @access  Public (temporairement pour les tests)
-router.post('/', upload.single('coverImage'), async (req, res) => {
+router.post('/', uploadImages.single('coverImage'), async (req, res) => {
   try {
     const {
       title,
@@ -238,7 +217,7 @@ router.get('/:id', async (req, res) => {
 // @desc    Mettre à jour un article
 // @route   PUT /api/newsletters/:id
 // @access  Public (temporairement pour les tests)
-router.put('/:id', upload.single('coverImage'), async (req, res) => {
+router.put('/:id', uploadImages.single('coverImage'), async (req, res) => {
   try {
     const {
       title,
@@ -368,7 +347,7 @@ router.patch('/:id/publish', async (req, res) => {
 // @desc    Upload d'image pour l'éditeur
 // @route   POST /api/newsletters/upload-image
 // @access  Public (temporairement pour les tests)
-router.post('/upload-image', upload.single('image'), async (req, res) => {
+router.post('/upload-image', uploadImages.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
