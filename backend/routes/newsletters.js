@@ -10,11 +10,11 @@ const { validateNewsletter } = require('../middleware/validation');
 
 const router = express.Router();
 
-// Configuration du dossier uploads (adapté pour Vercel)
-const uploadsDir = process.env.VERCEL ? '/tmp/uploads/articles' : './uploads/articles';
+// Configuration du dossier uploads
+const uploadsDir = './uploads/articles';
 
-// Créer le dossier seulement si on n'est pas sur Vercel
-if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
+// Créer le dossier s'il n'existe pas
+if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
