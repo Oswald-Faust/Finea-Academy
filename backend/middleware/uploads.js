@@ -2,82 +2,57 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configuration des dossiers uploads
+// Configuration des uploads pour déploiement manuel
 const getUploadConfig = (subfolder = '') => {
-  const baseDir = process.env.VERCEL ? '/tmp/uploads' : './uploads';
-  const fullDir = subfolder ? path.join(baseDir, subfolder) : baseDir;
+  const baseDir = './uploads';
+  const fullDir = path.join(baseDir, subfolder);
   
-  // Créer le dossier seulement si on n'est pas sur Vercel
-  if (!process.env.VERCEL && !fs.existsSync(fullDir)) {
+  // Créer le dossier s'il n'existe pas
+  if (!fs.existsSync(fullDir)) {
     fs.mkdirSync(fullDir, { recursive: true });
   }
-  
-  return fullDir;
-};
 
-// Storage pour les articles
-const articleStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadsDir = getUploadConfig('articles');
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
+  const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, fullDir);
+    },
+    filename: function (req, file, cb) {
+      // Générer un nom unique pour éviter les collisions
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const extension = path.extname(file.originalname);
+      const baseName = path.basename(file.originalname, extension);
+      const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9]/g, '-');
+      cb(null, sanitizedBaseName + '-' + uniqueSuffix + extension);
+    }
+  });
 
-// Storage pour les avatars
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadsDir = getUploadConfig('avatars');
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${req.params.id}-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
+  const fileFilter = (req, file, cb) => {
+    // Types de fichiers autorisés
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/webp',
+      'image/gif'
+    ];
 
-// Configuration multer commune
-const commonConfig = {
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Seules les images sont autorisées'));
+      cb(new Error('Type de fichier non autorisé. Seules les images sont acceptées.'), false);
     }
-  },
-};
+  };
 
-// Exports des configurations
-const uploadArticleImage = multer({
-  storage: articleStorage,
-  ...commonConfig,
-});
-
-const uploadAvatar = multer({
-  storage: avatarStorage,
-  ...commonConfig,
-});
-
-// Middleware pour désactiver les uploads sur Vercel si nécessaire
-const vercelUploadHandler = (req, res, next) => {
-  if (process.env.VERCEL && process.env.DISABLE_UPLOADS === 'true') {
-    return res.status(501).json({
-      success: false,
-      message: 'Les uploads de fichiers sont temporairement désactivés en production.',
-      suggestion: 'Utilisez un service cloud comme Cloudinary ou AWS S3 pour les uploads en production.'
-    });
-  }
-  next();
+  return multer({
+    storage: storage,
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max
+      files: 5 // Maximum 5 fichiers
+    },
+    fileFilter: fileFilter
+  });
 };
 
 module.exports = {
-  uploadArticleImage,
-  uploadAvatar,
-  vercelUploadHandler,
   getUploadConfig
 };

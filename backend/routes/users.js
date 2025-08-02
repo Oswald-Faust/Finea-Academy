@@ -18,39 +18,20 @@ const {
   validateUpdatePreferences,
 } = require('../middleware/validation');
 
+const { getUploadConfig } = require('../middleware/uploads');
+
 const router = express.Router();
 
-// Configuration du dossier uploads pour avatars (adapté pour Vercel)
-const avatarsDir = process.env.VERCEL ? '/tmp/uploads/avatars' : './uploads/avatars';
+// Configuration du dossier uploads pour avatars
+const avatarsDir = './uploads/avatars';
 
-// Créer le dossier seulement si on n'est pas sur Vercel
-if (!process.env.VERCEL && !fs.existsSync(avatarsDir)) {
+// Créer le dossier s'il n'existe pas
+if (!fs.existsSync(avatarsDir)) {
   fs.mkdirSync(avatarsDir, { recursive: true });
 }
 
-// Configuration de multer pour l'upload d'avatar
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, avatarsDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${req.params.id}-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seuls les fichiers image sont autorisés'), false);
-    }
-  },
-});
+// Configuration de l'upload d'avatar
+const uploadAvatar = getUploadConfig('avatars');
 
 // Routes publiques - aucune authentification requise
 
@@ -68,7 +49,46 @@ router.put('/:id/activate', activateUser);
 router.put('/:id/role', updateUserRole);
 
 // Route pour l'upload d'avatar
-router.post('/:id/avatar', upload.single('avatar'), uploadAvatar);
+router.post('/:id/avatar', uploadAvatar.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun fichier fourni'
+      });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvé'
+      });
+    }
+
+    // Supprimer l'ancien avatar s'il existe
+    if (user.avatar && fs.existsSync(user.avatar)) {
+      fs.unlinkSync(user.avatar);
+    }
+
+    // Mettre à jour le chemin de l'avatar
+    user.avatar = req.file.path;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Avatar mis à jour avec succès',
+      data: {
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise à jour de l\'avatar',
+      error: error.message
+    });
+  }
+});
 
 // Route pour supprimer définitivement un utilisateur
 router.delete('/:id/permanent', async (req, res) => {
