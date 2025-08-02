@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const {
   getUsers,
   getUserById,
@@ -19,10 +20,18 @@ const {
 
 const router = express.Router();
 
+// Configuration du dossier uploads pour avatars (adapté pour Vercel)
+const avatarsDir = process.env.VERCEL ? '/tmp/uploads/avatars' : './uploads/avatars';
+
+// Créer le dossier seulement si on n'est pas sur Vercel
+if (!process.env.VERCEL && !fs.existsSync(avatarsDir)) {
+  fs.mkdirSync(avatarsDir, { recursive: true });
+}
+
 // Configuration de multer pour l'upload d'avatar
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads/avatars');
+    cb(null, avatarsDir);
   },
   filename: (req, file, cb) => {
     cb(null, `${req.params.id}-${Date.now()}${path.extname(file.originalname)}`);
