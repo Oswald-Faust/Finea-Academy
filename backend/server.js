@@ -143,11 +143,6 @@ const connectDB = async () => {
     const mongoUri = process.env.MONGODB_URI;
     if (!mongoUri) {
       console.error('MONGODB_URI non définie dans les variables d\'environnement');
-      // Sur Vercel, continuer sans MongoDB
-      if (process.env.VERCEL) {
-        console.log('Continuing without MongoDB on Vercel...');
-        return;
-      }
       return;
     }
 
@@ -164,12 +159,7 @@ const connectDB = async () => {
     console.log(`MongoDB connecté: ${conn.connection.host}`);
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error.message);
-    // Sur Vercel, continuer sans MongoDB
-    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-      console.log('Continuing without MongoDB connection...');
-    } else {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 };
 
@@ -189,25 +179,15 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Sur Vercel, on ne démarre pas le serveur HTTP
-    if (!process.env.VERCEL) {
-      await connectDB();
-      app.listen(PORT, () => {
-        console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-        console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
-      });
-    } else {
-      // Sur Vercel, juste se connecter à la DB
-      await connectDB();
-      console.log('✅ Application prête sur Vercel');
-    }
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+      console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
+    });
   } catch (error) {
     console.error('Erreur lors du démarrage du serveur:', error);
-    // Ne pas arrêter le processus sur Vercel
-    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 };
 
