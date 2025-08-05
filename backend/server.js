@@ -103,6 +103,27 @@ app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
 
+// Route d'accueil
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: '🚀 API Finéa Académie - Bienvenue !',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      users: '/api/users',
+      courses: '/api/courses',
+      analytics: '/api/analytics',
+      newsletters: '/api/newsletters',
+      notifications: '/api/notifications'
+    },
+    documentation: 'Consultez /api/health pour plus d\'informations'
+  });
+});
+
 // Route de test pour vérifier que l'API fonctionne
 app.get('/api/health', (req, res) => {
   res.status(200).json({

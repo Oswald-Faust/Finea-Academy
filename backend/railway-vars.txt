@@ -1,0 +1,27 @@
+# Variables d'environnement pour Railway
+# Copiez ces variables dans l'interface Railway
+# Basé sur env.example pour la cohérence
+
+# Configuration de la base de données MongoDB
+MONGODB_URI=mongodb+srv://faustfrank370:writer55FF@cluster0.km3u4wj.mongodb.net/finea_academie?retryWrites=true&w=majority&appName=Cluster0
+
+# Configuration JWT
+JWT_SECRET=votre_secret_jwt_tres_securise
+JWT_EXPIRE=30d
+
+# Configuration email
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=votre_email@gmail.com
+EMAIL_PASS=votre_mot_de_passe_app
+
+# Configuration serveur
+PORT=5000
+NODE_ENV=production
+
+# URLs autorisées
+FRONTEND_URL=https://finea-admin.vercel.app
+FLUTTER_APP_URL=https://finea-academie.vercel.app
+
+# Configuration Railway
+RAILWAY_URL=https://finea-api-production.up.railway.app 

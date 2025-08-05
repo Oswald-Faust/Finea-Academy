@@ -15,7 +15,7 @@ class ApiService {
   late final Dio _dio;
   static const String baseUrl = kDebugMode 
       ? 'http://localhost:5000/api'  // URL pour le développement
-      : 'https://finea-backend.vercel.app/api';  // URL pour la production
+      : 'https://finea-api-production.up.railway.app/api';  // URL pour la production Railway
 
   ApiService() {
     _dio = Dio(BaseOptions(
