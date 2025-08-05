@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
@@ -66,39 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _autoLogin() async {
-    setState(() => _isLoading = true);
-    
-    final authService = Provider.of<AuthService>(context, listen: false);
-    
-    final success = await authService.autoLogin();
-    
-    setState(() => _isLoading = false);
-    
-    if (success && mounted) {
-      // Afficher un message de succès
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Connexion automatique réussie !'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      
-      // Naviguer vers l'écran principal
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-      );
-    } else if (mounted && authService.errorMessage != null) {
-      // Afficher le message d'erreur
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authService.errorMessage!),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
               FadeInLeft(
                 duration: const Duration(milliseconds: 600),
                 child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => SystemNavigator.pop(),
                   icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
                 ),
               ),
@@ -299,42 +267,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 )
                               : const Text(
                                   'Se connecter',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Bouton de connexion automatique
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _autoLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 56),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Colors.white, width: 2),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  'Connexion automatique',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

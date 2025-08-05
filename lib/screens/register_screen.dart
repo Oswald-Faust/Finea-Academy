@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
@@ -100,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               FadeInLeft(
                 duration: const Duration(milliseconds: 600),
                 child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => SystemNavigator.pop(),
                   icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
                 ),
               ),
