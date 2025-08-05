@@ -2,9 +2,9 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendEmail } = require('../services/emailService');
 
-// @desc    Récupérer tous les utilisateurs (Admin seulement)
+// @desc    Récupérer tous les utilisateurs (Public pour le dashboard)
 // @route   GET /api/users
-// @access  Private/Admin
+// @access  Public
 const getUsers = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
