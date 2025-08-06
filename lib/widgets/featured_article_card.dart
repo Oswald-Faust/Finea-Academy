@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/image_utils.dart';
 
 class FeaturedArticleCard extends StatelessWidget {
   final String title;
@@ -19,10 +20,11 @@ class FeaturedArticleCard extends StatelessWidget {
   });
 
   ImageProvider _getImageProvider(String imagePath) {
-    if (imagePath.startsWith('http')) {
-      return NetworkImage(imagePath);
+    final fullImageUrl = ImageUtils.getImageUrl(imagePath);
+    if (ImageUtils.isNetworkImage(fullImageUrl)) {
+      return NetworkImage(fullImageUrl);
     } else {
-      return AssetImage(imagePath);
+      return AssetImage(fullImageUrl);
     }
   }
 
