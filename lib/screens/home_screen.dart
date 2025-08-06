@@ -9,6 +9,7 @@ import '../widgets/investor_profile_section.dart';
 import '../widgets/finea_vision_section.dart';
 import '../models/newsletter_model.dart';
 import '../services/api_service.dart';
+import '../utils/image_utils.dart';
 import 'concours_screen.dart';
 import 'profile_screen.dart';
 import 'newsletter_detail_screen.dart';
@@ -293,15 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getImagePath(String imageUrl) {
-    if (imageUrl.startsWith('http')) {
-      return imageUrl;
-    } else if (imageUrl.startsWith('/uploads/')) {
-      return 'http://localhost:5000$imageUrl';
-    } else if (imageUrl.isNotEmpty) {
-      return imageUrl;
-    } else {
-      return 'assets/images/Bourse 1 .jpg';
-    }
+    return ImageUtils.getImageUrl(imageUrl);
   }
 
   String _formatDate(DateTime date) {

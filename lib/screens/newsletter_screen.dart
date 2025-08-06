@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import '../models/newsletter_model.dart';
 import '../services/api_service.dart';
+import '../utils/image_utils.dart';
 import 'newsletter_detail_screen.dart';
 
 class NewsletterScreen extends StatefulWidget {
@@ -352,17 +353,11 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
   }
 
   ImageProvider _getImageProvider(String imageUrl) {
-    if (imageUrl.startsWith('http')) {
-      return NetworkImage(imageUrl);
-    } else if (imageUrl.startsWith('/uploads/')) {
-      // URL relative vers l'API
-      return NetworkImage('http://localhost:5000$imageUrl');
-    } else if (imageUrl.isNotEmpty) {
-      // Asset local
-      return AssetImage(imageUrl);
+    final fullImageUrl = ImageUtils.getImageUrl(imageUrl);
+    if (ImageUtils.isNetworkImage(fullImageUrl)) {
+      return NetworkImage(fullImageUrl);
     } else {
-      // Image par défaut
-      return const AssetImage('assets/images/Bourse 1 .jpg');
+      return AssetImage(fullImageUrl);
     }
   }
 

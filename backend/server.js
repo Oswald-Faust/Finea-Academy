@@ -98,6 +98,9 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// Servir les fichiers statiques (images uploadées)
+app.use('/uploads', express.static('uploads'));
+
 // Middlewares de sécurité pour les données
 app.use(mongoSanitize());
 app.use(xss());

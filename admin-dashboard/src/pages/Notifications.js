@@ -51,7 +51,7 @@ const Notifications = () => {
         status: filterStatus !== 'all' ? filterStatus : '',
       });
 
-      const response = await fetch(`http://localhost:5000/api/notifications?${params}`);
+      const response = await fetch(`https://finea-backend.vercel.app/api/notifications?${params}`);
       const data = await response.json();
 
       if (data.success) {
@@ -69,7 +69,7 @@ const Notifications = () => {
   const handleCreateNotification = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/notifications', {
+      const response = await fetch('https://finea-backend.vercel.app/api/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ const Notifications = () => {
   const handleDeleteNotification = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/notifications/${id}`, {
+        const response = await fetch(`https://finea-backend.vercel.app/api/notifications/${id}`, {
           method: 'DELETE',
         });
 
@@ -124,7 +124,7 @@ const Notifications = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/notifications/bulk-${action}`, {
+      const response = await fetch(`https://finea-backend.vercel.app/api/notifications/bulk-${action}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
