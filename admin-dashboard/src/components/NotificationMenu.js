@@ -36,7 +36,7 @@ const NotificationMenu = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/notifications?limit=5');
+      const response = await fetch('https://finea-api-production.up.railway.app/api/notifications?limit=5');
       const data = await response.json();
       
       if (data.success) {
@@ -52,7 +52,7 @@ const NotificationMenu = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+      const response = await fetch(`https://finea-api-production.up.railway.app/api/notifications/${notificationId}/read`, {
         method: 'PUT',
       });
       
@@ -71,7 +71,7 @@ const NotificationMenu = () => {
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/notifications/mark-all-read', {
+      const response = await fetch('https://finea-api-production.up.railway.app/api/notifications/mark-all-read', {
         method: 'PUT',
       });
       

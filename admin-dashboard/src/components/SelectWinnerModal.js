@@ -57,7 +57,7 @@ const SelectWinnerModal = ({ isOpen, onClose, contest, onWinnerSelected }) => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:5000/api/contests/${contest._id}/winners`, {
+      const response = await fetch(`https://finea-api-production.up.railway.app/api/contests/${contest._id}/winners`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -62,7 +62,7 @@ const Dashboard = () => {
       setStats(statsData);
 
       // Récupérer les récents utilisateurs directement via fetch pour plus de contrôle
-      const usersResponse = await fetch('http://localhost:5000/api/users?limit=8&sort=createdAt&order=desc');
+      const usersResponse = await fetch('https://finea-api-production.up.railway.app/api/users?limit=8&sort=createdAt&order=desc');
       const usersData = await usersResponse.json();
       
       if (usersData.success) {
