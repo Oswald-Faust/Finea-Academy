@@ -49,7 +49,7 @@ const CreateContestModal = ({ isOpen, onClose, onContestCreated }) => {
         prizes: formData.prizes.filter(prize => prize.name && prize.name.trim()),
       };
 
-      const response = await fetch('https://finea-api-production.up.railway.app/api/contests', {
+      const response = await fetch('https://finea-api-production.up.railway.app/api//contests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

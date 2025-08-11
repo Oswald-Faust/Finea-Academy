@@ -25,7 +25,7 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://finea-api-production.up.railway.app/api/users/create', {
+      const response = await fetch('https://finea-api-production.up.railway.app/api//users/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -54,7 +54,7 @@ const UserDetails = () => {
   const fetchUserDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`https://finea-api-production.up.railway.app/api/users/${userId}`);
+      const response = await fetch(`https://finea-api-production.up.railway.app/api//users/${userId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -72,7 +72,7 @@ const UserDetails = () => {
 
   const fetchUserNotifications = async () => {
     try {
-      const response = await fetch(`https://finea-api-production.up.railway.app/api/notifications/user/${userId}?limit=50`);
+      const response = await fetch(`https://finea-api-production.up.railway.app/api//notifications/user/${userId}?limit=50`);
       const data = await response.json();
       
       if (data.success) {
@@ -95,7 +95,7 @@ const UserDetails = () => {
 
   const handleStatusToggle = async () => {
     try {
-      const response = await fetch(`https://finea-api-production.up.railway.app/api/users/${userId}/toggle-status`, {
+      const response = await fetch(`https://finea-api-production.up.railway.app/api//users/${userId}/toggle-status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ const UserDetails = () => {
   const handleDeleteUser = async () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
       try {
-        const response = await fetch(`https://finea-api-production.up.railway.app/api/users/${userId}`, {
+        const response = await fetch(`https://finea-api-production.up.railway.app/api//users/${userId}`, {
           method: 'DELETE',
         });
 

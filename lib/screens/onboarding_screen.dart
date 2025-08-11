@@ -138,13 +138,44 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000D64),
+      backgroundColor: const Color(0xFF000B4A), // Plus foncé
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Stack(
           children: [
             // Background avec effets visuels
             const OnboardingBackground(),
+            
+            // Indicateurs de page en haut
+            Positioned(
+              top: 60,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: FadeInDown(
+                  duration: const Duration(milliseconds: 800),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _pages.length,
+                        (index) => Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: index == _currentPage
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             
             // PageView principal
             PageView.builder(
@@ -161,30 +192,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   isVisible: index == _currentPage,
                 );
               },
-            ),
-            
-            // Indicateurs de page
-            Positioned(
-              bottom: 180,
-              left: 0,
-              right: 0,
-              child: FadeInUp(
-                duration: const Duration(milliseconds: 800),
-                child: Center(
-                  child: AnimatedSmoothIndicator(
-                    activeIndex: _currentPage,
-                    count: _pages.length,
-                    effect: WormEffect(
-                      dotWidth: 12,
-                      dotHeight: 12,
-                      spacing: 16,
-                      dotColor: Colors.white.withOpacity(0.3),
-                      activeDotColor: Colors.white,
-                      paintStyle: PaintingStyle.fill,
-                    ),
-                  ),
-                ),
-              ),
             ),
             
             // Bottom sheet avec boutons
@@ -255,7 +262,7 @@ class OnboardingChecker extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
-            color: const Color(0xFF000D64),
+            color: const Color(0xFF000B4A), // Plus foncé
             child: const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),

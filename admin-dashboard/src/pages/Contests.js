@@ -62,7 +62,7 @@ const Contests = () => {
         type: filterType !== 'all' ? filterType : undefined,
       };
 
-      const response = await fetch(`https://finea-api-production.up.railway.app/api/contests?${new URLSearchParams(params)}`);
+      const response = await fetch(`https://finea-api-production.up.railway.app/api//contests?${new URLSearchParams(params)}`);
       const data = await response.json();
 
       if (data.success) {
@@ -79,7 +79,7 @@ const Contests = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('https://finea-api-production.up.railway.app/api/contests/stats/overview');
+      const response = await fetch('https://finea-api-production.up.railway.app/api//contests/stats/overview');
       const data = await response.json();
 
       if (data.success) {
@@ -104,7 +104,7 @@ const Contests = () => {
   const handleDeleteContest = async (contestId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce concours ?')) {
       try {
-        const response = await fetch(`https://finea-api-production.up.railway.app/api/contests/${contestId}`, {
+        const response = await fetch(`https://finea-api-production.up.railway.app/api//contests/${contestId}`, {
           method: 'DELETE',
         });
 
