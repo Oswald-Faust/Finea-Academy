@@ -99,7 +99,7 @@ const SendNotificationModal = ({ isOpen, onClose, user, onNotificationSent }) =>
         ...(formData.scheduledFor && { scheduledFor: new Date(formData.scheduledFor).toISOString() }),
       };
 
-      const response = await fetch('https://finea-api-production.up.railway.app/api/notifications', {
+      const response = await fetch('https://finea-api-production.up.railway.app/api//notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

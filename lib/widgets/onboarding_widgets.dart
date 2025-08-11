@@ -20,9 +20,9 @@ class OnboardingPageWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF000D64),
-            const Color(0xFF1A237E),
-            const Color(0xFF3F51B5).withOpacity(0.8),
+            const Color(0xFF000B4A), // Plus foncé
+            const Color(0xFF001064), // Plus foncé
+            const Color(0xFF1A1A2E).withOpacity(0.9), // Plus foncé
           ],
         ),
       ),
@@ -31,17 +31,6 @@ class OnboardingPageWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
           child: Column(
             children: [
-              // Progress indicator au top
-              FadeInDown(
-                duration: const Duration(milliseconds: 800),
-                delay: Duration(milliseconds: isVisible ? 200 : 0),
-                child: LinearProgressIndicator(
-                  value: (page.pageIndex + 1) / 8,
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-              
               // Traitement spécial pour la première page (logo centré)
               if (page.pageIndex == 0) ...[
                 Expanded(
@@ -178,18 +167,12 @@ class OnboardingBottomSheet extends StatelessWidget {
     return Container(
       height: isLastPage ? 140 : 120,
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Suppression du fond blanc - transparent
+        color: Colors.transparent,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
@@ -236,8 +219,8 @@ class OnboardingBottomSheet extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: onRegister,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF000D64),
-                          side: const BorderSide(color: Color(0xFF000D64), width: 2),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white, width: 2),
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
@@ -264,7 +247,7 @@ class OnboardingBottomSheet extends StatelessWidget {
                       child: TextButton(
                         onPressed: onSkip,
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF000D64),
+                          foregroundColor: Colors.white,
                         ),
                         child: const Text(
                           'Passer',
@@ -322,9 +305,9 @@ class OnboardingBackground extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF000D64),
-            const Color(0xFF1A237E),
-            const Color(0xFF3F51B5).withOpacity(0.8),
+            const Color(0xFF000B4A), // Plus foncé
+            const Color(0xFF001064), // Plus foncé
+            const Color(0xFF1A1A2E).withOpacity(0.9), // Plus foncé
           ],
         ),
       ),

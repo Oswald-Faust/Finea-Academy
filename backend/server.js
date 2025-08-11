@@ -57,7 +57,8 @@ const corsOptions = {
       process.env.FRONTEND_URL,
       'https://finea-admin.vercel.app',
       'https://finea-academie.vercel.app',
-      'https://finea-admin-dashboard.netlify.app'
+      'https://finea-admin-dashboard.netlify.app',
+      'https://finea-api-production.up.railway.app'
     ].filter(Boolean); // Enlever les valeurs null/undefined
 
     // Autoriser les requêtes sans origine (comme les apps mobiles)
