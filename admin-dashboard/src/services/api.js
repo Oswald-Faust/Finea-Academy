@@ -19,7 +19,7 @@ const getApiBaseUrl = () => {
   }
 };
 
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URL = getApiBaseUrl().trim();
 
 // Log de l'environnement
 console.log(`🌐 Admin Dashboard API Configuration:`);
@@ -61,6 +61,23 @@ const api = axios.create({
 //     return Promise.reject(error);
 //   }
 // );
+
+// Intercepteur pour debug des requêtes
+api.interceptors.request.use(
+  (config) => {
+    console.log('🚀 Requête API:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      params: config.params
+    });
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Intercepteur pour gérer les erreurs de réponse (redirection login désactivée)
 api.interceptors.response.use(
