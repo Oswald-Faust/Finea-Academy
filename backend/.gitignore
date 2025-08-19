@@ -1,11 +1,1 @@
-*.json
-*.env
-*.log
-*.log.*
-*.log.*.*
-*.log.*.*.*
-*.log.*.*.*.*
-*.log.*.*.*.*.*
-*.log.*.*.*.*.*.*
-*.log.*.*.*.*.*.*.*
-*.log.*.*.*.*.*.*.*.*
+firebase-service-account.json
