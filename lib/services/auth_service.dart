@@ -19,6 +19,12 @@ class AuthService extends ChangeNotifier implements TokenProvider {
 
   AuthService(this._apiService) : _secureStorage = const FlutterSecureStorage();
 
+  // Méthode statique pour récupérer le token
+  static Future<String?> getToken() async {
+    const storage = FlutterSecureStorage();
+    return await storage.read(key: _tokenKey);
+  }
+
   // Getters
   User? get currentUser => _currentUser;
   bool get isLoggedIn => _isLoggedIn;

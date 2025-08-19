@@ -131,6 +131,35 @@ const userSchema = new mongoose.Schema({
       default: 'auto',
     },
   },
+  // Tokens FCM pour les notifications push
+  fcmTokens: [{
+    token: {
+      type: String,
+      required: true
+    },
+    platform: {
+      type: String,
+      enum: ['android', 'ios', 'web'],
+      required: true
+    },
+    deviceId: {
+      type: String,
+      required: true
+    },
+    lastUsed: {
+      type: Date,
+      default: Date.now
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  // Référence aux favoris (virtuelle)
+  favoritesCount: {
+    type: Number,
+    default: 0
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -217,6 +246,34 @@ userSchema.methods.generateEmailVerificationToken = function() {
 
 // Méthode supprimée - les comptes ne doivent jamais être verrouillés
 
+// Méthode pour ajouter un token FCM
+userSchema.methods.addFCMToken = function(token, platform, deviceId) {
+  // Supprimer l'ancien token pour ce device s'il existe
+  this.fcmTokens = this.fcmTokens.filter(t => t.deviceId !== deviceId);
+  
+  // Ajouter le nouveau token
+  this.fcmTokens.push({
+    token,
+    platform,
+    deviceId,
+    lastUsed: new Date(),
+    isActive: true
+  });
+  
+  return this.save();
+};
+
+// Méthode pour supprimer un token FCM
+userSchema.methods.removeFCMToken = function(deviceId) {
+  this.fcmTokens = this.fcmTokens.filter(t => t.deviceId !== deviceId);
+  return this.save();
+};
+
+// Méthode pour récupérer les tokens FCM actifs
+userSchema.methods.getActiveFCMTokens = function() {
+  return this.fcmTokens.filter(t => t.isActive).map(t => t.token);
+};
+
 // Méthode pour convertir en objet JSON sûr (sans données sensibles)
 userSchema.methods.toSafeObject = function() {
   const userObject = this.toObject();
@@ -228,6 +285,7 @@ userSchema.methods.toSafeObject = function() {
   delete userObject.emailVerificationToken;
   delete userObject.emailVerificationExpires;
   delete userObject.twoFactorSecret;
+  delete userObject.fcmTokens; // Supprimer les tokens FCM pour la sécurité
   
   return userObject;
 };

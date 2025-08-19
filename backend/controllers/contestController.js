@@ -1,5 +1,6 @@
 const Contest = require('../models/Contest');
 const User = require('../models/User');
+const WeeklyContestService = require('../services/weeklyContestService');
 const { protect: auth } = require('../middleware/auth');
 
 // @desc    Créer un nouveau concours
@@ -76,6 +77,337 @@ const createContest = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la création du concours'
+    });
+  }
+};
+
+// @desc    Créer un concours hebdomadaire
+// @route   POST /api/contests/weekly
+// @access  Public (Admin dashboard)
+const createWeeklyContest = async (req, res) => {
+  try {
+    // Pas besoin d'authentification - création directe avec adminUserId null
+    const contest = await WeeklyContestService.createWeeklyContest(null);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Concours hebdomadaire créé avec succès',
+      data: contest
+    });
+  } catch (error) {
+    console.error('Erreur lors de la création du concours hebdomadaire:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erreur lors de la création du concours hebdomadaire'
+    });
+  }
+};
+
+// @desc    Obtenir le concours hebdomadaire actuel
+// @route   GET /api/contests/weekly/current
+// @access  Public
+const getCurrentWeeklyContest = async (req, res) => {
+  try {
+    const contest = await Contest.findCurrentWeeklyContest()
+      .populate('participants.user', 'firstName lastName email fullName')
+      .populate('winners.user', 'firstName lastName email fullName');
+
+    if (!contest) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucun concours hebdomadaire actif'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: contest
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération du concours hebdomadaire:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération du concours hebdomadaire'
+    });
+  }
+};
+
+// @desc    Effectuer le tirage automatique
+// @route   POST /api/contests/weekly/draw
+// @access  Public (Admin dashboard)
+const performAutoDraw = async (req, res) => {
+  try {
+    // Pas besoin d'authentification - tirage direct
+    await WeeklyContestService.performAutoDraws();
+    
+    res.json({
+      success: true,
+      message: 'Tirage automatique effectué'
+    });
+  } catch (error) {
+    console.error('Erreur lors du tirage automatique:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors du tirage automatique'
+    });
+  }
+};
+
+// @desc    Obtenir les statistiques des concours hebdomadaires
+// @route   GET /api/contests/weekly/stats
+// @access  Public
+const getWeeklyContestStats = async (req, res) => {
+  try {
+    const stats = await WeeklyContestService.getWeeklyContestStats();
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des statistiques'
+    });
+  }
+};
+
+// @desc    Obtenir l'historique des concours hebdomadaires
+// @route   GET /api/contests/weekly/history
+// @access  Public
+const getWeeklyContestHistory = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    const history = await WeeklyContestService.getWeeklyContestHistory(parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: history
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'historique:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération de l\'historique'
+    });
+  }
+};
+
+// @desc    Participer au concours hebdomadaire
+// @route   POST /api/contests/weekly/participate
+// @access  Private (Authentification requise)
+const participateInWeeklyContest = async (req, res) => {
+  try {
+    // Vérifier l'authentification
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentification requise pour participer au concours'
+      });
+    }
+
+    // Récupérer le concours hebdomadaire actuel
+    const currentContest = await Contest.findOne({
+      isWeeklyContest: true,
+      status: 'active'
+    });
+
+    if (!currentContest) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucun concours hebdomadaire actif'
+      });
+    }
+
+    // Vérifier si le concours est ouvert aux inscriptions
+    if (!currentContest.isOpenForRegistration) {
+      return res.status(400).json({
+        success: false,
+        error: 'Le concours n\'est pas ouvert aux inscriptions'
+      });
+    }
+
+    // Vérifier si l'utilisateur participe déjà
+    const isAlreadyParticipating = currentContest.participants.some(
+      participant => participant.user.toString() === req.user._id.toString()
+    );
+
+    if (isAlreadyParticipating) {
+      return res.status(400).json({
+        success: false,
+        error: 'Vous participez déjà à ce concours'
+      });
+    }
+
+    // Ajouter le participant avec l'ID utilisateur authentifié
+    await currentContest.addParticipant(req.user._id);
+
+    res.json({
+      success: true,
+      message: 'Participation enregistrée avec succès',
+      data: currentContest
+    });
+  } catch (error) {
+    console.error('Erreur lors de la participation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la participation'
+    });
+  }
+};
+
+// @desc    Vérifier si l'utilisateur participe au concours hebdomadaire
+// @route   GET /api/contests/weekly/participation
+// @access  Private
+const checkWeeklyContestParticipation = async (req, res) => {
+  try {
+    // Vérifier l'authentification
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentification requise'
+      });
+    }
+
+    // Récupérer le concours hebdomadaire actuel
+    const currentContest = await Contest.findOne({
+      isWeeklyContest: true,
+      status: 'active'
+    });
+
+    if (!currentContest) {
+      return res.json({
+        success: true,
+        data: { isParticipating: false, reason: 'Aucun concours actif' }
+      });
+    }
+
+    // Vérifier si l'utilisateur participe
+    const isParticipating = currentContest.participants.some(
+      participant => participant.user.toString() === req.user._id.toString()
+    );
+
+    res.json({
+      success: true,
+      data: { 
+        isParticipating,
+        contestId: currentContest._id,
+        contestTitle: currentContest.title
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la vérification de participation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la vérification de participation'
+    });
+  }
+};
+
+// @desc    Récupérer tous les participants de tous les concours
+// @route   GET /api/contests/participants/all
+// @access  Public (Admin dashboard)
+const getAllParticipants = async (req, res) => {
+  try {
+    const contests = await Contest.find()
+      .populate('participants.user', 'firstName lastName email fullName')
+      .sort({ createdAt: -1 });
+
+    const allParticipants = [];
+    
+    contests.forEach(contest => {
+      contest.participants.forEach(participant => {
+        // Vérifier si c'est un gagnant
+        const winner = contest.winners.find(w => w.user.toString() === participant.user._id.toString());
+        
+        allParticipants.push({
+          userId: participant.user._id,
+          userEmail: participant.user?.email || 'Email non disponible',
+          userFullName: participant.user?.fullName || `${participant.user?.firstName} ${participant.user?.lastName}`,
+          contestId: contest._id,
+          contestTitle: contest.title,
+          contestWeek: contest.weekNumber,
+          joinedAt: participant.joinedAt,
+          status: winner ? 'winner' : 'participant',
+          winnerPosition: winner?.position || null,
+          winnerPrize: winner?.prize || null
+        });
+      });
+    });
+
+    res.json({
+      success: true,
+      data: allParticipants
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des participants:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des participants'
+    });
+  }
+};
+
+// @desc    Sélectionner plusieurs gagnants pour un concours
+// @route   POST /api/contests/:id/winners/select
+// @access  Public (Admin dashboard)
+const selectMultipleWinners = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { participants } = req.body;
+
+    if (!participants || !Array.isArray(participants) || participants.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Liste de participants requise'
+      });
+    }
+
+    if (participants.length > 3) {
+      return res.status(400).json({
+        success: false,
+        error: 'Maximum 3 gagnants autorisés'
+      });
+    }
+
+    const contest = await Contest.findById(id);
+    if (!contest) {
+      return res.status(404).json({
+        success: false,
+        error: 'Concours non trouvé'
+      });
+    }
+
+    // Effacer les anciens gagnants
+    contest.winners = [];
+
+    // Ajouter les nouveaux gagnants
+    participants.forEach((participant, index) => {
+      contest.winners.push({
+        user: participant.userId,
+        position: index + 1,
+        prize: contest.prizes[index]?.name || `Prix ${index + 1}`,
+        selectedAt: new Date(),
+        selectedBy: null // Pas d'authentification admin
+      });
+    });
+
+    await contest.save();
+
+    // Ici on peut ajouter la logique pour envoyer des notifications
+    // TODO: Implémenter le système de notifications
+
+    res.json({
+      success: true,
+      message: 'Gagnants sélectionnés avec succès',
+      data: contest
+    });
+  } catch (error) {
+    console.error('Erreur lors de la sélection des gagnants:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la sélection des gagnants'
     });
   }
 };
@@ -520,6 +852,15 @@ const getContestsByType = async (req, res) => {
 
 module.exports = {
   createContest,
+  createWeeklyContest,
+  getCurrentWeeklyContest,
+  performAutoDraw,
+  getWeeklyContestStats,
+  getWeeklyContestHistory,
+  participateInWeeklyContest,
+  checkWeeklyContestParticipation,
+  getAllParticipants,
+  selectMultipleWinners,
   getContests,
   getContestById,
   updateContest,

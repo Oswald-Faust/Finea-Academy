@@ -15,6 +15,19 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
+// Configuration automatique de l'URL selon l'environnement
+const getApiBaseUrl = () => {
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+  
+  if (isDevelopment) {
+    return 'http://localhost:5000/api';
+  } else {
+    return 'https://finea-api-production.up.railway.app/api';
+  }
+};
+
 const SendNotificationModal = ({ isOpen, onClose, user, onNotificationSent }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -99,7 +112,7 @@ const SendNotificationModal = ({ isOpen, onClose, user, onNotificationSent }) =>
         ...(formData.scheduledFor && { scheduledFor: new Date(formData.scheduledFor).toISOString() }),
       };
 
-      const response = await fetch('https://finea-api-production.up.railway.app/api//notifications', {
+      const response = await fetch(`${getApiBaseUrl()}/notifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

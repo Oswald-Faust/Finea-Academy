@@ -1,31 +1,52 @@
 import 'package:flutter/material.dart';
+import 'dart:async'; // Added for Timer
 
 class ContestCountdownSection extends StatefulWidget {
-  const ContestCountdownSection({super.key});
+  final DateTime targetDate;
+  final String title;
+  
+  const ContestCountdownSection({
+    super.key,
+    required this.targetDate,
+    this.title = 'Prochain tirage dans :',
+  });
 
   @override
   State<ContestCountdownSection> createState() => _ContestCountdownSectionState();
 }
 
 class _ContestCountdownSectionState extends State<ContestCountdownSection> {
-  late DateTime _targetDate;
   late Duration _timeLeft;
+  Timer? _timer;
   
   @override
   void initState() {
     super.initState();
-    // Date cible : Dimanche 6 juillet 2025 à 19h
-    _targetDate = DateTime(2025, 7, 6, 19, 0);
-    _timeLeft = _targetDate.difference(DateTime.now());
+    _updateTimeLeft();
     
     // Mettre à jour le compte à rebours chaque seconde
-    Future.delayed(const Duration(seconds: 1), () {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          _timeLeft = _targetDate.difference(DateTime.now());
+          _updateTimeLeft();
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateTimeLeft() {
+    _timeLeft = widget.targetDate.difference(DateTime.now());
+    
+    // Si le temps est écoulé, arrêter le timer
+    if (_timeLeft.isNegative) {
+      _timer?.cancel();
+    }
   }
 
   @override
@@ -33,12 +54,24 @@ class _ContestCountdownSectionState extends State<ContestCountdownSection> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.blue.withOpacity(0.2),
+            Colors.purple.withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+      ),
       child: Column(
         children: [
           // Titre du compte à rebours
-          const Text(
-            'Prochain tirage dans :',
-            style: TextStyle(
+          Text(
+            widget.title,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -52,16 +85,9 @@ class _ContestCountdownSectionState extends State<ContestCountdownSection> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.blue.withOpacity(0.2),
-                  Colors.purple.withOpacity(0.1),
-                ],
-              ),
+              color: Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+              border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -77,9 +103,9 @@ class _ContestCountdownSectionState extends State<ContestCountdownSection> {
           const SizedBox(height: 16),
           
           // Date et heure du tirage
-          const Text(
-            'Dimanche 6 juillet 2025 à 19h',
-            style: TextStyle(
+          Text(
+            'Tirage le ${_formatDate(widget.targetDate)}',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -89,61 +115,6 @@ class _ContestCountdownSectionState extends State<ContestCountdownSection> {
           
           const SizedBox(height: 24),
           
-          // Icônes des réseaux sociaux
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Instagram
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE4405F), Color(0xFF833AB4)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFE4405F).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.camera_alt,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              
-              const SizedBox(width: 20),
-              
-              // TikTok
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF25F4EE), Color(0xFFFE2C55)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF25F4EE).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.music_note,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -181,5 +152,12 @@ class _ContestCountdownSectionState extends State<ContestCountdownSection> {
         ),
       ],
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    final months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    
+    return '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]} ${date.year} à ${date.hour.toString().padLeft(2, '0')}h${date.minute.toString().padLeft(2, '0')}';
   }
 } 

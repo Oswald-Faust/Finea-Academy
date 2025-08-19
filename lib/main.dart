@@ -10,7 +10,9 @@ import 'screens/onboarding_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'services/push_notification_service.dart';
 import 'screens/login_screen.dart';
+import 'firebase_options.dart';
 
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -23,7 +25,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     print('Firebase initialisé avec succès');
   } catch (e) {
     print('Erreur lors de l\'initialisation Firebase: $e');
@@ -60,6 +64,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final ApiService apiService;
   late final AuthService authService;
+  late final PushNotificationService pushNotificationService;
   late final Future<void> _initializationFuture;
 
   @override
@@ -68,12 +73,85 @@ class _MyAppState extends State<MyApp> {
     // Créer les services
     apiService = ApiService();
     authService = AuthService(apiService);
+    pushNotificationService = PushNotificationService();
     
     // Configurer la liaison entre les services
     ApiService.setTokenProvider(authService);
     
-    // Initialiser une seule fois au démarrage
-    _initializationFuture = authService.initialize();
+    // Initialiser les services
+    _initializationFuture = _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      // Initialiser l'authentification
+      await authService.initialize();
+      
+      // Initialiser les notifications push
+      await pushNotificationService.initialize();
+      
+      // Configurer les callbacks des notifications
+      pushNotificationService.setCallbacks(
+        onMessageReceived: (RemoteMessage message) {
+          print('📱 Notification reçue: ${message.notification?.title}');
+          // Ici vous pouvez ajouter une logique personnalisée
+          _showInAppNotification(message);
+        },
+        onMessageOpenedApp: (RemoteMessage message) {
+          print('👆 App ouverte depuis notification: ${message.notification?.title}');
+          // Naviguer selon le type de notification
+          _handleNotificationNavigation(message);
+        },
+      );
+
+      print('✅ Tous les services initialisés');
+    } catch (e) {
+      print('❌ Erreur lors de l\'initialisation des services: $e');
+      // Continuer même en cas d'erreur pour que l'app reste fonctionnelle
+    }
+  }
+
+  void _showInAppNotification(RemoteMessage message) {
+    // Afficher une notification in-app si nécessaire
+    if (mounted && message.notification != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message.notification!.body ?? 'Nouvelle notification'),
+          action: SnackBarAction(
+            label: 'Voir',
+            onPressed: () => _handleNotificationNavigation(message),
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  void _handleNotificationNavigation(RemoteMessage message) {
+    // Logique de navigation selon le type de notification
+    final String? type = message.data['type'];
+    
+    switch (type) {
+      case 'course':
+        // Naviguer vers la section cours
+        navigatorKey.currentState?.pushNamed('/courses');
+        break;
+      case 'contest':
+        // Naviguer vers les concours
+        navigatorKey.currentState?.pushNamed('/contests');
+        break;
+      case 'article':
+        // Naviguer vers l'article spécifique
+        final String? articleId = message.data['articleId'];
+        if (articleId != null) {
+          navigatorKey.currentState?.pushNamed('/article/$articleId');
+        }
+        break;
+      default:
+        // Navigation par défaut vers la page d'accueil
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
+        break;
+    }
   }
 
   @override
@@ -82,6 +160,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider<AuthService>.value(value: authService),
+        Provider<PushNotificationService>.value(value: pushNotificationService),
       ],
       child: MaterialApp(
         title: 'Finéa App',

@@ -16,6 +16,19 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
+// Configuration automatique de l'URL selon l'environnement
+const getApiBaseUrl = () => {
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+  
+  if (isDevelopment) {
+    return 'http://localhost:5000/api';
+  } else {
+    return 'https://finea-api-production.up.railway.app/api';
+  }
+};
+
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +64,7 @@ const Notifications = () => {
         status: filterStatus !== 'all' ? filterStatus : '',
       });
 
-      const response = await fetch(`https://finea-api-production.up.railway.app/api//notifications?${params}`);
+      const response = await fetch(`${getApiBaseUrl()}/notifications?${params}`);
       const data = await response.json();
 
       if (data.success) {
@@ -69,7 +82,7 @@ const Notifications = () => {
   const handleCreateNotification = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://finea-api-production.up.railway.app/api//notifications', {
+      const response = await fetch(`${getApiBaseUrl()}/notifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +116,7 @@ const Notifications = () => {
   const handleDeleteNotification = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
       try {
-        const response = await fetch(`https://finea-api-production.up.railway.app/api//notifications/${id}`, {
+        const response = await fetch(`${getApiBaseUrl()}/notifications/${id}`, {
           method: 'DELETE',
         });
 
@@ -124,7 +137,7 @@ const Notifications = () => {
     }
 
     try {
-      const response = await fetch(`https://finea-api-production.up.railway.app/api//notifications/bulk-${action}`, {
+      const response = await fetch(`${getApiBaseUrl()}/notifications/bulk-${action}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

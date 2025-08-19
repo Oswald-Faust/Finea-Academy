@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import 'personal_info_screen.dart';
 import 'security_screen.dart';
 import 'notifications_screen.dart';
+import 'favorites_screen.dart';
 import '../widgets/custom_bottom_navigation.dart';
 import 'main_navigation_screen.dart';
 import 'login_screen.dart';
@@ -217,6 +218,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => const NotificationsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            
+                            _buildDivider(),
+                            
+                            // Favoris
+                            _buildProfileOption(
+                              context,
+                              icon: Icons.favorite_border,
+                              title: 'Mes Favoris',
+                              subtitle: 'Articles et newsletters sauvegardés',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const FavoritesScreen(),
                                   ),
                                 );
                               },

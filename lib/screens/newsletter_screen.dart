@@ -37,6 +37,21 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
         limit: 20,
       );
 
+      if (response.data != null) {
+        // Vérifier l'état des favoris pour chaque article
+        for (var article in response.data!) {
+          try {
+            final favoriteResponse = await _apiService.checkIfFavorite(article.id);
+            if (favoriteResponse.success && favoriteResponse.data != null) {
+              article.isBookmarked = favoriteResponse.data!['isFavorite'] ?? false;
+            }
+          } catch (e) {
+            // En cas d'erreur, on garde l'état par défaut (non favori)
+            article.isBookmarked = false;
+          }
+        }
+      }
+
       setState(() {
         _articles = response.data ?? [];
         _isLoading = false;
@@ -52,21 +67,35 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
 
   Future<void> _toggleBookmark(NewsletterArticle article) async {
     try {
-      await _apiService.toggleNewsletterBookmark(article.id, !article.isBookmarked);
-      
-      setState(() {
-        article.isBookmarked = !article.isBookmarked;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            article.isBookmarked ? 'Article ajouté aux favoris' : 'Article retiré des favoris',
+      if (article.isBookmarked) {
+        // Retirer des favoris
+        await _apiService.removeFromFavorites(article.id);
+        setState(() {
+          article.isBookmarked = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Article retiré des favoris'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 1),
           ),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 1),
-        ),
-      );
+        );
+      } else {
+        // Ajouter aux favoris
+        await _apiService.addToFavorites(article.id, type: 'article');
+        setState(() {
+          article.isBookmarked = true;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Article ajouté aux favoris'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

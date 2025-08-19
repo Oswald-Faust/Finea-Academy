@@ -3,6 +3,7 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { protect: auth } = require('../middleware/auth');
 const { validateNotification } = require('../middleware/validation');
+const pushNotificationService = require('../services/pushNotificationService');
 
 const router = express.Router();
 
@@ -333,8 +334,42 @@ async function sendNotificationToUsers(notification) {
       }).select('_id');
     }
 
-    // Ici, on pourrait intégrer avec FCM, OneSignal, ou autre service de push
     console.log(`Notification "${notification.title}" envoyée à ${targetUsers.length} utilisateur(s)`);
+
+    // Envoyer les notifications push si disponible
+    try {
+      const pushNotificationData = {
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        priority: notification.priority,
+        image: notification.metadata?.image || null
+      };
+
+      let pushResult;
+      if (notification.isGlobal) {
+        pushResult = await pushNotificationService.sendToAllUsers(pushNotificationData);
+      } else if (notification.targetRoles.length > 0) {
+        pushResult = await pushNotificationService.sendToRoles(notification.targetRoles, pushNotificationData);
+      } else if (notification.targetUsers.length > 0) {
+        const userIds = targetUsers.map(user => user._id || user);
+        pushResult = await pushNotificationService.sendToUsers(userIds, pushNotificationData);
+      }
+
+      // Ajouter les résultats du push dans les métadonnées
+      if (pushResult) {
+        notification.metadata = {
+          ...notification.metadata,
+          pushNotification: true,
+          pushResults: pushResult
+        };
+      }
+
+      console.log(`📱 Push notifications envoyées: ${pushResult?.successCount || 0} succès`);
+    } catch (pushError) {
+      console.error('Erreur lors de l\'envoi des push notifications:', pushError);
+      // Ne pas faire échouer la notification pour une erreur de push
+    }
 
     // Marquer comme envoyée
     await notification.markAsSent();

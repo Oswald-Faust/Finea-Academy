@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Couleur principale Finéa pour les notifications -->
+    <color name="notification_color">#000D64</color>
+    <color name="primary_color">#000D64</color>
+</resources>

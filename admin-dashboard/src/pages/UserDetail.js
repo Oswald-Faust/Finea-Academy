@@ -19,8 +19,10 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ClockIcon,
+  HeartIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
-import { userAPI } from '../services/api';
+import { userAPI, notificationAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import SendNotificationModal from '../components/SendNotificationModal';
 import NotificationHistoryModal from '../components/NotificationHistoryModal';
@@ -48,10 +50,13 @@ const UserDetail = () => {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [userFavorites, setUserFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   useEffect(() => {
     fetchUser();
     fetchUserNotifications();
+    fetchUserFavorites();
   }, [id]);
 
   const fetchUser = async () => {
@@ -116,8 +121,8 @@ const UserDetail = () => {
 
   const fetchUserNotifications = async () => {
     try {
-              const response = await fetch(`https://finea-api-production.up.railway.app/api//notifications/user/${id}?limit=50`);
-      const data = await response.json();
+      const response = await notificationAPI.getUserNotifications(id, { limit: 50 });
+      const data = response.data;
       
       if (data.success) {
         setNotifications(data.data || []);
@@ -140,6 +145,22 @@ const UserDetail = () => {
   const handleNotificationSent = () => {
     fetchUserNotifications();
     toast.success('Notification envoyée avec succès !');
+  };
+
+  const fetchUserFavorites = async () => {
+    try {
+      setFavoritesLoading(true);
+      const response = await fetch(`http://localhost:5000/api/favorites/user/${id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setUserFavorites(data.data.favorites || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user favorites:', error);
+    } finally {
+      setFavoritesLoading(false);
+    }
   };
 
   const getNotificationTypeIcon = (type) => {
@@ -382,6 +403,80 @@ const UserDetail = () => {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Favoris de l'utilisateur */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <HeartIcon className="h-5 w-5 text-red-500 mr-2" />
+                Articles Favoris ({userFavorites.length})
+              </h3>
+            </div>
+            
+            {favoritesLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Chargement des favoris...</p>
+              </div>
+            ) : userFavorites.length === 0 ? (
+              <div className="text-center py-8">
+                <HeartIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">Aucun article en favori</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {userFavorites.map((favorite) => (
+                  <div key={favorite._id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex-shrink-0">
+                      {favorite.article?.coverImage ? (
+                        <img
+                          src={favorite.article.coverImage}
+                          alt="Cover"
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 bg-gray-300 rounded flex items-center justify-center">
+                          <DocumentTextIcon className="h-6 w-6 text-gray-500" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {favorite.article?.title || 'Titre non disponible'}
+                        </p>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <ClockIcon className="h-3 w-3 mr-1" />
+                          {new Date(favorite.addedAt).toLocaleDateString('fr-FR')}
+                        </div>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          favorite.type === 'article' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {favorite.type}
+                        </span>
+                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          favorite.article?.status === 'published'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {favorite.article?.status === 'published' ? 'Publié' : 'Brouillon'}
+                        </span>
+                        {favorite.article?.tags && favorite.article.tags.length > 0 && (
+                          <span className="ml-2 text-xs text-gray-500">
+                            #{favorite.article.tags[0]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

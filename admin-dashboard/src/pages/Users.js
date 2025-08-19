@@ -106,12 +106,12 @@ const Users = () => {
 
   const getStatusBadge = (isActive) => {
     return isActive ? (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      <span className="badge-success-modern">
         <CheckCircleIcon className="w-3 h-3 mr-1" />
         Actif
       </span>
     ) : (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+      <span className="badge-error-modern">
         <XCircleIcon className="w-3 h-3 mr-1" />
         Inactif
       </span>
@@ -138,7 +138,7 @@ const Users = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="card">
+      <div className="card-glass animate-slideInRight">
         <div className="flex flex-col sm:flex-row gap-4">
           <form onSubmit={handleSearch} className="flex-1">
             <div className="relative">
@@ -172,14 +172,14 @@ const Users = () => {
       </div>
 
       {/* Users Table */}
-      <div className="card p-0">
+      <div className="table-container animate-fadeInUp">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="min-w-full divide-y divide-gray-200/30">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -205,18 +205,18 @@ const Users = () => {
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-primary-700">
+                          <div className="flex-shrink-0 h-12 w-12">
+                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+                              <span className="text-sm font-bold text-white">
                                 {user.fullName?.charAt(0) || user.firstName?.charAt(0) || 'U'}
                               </span>
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-semibold text-gray-900">
                               {user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Nom non défini'}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs text-gray-500 font-mono">
                               ID: {user._id.slice(-8)}
                             </div>
                           </div>

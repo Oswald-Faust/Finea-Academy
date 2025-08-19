@@ -29,6 +29,19 @@ import toast from 'react-hot-toast';
 import SendNotificationModal from '../components/SendNotificationModal';
 import NotificationHistoryModal from '../components/NotificationHistoryModal';
 
+// Configuration automatique de l'URL selon l'environnement
+const getApiBaseUrl = () => {
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+  
+  if (isDevelopment) {
+    return 'http://localhost:5000/api';
+  } else {
+    return 'https://finea-api-production.up.railway.app/api';
+  }
+};
+
 const UserDetails = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -54,7 +67,7 @@ const UserDetails = () => {
   const fetchUserDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`https://finea-api-production.up.railway.app/api//users/${userId}`);
+      const response = await fetch(`${getApiBaseUrl()}/users/${userId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -72,7 +85,7 @@ const UserDetails = () => {
 
   const fetchUserNotifications = async () => {
     try {
-      const response = await fetch(`https://finea-api-production.up.railway.app/api//notifications/user/${userId}?limit=50`);
+      const response = await fetch(`${getApiBaseUrl()}/notifications/user/${userId}?limit=50`);
       const data = await response.json();
       
       if (data.success) {
@@ -95,7 +108,7 @@ const UserDetails = () => {
 
   const handleStatusToggle = async () => {
     try {
-      const response = await fetch(`https://finea-api-production.up.railway.app/api//users/${userId}/toggle-status`, {
+      const response = await fetch(`${getApiBaseUrl()}/users/${userId}/toggle-status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +132,7 @@ const UserDetails = () => {
   const handleDeleteUser = async () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
       try {
-        const response = await fetch(`https://finea-api-production.up.railway.app/api//users/${userId}`, {
+        const response = await fetch(`${getApiBaseUrl()}/users/${userId}`, {
           method: 'DELETE',
         });
 

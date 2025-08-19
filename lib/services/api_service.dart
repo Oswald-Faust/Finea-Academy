@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../models/newsletter_model.dart';
 import '../models/notification_model.dart';
+import '../config/api_config.dart';
 
 // Interface pour la gestion des tokens
 abstract class TokenProvider {
@@ -13,19 +14,16 @@ abstract class TokenProvider {
 
 class ApiService {
   late final Dio _dio;
-  static const String baseUrl = kDebugMode 
-      ? 'https://finea-api-production.up.railway.app/api/'  // URL pour le développement
-      : 'https://finea-api-production.up.railway.app/api/';  // URL pour la production
+  
+  // Utilise la configuration centralisée
+  static String get baseUrl => ApiConfig.apiUrl;
 
   ApiService() {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      connectTimeout: ApiConfig.connectTimeout,
+      receiveTimeout: ApiConfig.receiveTimeout,
+      headers: ApiConfig.defaultHeaders,
     ));
 
     // Ajouter les intercepteurs pour le logging et la gestion des erreurs
@@ -418,6 +416,133 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Méthodes pour gérer les favoris
+  Future<ApiResponse<List<Map<String, dynamic>>>> getUserFavorites({String? type}) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (type != null) queryParams['type'] = type;
+      
+      final response = await _dio.get('/favorites', queryParameters: queryParams);
+      return ApiResponse<List<Map<String, dynamic>>>.fromJson(
+        response.data, 
+        (data) => List<Map<String, dynamic>>.from((data as List<dynamic>?) ?? [])
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> addToFavorites(String articleId, {String type = 'article'}) async {
+    try {
+      final response = await _dio.post('/favorites', data: {
+        'articleId': articleId,
+        'type': type,
+      });
+      return ApiResponse<Map<String, dynamic>>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<void>> removeFromFavorites(String articleId) async {
+    try {
+      final response = await _dio.delete('/favorites/$articleId');
+      return ApiResponse<void>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> checkIfFavorite(String articleId) async {
+    try {
+      final response = await _dio.get('/favorites/check/$articleId');
+      return ApiResponse<Map<String, dynamic>>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // ==================== PUSH NOTIFICATIONS ====================
+
+  /// Enregistre un token FCM pour l'utilisateur connecté
+  static Future<Map<String, dynamic>> registerFCMToken({
+    required String token,
+    required String platform,
+    required String deviceId,
+  }) async {
+    try {
+      final dio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        headers: {'Content-Type': 'application/json'},
+      ));
+
+      // Ajouter le token d'authentification s'il existe
+      final authToken = await _getStoredAuthToken();
+      if (authToken != null) {
+        dio.options.headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final response = await dio.post('/push-notifications/register', data: {
+        'token': token,
+        'platform': platform,
+        'deviceId': deviceId,
+      });
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('Erreur lors de l\'enregistrement du token FCM: ${e.message}');
+      return {
+        'success': false,
+        'error': e.response?.data?['error'] ?? 'Erreur de réseau'
+      };
+    }
+  }
+
+  /// Supprime un token FCM
+  static Future<Map<String, dynamic>> unregisterFCMToken({
+    required String deviceId,
+  }) async {
+    try {
+      final dio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        headers: {'Content-Type': 'application/json'},
+      ));
+
+      // Ajouter le token d'authentification s'il existe
+      final authToken = await _getStoredAuthToken();
+      if (authToken != null) {
+        dio.options.headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final response = await dio.delete('/push-notifications/unregister', data: {
+        'deviceId': deviceId,
+      });
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      print('Erreur lors de la suppression du token FCM: ${e.message}');
+      return {
+        'success': false,
+        'error': e.response?.data?['error'] ?? 'Erreur de réseau'
+      };
+    }
+  }
+
+  /// Récupère le token d'authentification stocké (à implémenter selon votre système d'auth)
+  static Future<String?> _getStoredAuthToken() async {
+    // Ici, vous devriez récupérer le token JWT depuis le stockage sécurisé
+    // Par exemple avec flutter_secure_storage
+    try {
+      // TODO: Implémenter la récupération du token depuis le stockage sécurisé
+      // final storage = FlutterSecureStorage();
+      // return await storage.read(key: 'auth_token');
+      return null; // Temporaire
+    } catch (e) {
+      print('Erreur lors de la récupération du token d\'auth: $e');
+      return null;
     }
   }
 }

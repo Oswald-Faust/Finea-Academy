@@ -61,9 +61,13 @@ const Dashboard = () => {
       const statsData = statsResponse.data.data || statsResponse.data;
       setStats(statsData);
 
-      // Récupérer les récents utilisateurs directement via fetch pour plus de contrôle
-      const usersResponse = await fetch('https://finea-api-production.up.railway.app/api//users?limit=8&sort=createdAt&order=desc');
-      const usersData = await usersResponse.json();
+      // Récupérer les récents utilisateurs
+      const usersResponse = await userAPI.getUsers({ 
+        limit: 8, 
+        sort: 'createdAt', 
+        order: 'desc' 
+      });
+      const usersData = usersResponse.data;
       
       if (usersData.success) {
         setRecentUsers(usersData.data.users || usersData.data || []); 
@@ -209,10 +213,10 @@ const Dashboard = () => {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Users */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow duration-300">
+        <div className="card-glass hover-lift-strong animate-slideInLeft">
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+            <div className="flex items-center space-x-4">
+              <div className="stat-icon">
                 <UsersIcon className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -299,9 +303,9 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+        <div className="card-glass hover-lift-strong animate-slideInRight">
+          <div className="flex items-center space-x-4 mb-8">
+            <div className="stat-icon">
               <SparklesIcon className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -313,56 +317,59 @@ const Dashboard = () => {
           <div className="space-y-4">
             <Link
               to="/newsletter"
-              className="group block p-6 border-2 border-gray-100 rounded-2xl hover:border-orange-200 hover:bg-orange-50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className="group block p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200/50 hover:shadow-xl hover:-translate-y-2 transition-all duration-400 relative overflow-hidden"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-500 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
                     <EnvelopeIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">Envoyer une newsletter</p>
-                    <p className="text-sm text-gray-500">Créer et envoyer une newsletter à tous les utilisateurs</p>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-orange-700 transition-colors duration-300">Envoyer une newsletter</p>
+                    <p className="text-sm text-gray-600">Créer et envoyer une newsletter à tous les utilisateurs</p>
                   </div>
                 </div>
-                <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transform group-hover:translate-x-1 transition-all duration-300" />
+                <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transform group-hover:translate-x-2 transition-all duration-300" />
               </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
             
             <Link
               to="/users"
-              className="group block p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className="group block p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 hover:shadow-xl hover:-translate-y-2 transition-all duration-400 relative overflow-hidden"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
                     <UsersIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">Gérer les utilisateurs</p>
-                    <p className="text-sm text-gray-500">Voir, modifier et gérer tous les utilisateurs</p>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors duration-300">Gérer les utilisateurs</p>
+                    <p className="text-sm text-gray-600">Voir, modifier et gérer tous les utilisateurs</p>
                   </div>
                 </div>
-                <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transform group-hover:translate-x-1 transition-all duration-300" />
+                <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transform group-hover:translate-x-2 transition-all duration-300" />
               </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
             
             <Link
               to="/stats"
-              className="group block p-6 border-2 border-gray-100 rounded-2xl hover:border-green-200 hover:bg-green-50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className="group block p-6 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/50 hover:shadow-xl hover:-translate-y-2 transition-all duration-400 relative overflow-hidden"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-green-400 to-green-500 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-green-400 to-green-500 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
                     <ChartBarIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">Voir les statistiques détaillées</p>
-                    <p className="text-sm text-gray-500">Analyser les données et tendances en temps réel</p>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-green-700 transition-colors duration-300">Voir les statistiques détaillées</p>
+                    <p className="text-sm text-gray-600">Analyser les données et tendances en temps réel</p>
                   </div>
                 </div>
-                <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-green-500 transform group-hover:translate-x-1 transition-all duration-300" />
+                <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-green-500 transform group-hover:translate-x-2 transition-all duration-300" />
               </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </div>
         </div>

@@ -1,9 +1,10 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../config/api_config.dart';
 
 class ImageUtils {
-  static const String _apiBaseUrl = kDebugMode 
-      ? 'http://localhost:5000'  // URL pour le développement
-      : 'https://finea-api-production.up.railway.app';  // URL pour la production
+  // Utilise la configuration centralisée
+  static String get _apiBaseUrl => ApiConfig.baseUrl;
 
   /// Convertit une URL d'image en URL complète
   static String getImageUrl(String? imageUrl) {

@@ -2,7 +2,7 @@
 
 ## 🌐 URL de base
 ```
-http://localhost:5000/api
+https://finea-api-production.up.railway.app/api 
 ```
 
 ## ✨ Caractéristiques
@@ -21,19 +21,19 @@ http://localhost:5000/api
 #### `GET /api/users`
 Récupérer tous les utilisateurs
 ```bash
-curl "http://localhost:5000/api/users?page=1&limit=10&search=jean"
+curl "https://finea-api-production.up.railway.app/api /users?page=1&limit=10&search=jean"
 ```
 
 #### `GET /api/users/:id`
 Récupérer un utilisateur spécifique
 ```bash
-curl "http://localhost:5000/api/users/123"
+curl "https://finea-api-production.up.railway.app/api /users/123"
 ```
 
 #### `POST /api/users/create`
 Créer un utilisateur manuellement (admin)
 ```bash
-curl -X POST "http://localhost:5000/api/users/create" \
+curl -X POST "https://finea-api-production.up.railway.app/api /users/create" \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "Jean",
@@ -47,7 +47,7 @@ curl -X POST "http://localhost:5000/api/users/create" \
 #### `POST /api/users/register`
 Inscription d'un nouvel utilisateur
 ```bash
-curl -X POST "http://localhost:5000/api/users/register" \
+curl -X POST "https://finea-api-production.up.railway.app/api /users/register" \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "Marie",
@@ -62,13 +62,13 @@ curl -X POST "http://localhost:5000/api/users/register" \
 #### `GET /api/users/stats`
 Statistiques de base des utilisateurs
 ```bash
-curl "http://localhost:5000/api/users/stats"
+curl "https://finea-api-production.up.railway.app/api /users/stats"
 ```
 
 #### `GET /api/users/detailed-stats`
 Statistiques détaillées avec croissance et répartition
 ```bash
-curl "http://localhost:5000/api/users/detailed-stats"
+curl "https://finea-api-production.up.railway.app/api /users/detailed-stats"
 ```
 
 ---
@@ -78,7 +78,7 @@ curl "http://localhost:5000/api/users/detailed-stats"
 #### `POST /api/email/send`
 Envoyer un email générique
 ```bash
-curl -X POST "http://localhost:5000/api/email/send" \
+curl -X POST "https://finea-api-production.up.railway.app/api /email/send" \
   -H "Content-Type: application/json" \
   -d '{
     "to": "utilisateur@example.com",
@@ -90,7 +90,7 @@ curl -X POST "http://localhost:5000/api/email/send" \
 #### `POST /api/email/newsletter`
 Envoyer une newsletter à tous les utilisateurs
 ```bash
-curl -X POST "http://localhost:5000/api/email/newsletter" \
+curl -X POST "https://finea-api-production.up.railway.app/api /email/newsletter" \
   -H "Content-Type: application/json" \
   -d '{
     "subject": "Nouvelles formations disponibles",
@@ -102,13 +102,13 @@ curl -X POST "http://localhost:5000/api/email/newsletter" \
 #### `GET /api/email/newsletter/history`
 Historique des newsletters envoyées
 ```bash
-curl "http://localhost:5000/api/email/newsletter/history"
+curl "https://finea-api-production.up.railway.app/api /email/newsletter/history"
 ```
 
 #### `GET /api/email/templates`
 Templates d'email prédéfinis
 ```bash
-curl "http://localhost:5000/api/email/templates"
+curl "https://finea-api-production.up.railway.app/api /email/templates"
 ```
 
 ---
@@ -118,19 +118,19 @@ curl "http://localhost:5000/api/email/templates"
 #### `GET /api/courses`
 Récupérer tous les cours avec filtres
 ```bash
-curl "http://localhost:5000/api/courses?category=Finance&level=Débutant&search=trading"
+curl "https://finea-api-production.up.railway.app/api /courses?category=Finance&level=Débutant&search=trading"
 ```
 
 #### `GET /api/courses/:id`
 Détails complets d'un cours
 ```bash
-curl "http://localhost:5000/api/courses/1"
+curl "https://finea-api-production.up.railway.app/api /courses/1"
 ```
 
 #### `POST /api/courses`
 Créer un nouveau cours
 ```bash
-curl -X POST "http://localhost:5000/api/courses" \
+curl -X POST "https://finea-api-production.up.railway.app/api /courses" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Investissement Immobilier",
@@ -146,7 +146,7 @@ curl -X POST "http://localhost:5000/api/courses" \
 #### `POST /api/courses/:id/enroll`
 Inscrire un utilisateur à un cours
 ```bash
-curl -X POST "http://localhost:5000/api/courses/1/enroll" \
+curl -X POST "https://finea-api-production.up.railway.app/api /courses/1/enroll" \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "123",
@@ -158,7 +158,7 @@ curl -X POST "http://localhost:5000/api/courses/1/enroll" \
 #### `GET /api/courses/stats/overview`
 Statistiques générales des cours
 ```bash
-curl "http://localhost:5000/api/courses/stats/overview"
+curl "https://finea-api-production.up.railway.app/api /courses/stats/overview"
 ```
 
 ---
@@ -168,31 +168,31 @@ curl "http://localhost:5000/api/courses/stats/overview"
 #### `GET /api/analytics/activity`
 Rapport d'activité générale
 ```bash
-curl "http://localhost:5000/api/analytics/activity?period=30d"
+curl "https://finea-api-production.up.railway.app/api /analytics/activity?period=30d"
 ```
 
 #### `GET /api/analytics/courses/performance`
 Performance détaillée des cours
 ```bash
-curl "http://localhost:5000/api/analytics/courses/performance"
+curl "https://finea-api-production.up.railway.app/api /analytics/courses/performance"
 ```
 
 #### `GET /api/analytics/users/demographics`
 Données démographiques des utilisateurs
 ```bash
-curl "http://localhost:5000/api/analytics/users/demographics"
+curl "https://finea-api-production.up.railway.app/api /analytics/users/demographics"
 ```
 
 #### `GET /api/analytics/revenue`
 Analyse des revenus
 ```bash
-curl "http://localhost:5000/api/analytics/revenue?period=12m"
+curl "https://finea-api-production.up.railway.app/api /analytics/revenue?period=12m"
 ```
 
 #### `POST /api/analytics/reports/custom`
 Générer un rapport personnalisé
 ```bash
-curl -X POST "http://localhost:5000/api/analytics/reports/custom" \
+curl -X POST "https://finea-api-production.up.railway.app/api /analytics/reports/custom" \
   -H "Content-Type: application/json" \
   -d '{
     "dateRange": {
@@ -211,13 +211,13 @@ curl -X POST "http://localhost:5000/api/analytics/reports/custom" \
 #### `GET /api/notifications`
 Récupérer toutes les notifications
 ```bash
-curl "http://localhost:5000/api/notifications?status=unread&type=course_enrollment"
+curl "https://finea-api-production.up.railway.app/api /notifications?status=unread&type=course_enrollment"
 ```
 
 #### `POST /api/notifications`
 Créer une nouvelle notification
 ```bash
-curl -X POST "http://localhost:5000/api/notifications" \
+curl -X POST "https://finea-api-production.up.railway.app/api /notifications" \
   -H "Content-Type: application/json" \
   -d '{
     "type": "system_alert",
@@ -230,25 +230,25 @@ curl -X POST "http://localhost:5000/api/notifications" \
 #### `PUT /api/notifications/:id/read`
 Marquer une notification comme lue
 ```bash
-curl -X PUT "http://localhost:5000/api/notifications/1/read"
+curl -X PUT "https://finea-api-production.up.railway.app/api /notifications/1/read"
 ```
 
 #### `PUT /api/notifications/read-all`
 Marquer toutes les notifications comme lues
 ```bash
-curl -X PUT "http://localhost:5000/api/notifications/read-all"
+curl -X PUT "https://finea-api-production.up.railway.app/api /notifications/read-all"
 ```
 
 #### `GET /api/notifications/stats`
 Statistiques des notifications
 ```bash
-curl "http://localhost:5000/api/notifications/stats"
+curl "https://finea-api-production.up.railway.app/api /notifications/stats"
 ```
 
 #### `POST /api/notifications/preferences`
 Configurer les préférences de notifications
 ```bash
-curl -X POST "http://localhost:5000/api/notifications/preferences" \
+curl -X POST "https://finea-api-production.up.railway.app/api /notifications/preferences" \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "123",
@@ -260,12 +260,77 @@ curl -X POST "http://localhost:5000/api/notifications/preferences" \
 
 ---
 
+## 📱 Routes Notifications Push
+
+#### `POST /api/push-notifications/register`
+Enregistrer un token FCM pour un utilisateur
+```bash
+curl -X POST "https://finea-api-production.up.railway.app/api /push-notifications/register" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "token": "FCM_TOKEN_STRING",
+    "platform": "android",
+    "deviceId": "unique-device-id"
+  }'
+```
+
+#### `DELETE /api/push-notifications/unregister`
+Supprimer un token FCM
+```bash
+curl -X DELETE "https://finea-api-production.up.railway.app/api /push-notifications/unregister" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "deviceId": "unique-device-id"
+  }'
+```
+
+#### `POST /api/push-notifications/send`
+Envoyer une notification push immédiate (Admin)
+```bash
+curl -X POST "https://finea-api-production.up.railway.app/api /push-notifications/send" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Nouvelle formation disponible !",
+    "message": "Découvrez notre nouvelle formation en trading",
+    "type": "course_announcement",
+    "priority": "high",
+    "image": "https://example.com/image.jpg",
+    "isGlobal": true
+  }'
+```
+
+#### `POST /api/push-notifications/test`
+Envoyer une notification de test
+```bash
+curl -X POST "https://finea-api-production.up.railway.app/api /push-notifications/test" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "targetUserId": "user-id-here"
+  }'
+```
+
+#### `GET /api/push-notifications/stats`
+Statistiques des notifications push
+```bash
+curl "https://finea-api-production.up.railway.app/api /push-notifications/stats"
+```
+
+#### `GET /api/push-notifications/devices`
+Récupérer les appareils enregistrés (Admin)
+```bash
+curl "https://finea-api-production.up.railway.app/api /push-notifications/devices?page=1&limit=20"
+```
+
+---
+
 ## 🏥 Routes Système
 
 #### `GET /api/health`
 Vérification de l'état de l'API
 ```bash
-curl "http://localhost:5000/api/health"
+curl "https://finea-api-production.up.railway.app/api /health"
 ```
 
 ---
@@ -341,6 +406,7 @@ node test-routes.js
 - 🎓 Catalogue de cours avec statistiques
 - 📊 Analytics et rapports détaillés
 - 🔔 Système de notifications complet
+- 📱 **Notifications Push avec Firebase Cloud Messaging**
 - 🏥 Monitoring de santé de l'API
 
 ### 🔄 Données Fictives (Pour Demo)

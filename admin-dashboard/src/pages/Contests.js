@@ -20,6 +20,7 @@ import {
 import toast from 'react-hot-toast';
 import CreateContestModal from '../components/CreateContestModal';
 import SelectWinnerModal from '../components/SelectWinnerModal';
+import { contestAPI } from '../services/api';
 
 const Contests = () => {
   const [contests, setContests] = useState([]);
@@ -62,8 +63,8 @@ const Contests = () => {
         type: filterType !== 'all' ? filterType : undefined,
       };
 
-      const response = await fetch(`https://finea-api-production.up.railway.app/api//contests?${new URLSearchParams(params)}`);
-      const data = await response.json();
+      const response = await contestAPI.getContests(params);
+      const data = response.data;
 
       if (data.success) {
         setContests(data.data || []);
@@ -79,8 +80,8 @@ const Contests = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('https://finea-api-production.up.railway.app/api//contests/stats/overview');
-      const data = await response.json();
+      const response = await contestAPI.getStats();
+      const data = response.data;
 
       if (data.success) {
         setStats(data.data);
@@ -104,11 +105,8 @@ const Contests = () => {
   const handleDeleteContest = async (contestId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce concours ?')) {
       try {
-        const response = await fetch(`https://finea-api-production.up.railway.app/api//contests/${contestId}`, {
-          method: 'DELETE',
-        });
-
-        const data = await response.json();
+        const response = await contestAPI.deleteContest(contestId);
+        const data = response.data;
 
         if (data.success) {
           toast.success('Concours supprimé avec succès');
@@ -232,72 +230,72 @@ const Contests = () => {
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <div className="card p-4">
+        <div className="stat-card animate-fadeInUp" style={{ animationDelay: '0ms' }}>
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrophyIcon className="h-6 w-6 text-blue-600" />
+            <div className="stat-icon">
+              <TrophyIcon className="h-6 w-6 text-white" />
             </div>
-            <div className="ml-3">
+            <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Concours</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalContests}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-4">
+        <div className="stat-card animate-fadeInUp" style={{ animationDelay: '100ms' }}>
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircleIcon className="h-6 w-6 text-green-600" />
+            <div className="stat-icon">
+              <CheckCircleIcon className="h-6 w-6 text-white" />
             </div>
-            <div className="ml-3">
+            <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Actifs</p>
               <p className="text-2xl font-bold text-gray-900">{stats.activeContests}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-4">
+        <div className="stat-card animate-fadeInUp" style={{ animationDelay: '200ms' }}>
           <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <ClockIcon className="h-6 w-6 text-yellow-600" />
+            <div className="stat-icon">
+              <ClockIcon className="h-6 w-6 text-white" />
             </div>
-            <div className="ml-3">
+            <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">À venir</p>
               <p className="text-2xl font-bold text-gray-900">{stats.upcomingContests}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-4">
+        <div className="stat-card animate-fadeInUp" style={{ animationDelay: '300ms' }}>
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <StarIcon className="h-6 w-6 text-purple-600" />
+            <div className="stat-icon">
+              <StarIcon className="h-6 w-6 text-white" />
             </div>
-            <div className="ml-3">
+            <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Terminés</p>
               <p className="text-2xl font-bold text-gray-900">{stats.completedContests}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-4">
+        <div className="stat-card animate-fadeInUp" style={{ animationDelay: '400ms' }}>
           <div className="flex items-center">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <UsersIcon className="h-6 w-6 text-indigo-600" />
+            <div className="stat-icon">
+              <UsersIcon className="h-6 w-6 text-white" />
             </div>
-            <div className="ml-3">
+            <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Participants</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalParticipants}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-4">
+        <div className="stat-card animate-fadeInUp" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <GiftIcon className="h-6 w-6 text-orange-600" />
+            <div className="stat-icon">
+              <GiftIcon className="h-6 w-6 text-white" />
             </div>
-            <div className="ml-3">
+            <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Vainqueurs</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalWinners}</p>
             </div>
@@ -306,7 +304,7 @@ const Contests = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="card">
+      <div className="card-glass animate-slideInRight">
         <div className="flex flex-col sm:flex-row gap-4">
           <form onSubmit={handleSearch} className="flex-1">
             <div className="relative">
@@ -355,14 +353,14 @@ const Contests = () => {
       </div>
 
       {/* Contests Table */}
-      <div className="card p-0">
+      <div className="table-container animate-fadeInUp">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="min-w-full divide-y divide-gray-200/30">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

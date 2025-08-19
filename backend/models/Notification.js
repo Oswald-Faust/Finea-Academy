@@ -15,13 +15,13 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['info', 'success', 'warning', 'error', 'article'],
+    enum: ['info', 'success', 'warning', 'error', 'article', 'general', 'system'],
     default: 'info'
   },
   priority: {
     type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium'
+    enum: ['low', 'normal', 'medium', 'high', 'urgent'],
+    default: 'normal'
   },
   status: {
     type: String,

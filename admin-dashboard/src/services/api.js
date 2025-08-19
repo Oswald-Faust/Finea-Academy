@@ -1,6 +1,31 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://finea';
+// Configuration automatique de l'URL selon l'environnement
+const getApiBaseUrl = () => {
+  // Si une variable d'environnement est définie, l'utiliser
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Sinon, détecter automatiquement l'environnement
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+  
+  if (isDevelopment) {
+    return 'http://localhost:5000/api';
+  } else {
+    return 'https://finea-api-production.up.railway.app/api';
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Log de l'environnement
+console.log(`🌐 Admin Dashboard API Configuration:`);
+console.log(`   Environment: ${process.env.NODE_ENV === 'development' ? 'Development' : 'Production'}`);
+console.log(`   Base URL: ${API_BASE_URL}`);
+console.log(`   Hostname: ${window.location.hostname}`);
 
 // Fonctions utilitaires
 const getToken = () => {
@@ -26,7 +51,7 @@ const api = axios.create({
 // Intercepteur pour ajouter le token d'authentification (désactivé pour accès libre)
 // api.interceptors.request.use(
 //   (config) => {
-//     const token = localStorage.getItem('adminToken');
+//     const token = getToken();
 //     if (token) {
 //       config.headers.Authorization = `Bearer ${token}`;
 //     }
@@ -237,6 +262,77 @@ export const articleAPI = {
 
     return handleResponse(response);
   },
+};
+
+// Services pour les notifications normales
+export const notificationAPI = {
+  // Récupérer toutes les notifications
+  getNotifications: (params = {}) => api.get('/notifications', { params }),
+  
+  // Récupérer les notifications d'un utilisateur spécifique
+  getUserNotifications: (userId, params = {}) => api.get(`/notifications/user/${userId}`, { params }),
+  
+  // Créer une nouvelle notification
+  createNotification: (data) => api.post('/notifications', data),
+  
+  // Marquer une notification comme lue
+  markAsRead: (notificationId) => api.patch(`/notifications/${notificationId}/read`),
+  
+  // Marquer toutes les notifications comme lues
+  markAllAsRead: () => api.patch('/notifications/mark-all-read'),
+  
+  // Supprimer une notification
+  deleteNotification: (notificationId) => api.delete(`/notifications/${notificationId}`),
+  
+  // Récupérer les statistiques des notifications
+  getStats: () => api.get('/notifications/stats'),
+};
+
+// Services pour les notifications push
+export const pushNotificationAPI = {
+  // Statistiques des notifications push
+  getStats: () => api.get('/push-notifications/stats'),
+  
+  // Liste des appareils connectés
+  getDevices: (params = {}) => api.get('/push-notifications/devices', { params }),
+  
+  // Envoyer une notification push
+  send: (data) => api.post('/push-notifications/send', data),
+  
+  // Envoyer une notification de test
+  sendTest: (targetUserId) => api.post('/push-notifications/test', { targetUserId }),
+  
+  // Enregistrer un token FCM
+  registerToken: (data) => api.post('/push-notifications/register', data),
+  
+  // Supprimer un token FCM
+  unregisterToken: (deviceId) => api.delete('/push-notifications/unregister', { data: { deviceId } }),
+};
+
+// Services pour les concours
+export const contestAPI = {
+  // Récupérer tous les concours
+  getContests: (params = {}) => api.get('/contests', { params }),
+  
+  // Récupérer un concours par ID
+  getContestById: (id) => api.get(`/contests/${id}`),
+  
+  // Créer un nouveau concours
+  createContest: (data) => api.post('/contests', data),
+  
+  // Mettre à jour un concours
+  updateContest: (id, data) => api.put(`/contests/${id}`, data),
+  
+  // Supprimer un concours
+  deleteContest: (id) => api.delete(`/contests/${id}`),
+  
+  // Récupérer les statistiques des concours
+  getStats: () => api.get('/contests/stats/overview'),
+  
+  // Autres actions spécifiques aux concours
+  drawWinner: (id) => api.post(`/contests/${id}/draw`),
+  publishResults: (id) => api.patch(`/contests/${id}/publish`),
+  getParticipants: (id, params = {}) => api.get(`/contests/${id}/participants`, { params }),
 };
 
 // Service de santé de l'API

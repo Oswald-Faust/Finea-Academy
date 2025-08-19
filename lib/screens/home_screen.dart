@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await _apiService.getNewsletterArticles(
         status: 'published',
         limit: 1,
-        sortBy: 'publishedAt',
+        sortBy: 'createdAt',
         sortOrder: 'desc',
       );
 
