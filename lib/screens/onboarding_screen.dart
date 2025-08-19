@@ -216,7 +216,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             
             // Bouton de fermeture en haut à droite
             Positioned(
-              top: 50,
+              top: 10,
               right: 20,
               child: FadeInRight(
                 duration: const Duration(milliseconds: 800),

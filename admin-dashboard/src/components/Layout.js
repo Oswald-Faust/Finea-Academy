@@ -16,7 +16,7 @@ import {
   HeartIcon,
 } from '@heroicons/react/24/outline';
 import NotificationMenu from './NotificationMenu';
-import logoFinea from '../assets/images/logo_finea.png';
+import logoFinea from '../assets/images/Finea.png';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

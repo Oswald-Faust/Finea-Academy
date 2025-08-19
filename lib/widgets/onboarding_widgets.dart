@@ -69,13 +69,16 @@ class OnboardingPageWidget extends StatelessWidget {
                 FadeInLeft(
                   duration: const Duration(milliseconds: 800),
                   delay: Duration(milliseconds: isVisible ? 600 : 0),
-                  child: Text(
-                    page.title,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1.2,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      page.title,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                 ),
@@ -86,51 +89,59 @@ class OnboardingPageWidget extends StatelessWidget {
                 FadeInLeft(
                   duration: const Duration(milliseconds: 800),
                   delay: Duration(milliseconds: isVisible ? 800 : 0),
-                  child: Text(
-                    page.description,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                
-                // Image positionnée à droite au bord
-                Expanded(
                   child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 0),
-                      child: FadeInRight(
-                        duration: const Duration(milliseconds: 1000),
-                        delay: Duration(milliseconds: isVisible ? 1000 : 0),
-                        child: Container(
-                          constraints: const BoxConstraints(maxWidth: 250),
-                          child: Image.asset(
-                            page.imagePath,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 200,
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(
-                                  Icons.image_not_supported,
-                                  color: Colors.white,
-                                  size: 80,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      page.description,
+                      style: TextStyle(
+                        fontSize: 14, // Taille réduite
+                        color: Colors.white.withOpacity(0.9),
+                        height: 1.4, // Hauteur de ligne légèrement réduite
                       ),
                     ),
                   ),
                 ),
+                
+                                                  // Image positionnée à droite au bord
+                 Expanded(
+                   child: Stack(
+                     children: [
+                                                                       Positioned(
+                          right: page.pageIndex == 2 ? -20 : -100, // Moins coupée pour le cadeau, normale pour tous les autres
+                          top: 0,
+                          bottom: 0,
+                          child: FadeInRight(
+                            duration: const Duration(milliseconds: 1000),
+                            delay: Duration(milliseconds: isVisible ? 1000 : 0),
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth: page.pageIndex == 2 ? 550 : 600, // Légèrement plus petit pour le cadeau, normal pour tous les autres
+                              ),
+                              child: Image.asset(
+                                page.imagePath,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: page.pageIndex == 2 ? 550 : 600,
+                                    height: page.pageIndex == 2 ? 550 : 600,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.white,
+                                      size: 80,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                     ],
+                   ),
+                 ),
               ],
             ],
           ),

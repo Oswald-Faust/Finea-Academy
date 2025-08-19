@@ -38,6 +38,6 @@ class ImageUtils {
 
   /// Retourne le logo par défaut
   static String getDefaultLogo() {
-    return 'assets/images/logo_finea.png';
+    return 'assets/images/Finea.png';
   }
 } 

@@ -47,6 +47,9 @@ dev_dependencies:
   # Code generation
   build_runner: ^2.4.7
   json_serializable: ^6.7.1
+  
+  # Launcher icons generation
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -64,3 +67,27 @@ flutter:
 
   assets:
     - assets/images/
+
+# Configuration des icônes de l'application
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  # Configuration pour des icônes plus grandes et mieux visibles
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/Finea.png"
+  # Taille minimale pour Android
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/images/Finea.png"
+    background_color: "#ffffff"
+    theme_color: "#0175C2"
+  windows:
+    generate: true
+    image_path: "assets/images/Finea.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/images/Finea.png"
+  image_path: "assets/images/Finea.png"

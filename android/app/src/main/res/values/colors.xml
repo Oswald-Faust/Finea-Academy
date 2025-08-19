@@ -3,4 +3,5 @@
     <!-- Couleur principale Finéa pour les notifications -->
     <color name="notification_color">#000D64</color>
     <color name="primary_color">#000D64</color>
+	<color name="ic_launcher_background">#000000</color>
 </resources>
