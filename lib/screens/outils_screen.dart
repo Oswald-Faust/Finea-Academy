@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../widgets/positioning_alert_card.dart';
 import '../widgets/lot_calculator_card.dart';
 import '../widgets/currency_converter_card.dart';
-import 'profile_screen.dart'; // Added import for ProfileScreen
+import 'profile_screen.dart';
+import 'currency_converter_screen.dart';
+import 'lot_calculator_screen.dart';
 
 class OutilsScreen extends StatelessWidget {
   const OutilsScreen({super.key});
@@ -49,10 +51,9 @@ class OutilsScreen extends StatelessWidget {
             // SECTION CALCULATRICE DE LOT
             LotCalculatorCard(
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Ouverture de la calculatrice de lot...'),
-                    backgroundColor: Colors.orange,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const LotCalculatorScreen(),
                   ),
                 );
               },
@@ -63,10 +64,9 @@ class OutilsScreen extends StatelessWidget {
             // SECTION CONVERTISSEUR DE DEVISE
             CurrencyConverterCard(
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Ouverture du convertisseur de devise...'),
-                    backgroundColor: Colors.purple,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CurrencyConverterScreen(),
                   ),
                 );
               },

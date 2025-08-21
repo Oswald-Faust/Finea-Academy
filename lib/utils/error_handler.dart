@@ -86,7 +86,7 @@ class ErrorHandler {
     );
   }
 
-  static void showDialog(
+  static void showErrorDialog(
     BuildContext context, {
     required String title,
     required String message,
@@ -115,7 +115,7 @@ class ErrorHandler {
           content: Text(
             message,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 16,
             ),
           ),
@@ -126,7 +126,7 @@ class ErrorHandler {
                 child: Text(
                   cancelText,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -216,7 +216,7 @@ class ErrorHandler {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red.withOpacity(0.7),
+              color: Colors.red.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 16),
             Text(
@@ -224,7 +224,7 @@ class ErrorHandler {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
               ),
               textAlign: TextAlign.center,
             ),
@@ -233,7 +233,7 @@ class ErrorHandler {
               message,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),

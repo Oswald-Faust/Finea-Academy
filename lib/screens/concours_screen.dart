@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/contest_model.dart';
 import '../services/contest_service.dart';
-import '../services/auth_service.dart';
 import '../widgets/contest_countdown_section.dart';
-import '../widgets/contest_winner_card.dart';
 import '../widgets/mt5_account_card.dart';
 import '../widgets/winner_announcement_card.dart';
-import '../widgets/all_winners_section.dart';
+import '../widgets/youtube_video_player.dart';
+import '../config/youtube_config.dart';
 import 'profile_screen.dart';
 
 class ConcoursScreen extends StatefulWidget {
@@ -21,7 +20,6 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
   bool _isLoading = true;
   bool _isParticipating = false;
   bool _isJoining = false;
-  Map<String, dynamic>? _contestStats;
   Map<String, dynamic>? _contestWinners;
   bool _isUserWinner = false;
 
@@ -38,14 +36,12 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
 
     try {
       final contest = await ContestService.getCurrentWeeklyContest();
-      final stats = await ContestService.getContestStats();
       final winners = await ContestService.getCurrentContestWinners();
       final isUserWinner = await ContestService.checkIfUserWon();
       
       if (mounted) {
         setState(() {
           _currentContest = contest;
-          _contestStats = stats;
           _contestWinners = winners;
           _isUserWinner = isUserWinner;
           _isLoading = false;
@@ -246,7 +242,16 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           const SizedBox(height: 24),
           
           // Section vidéo YouTube
-          _buildVideoSection(),
+          YouTubeVideoPlayer(
+            videoId: YouTubeConfig.weeklyContestVideoId,
+            title: YouTubeConfig.weeklyContestVideoTitle,
+            description: YouTubeConfig.weeklyContestVideoDescription,
+            thumbnailPath: YouTubeConfig.weeklyContestThumbnailPath,
+            onVideoPlayed: () {
+              // Callback optionnel pour tracker les vues
+              print('Vidéo YouTube lancée: ${YouTubeConfig.weeklyContestVideoUrl}');
+            },
+          ),
           
           const SizedBox(height: 24),
           
@@ -309,7 +314,7 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           Text(
             'FINEA',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               fontSize: 16,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
@@ -320,189 +325,11 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
     );
   }
 
-  Widget _buildVideoSection() {
-    return GestureDetector(
-      onTap: () {
-        _showVideoPlayer();
-      },
-      child: Container(
-        width: double.infinity,
-        height: 200,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.withOpacity(0.1),
-              Colors.purple.withOpacity(0.1),
-            ],
-          ),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: Stack(
-          children: [
-            // Image de fond (placeholder)
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                image: const DecorationImage(
-                  image: AssetImage('assets/images/Formation_trading.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            // Overlay sombre
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.black.withOpacity(0.4),
-              ),
-            ),
-            // Bouton de lecture central
-            Center(
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(40),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  size: 40,
-                  color: Color(0xFF0f0f23),
-                ),
-              ),
-            ),
-            // Texte "YouTube" en bas à droite
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'YouTube',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  void _showVideoPlayer() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: double.infinity,
-          height: 300,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: const Color(0xFF1a1a2e),
-          ),
-          child: Column(
-            children: [
-              // En-tête du modal
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0f0f23),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Text(
-                      '🎥 Vidéo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-              // Zone de la vidéo
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.black,
-                  ),
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.play_circle_outline,
-                          color: Colors.white,
-                          size: 64,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Vidéo',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Cliquez pour regarder la vidéo',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
+
+
+
 
   Widget _buildMainActionButton() {
     return SizedBox(
@@ -671,89 +498,5 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
     );
   }
 
-  Widget _buildPrizesSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.blue.withOpacity(0.1),
-            Colors.purple.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '🎁 Gains à gagner',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildPrizeItem('300€', 'Gain minimum'),
-              const SizedBox(width: 16),
-              _buildPrizeItem('600€', 'Gain moyen'),
-              const SizedBox(width: 16),
-              _buildPrizeItem('1K€', 'Gain maximum'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Tirage automatique tous les dimanches à 19h00',
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 14,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildPrizeItem(String amount, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.2)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              amount,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 12,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 } 
