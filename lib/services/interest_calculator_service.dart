@@ -1,10 +1,10 @@
 import 'dart:math' as math;
-import '../models/lot_calculator_model.dart';
+import '../models/interest_calculator_model.dart';
 
-class LotCalculatorService {
+class InterestCalculatorService {
   /// Calcule la croissance du capital avec investissements récurrents et intérêts
-  static LotCalculatorResult calculateGrowth(LotCalculatorInput input) {
-    final history = <LotCalculatorPeriodResult>[];
+  static InterestCalculatorResult calculateGrowth(InterestCalculatorInput input) {
+    final history = <InterestCalculatorPeriodResult>[];
     
     double capital = input.initialCapital;
     double totalInvested = input.initialCapital;
@@ -43,7 +43,7 @@ class LotCalculatorService {
       }
       
       // Ajouter à l'historique
-      history.add(LotCalculatorPeriodResult(
+      history.add(InterestCalculatorPeriodResult(
         period: i,
         capital: capital,
         totalInvested: totalInvested,
@@ -53,7 +53,7 @@ class LotCalculatorService {
     
     final totalInterest = capital - totalInvested;
     
-    return LotCalculatorResult(
+    return InterestCalculatorResult(
       input: input,
       finalCapital: capital,
       totalInvested: totalInvested,
@@ -69,8 +69,8 @@ class LotCalculatorService {
     Frequency interestFrequency,
     Frequency calculationFrequency,
   ) {
-    final interestPeriodsPerYear = LotCalculatorInput.getPeriodsPerYear(interestFrequency);
-    final calculationPeriodsPerYear = LotCalculatorInput.getPeriodsPerYear(calculationFrequency);
+    final interestPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(interestFrequency);
+    final calculationPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(calculationFrequency);
     
     // Convertir le taux annuel en taux par période d'intérêt
     final ratePerInterestPeriod = annualRate / interestPeriodsPerYear;
@@ -87,8 +87,8 @@ class LotCalculatorService {
     Frequency recurringFrequency,
     Frequency calculationFrequency,
   ) {
-    final recurringPeriodsPerYear = LotCalculatorInput.getPeriodsPerYear(recurringFrequency);
-    final calculationPeriodsPerYear = LotCalculatorInput.getPeriodsPerYear(calculationFrequency);
+    final recurringPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(recurringFrequency);
+    final calculationPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(calculationFrequency);
     
     // Convertir le montant annuel
     final annualAmount = amount * recurringPeriodsPerYear;
@@ -98,12 +98,12 @@ class LotCalculatorService {
   }
   
   /// Compare plusieurs scénarios
-  static List<LotCalculatorResult> compareScenarios(List<LotCalculatorInput> inputs) {
+  static List<InterestCalculatorResult> compareScenarios(List<InterestCalculatorInput> inputs) {
     return inputs.map((input) => calculateGrowth(input)).toList();
   }
   
   /// Génère un résumé comparatif
-  static Map<String, dynamic> generateComparison(List<LotCalculatorResult> results) {
+  static Map<String, dynamic> generateComparison(List<InterestCalculatorResult> results) {
     if (results.isEmpty) return {};
     
     final bestReturn = results.reduce(

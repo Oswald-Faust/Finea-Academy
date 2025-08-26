@@ -72,7 +72,7 @@ class LotCalculatorCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Calculette de lot',
+                    'Calculateur d\'Intérêt',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -82,7 +82,7 @@ class LotCalculatorCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    '(intérêt composé, et prêt bancaire)',
+                    '(croissance du capital, intérêts composés)',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -100,7 +100,7 @@ class LotCalculatorCard extends StatelessWidget {
                           border: Border.all(color: Colors.orange.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'Calcul',
+                          'Simuler',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -118,7 +118,7 @@ class LotCalculatorCard extends StatelessWidget {
                           border: Border.all(color: Colors.blue.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'Prêt',
+                          'Graphique',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,

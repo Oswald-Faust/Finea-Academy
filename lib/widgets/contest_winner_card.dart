@@ -95,16 +95,20 @@ class ContestWinnerCard extends StatelessWidget {
                 const SizedBox(width: 16),
                 // Trophée 3D violet
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
                     color: Colors.purple.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
-                    Icons.emoji_events,
-                    color: Colors.purple,
-                    size: 40,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/images/trophies.png',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ],

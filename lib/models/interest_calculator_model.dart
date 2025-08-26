@@ -1,13 +1,13 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'lot_calculator_model.g.dart';
+part 'interest_calculator_model.g.dart';
 
 enum InterestType { simple, compound }
 
 enum Frequency { monthly, quarterly, annually }
 
 @JsonSerializable()
-class LotCalculatorInput {
+class InterestCalculatorInput {
   final double initialCapital;
   final double recurringAmount;
   final Frequency recurringFrequency;
@@ -16,7 +16,7 @@ class LotCalculatorInput {
   final int periods;
   final InterestType interestType;
 
-  const LotCalculatorInput({
+  const InterestCalculatorInput({
     required this.initialCapital,
     required this.recurringAmount,
     required this.recurringFrequency,
@@ -26,10 +26,10 @@ class LotCalculatorInput {
     required this.interestType,
   });
 
-  factory LotCalculatorInput.fromJson(Map<String, dynamic> json) =>
-      _$LotCalculatorInputFromJson(json);
+  factory InterestCalculatorInput.fromJson(Map<String, dynamic> json) =>
+      _$InterestCalculatorInputFromJson(json);
 
-  Map<String, dynamic> toJson() => _$LotCalculatorInputToJson(this);
+  Map<String, dynamic> toJson() => _$InterestCalculatorInputToJson(this);
 
   // Méthode pour convertir la fréquence en nombre de périodes par an
   static int getPeriodsPerYear(Frequency frequency) {
@@ -67,35 +67,35 @@ class LotCalculatorInput {
 }
 
 @JsonSerializable()
-class LotCalculatorPeriodResult {
+class InterestCalculatorPeriodResult {
   final int period;
   final double capital;
   final double totalInvested;
   final double interestEarned;
 
-  const LotCalculatorPeriodResult({
+  const InterestCalculatorPeriodResult({
     required this.period,
     required this.capital,
     required this.totalInvested,
     required this.interestEarned,
   });
 
-  factory LotCalculatorPeriodResult.fromJson(Map<String, dynamic> json) =>
-      _$LotCalculatorPeriodResultFromJson(json);
+  factory InterestCalculatorPeriodResult.fromJson(Map<String, dynamic> json) =>
+      _$InterestCalculatorPeriodResultFromJson(json);
 
-  Map<String, dynamic> toJson() => _$LotCalculatorPeriodResultToJson(this);
+  Map<String, dynamic> toJson() => _$InterestCalculatorPeriodResultToJson(this);
 }
 
 @JsonSerializable()
-class LotCalculatorResult {
-  final LotCalculatorInput input;
+class InterestCalculatorResult {
+  final InterestCalculatorInput input;
   final double finalCapital;
   final double totalInvested;
   final double totalInterest;
-  final List<LotCalculatorPeriodResult> history;
+  final List<InterestCalculatorPeriodResult> history;
   final DateTime calculatedAt;
 
-  const LotCalculatorResult({
+  const InterestCalculatorResult({
     required this.input,
     required this.finalCapital,
     required this.totalInvested,
@@ -104,10 +104,10 @@ class LotCalculatorResult {
     required this.calculatedAt,
   });
 
-  factory LotCalculatorResult.fromJson(Map<String, dynamic> json) =>
-      _$LotCalculatorResultFromJson(json);
+  factory InterestCalculatorResult.fromJson(Map<String, dynamic> json) =>
+      _$InterestCalculatorResultFromJson(json);
 
-  Map<String, dynamic> toJson() => _$LotCalculatorResultToJson(this);
+  Map<String, dynamic> toJson() => _$InterestCalculatorResultToJson(this);
 
   // Calculer le rendement total en pourcentage
   double get totalReturnPercentage {
@@ -118,7 +118,7 @@ class LotCalculatorResult {
   // Calculer le rendement annuel moyen
   double get averageAnnualReturn {
     if (input.periods == 0) return 0;
-    final years = input.periods / LotCalculatorInput.getPeriodsPerYear(input.interestFrequency);
+    final years = input.periods / InterestCalculatorInput.getPeriodsPerYear(input.interestFrequency);
     if (years == 0) return 0;
     return totalReturnPercentage / years;
   }
@@ -126,28 +126,28 @@ class LotCalculatorResult {
 
 // Classe pour stocker un scénario de comparaison
 @JsonSerializable()
-class LotCalculatorScenario {
+class InterestCalculatorScenario {
   final String name;
-  final LotCalculatorInput input;
-  final LotCalculatorResult? result;
+  final InterestCalculatorInput input;
+  final InterestCalculatorResult? result;
 
-  const LotCalculatorScenario({
+  const InterestCalculatorScenario({
     required this.name,
     required this.input,
     this.result,
   });
 
-  factory LotCalculatorScenario.fromJson(Map<String, dynamic> json) =>
-      _$LotCalculatorScenarioFromJson(json);
+  factory InterestCalculatorScenario.fromJson(Map<String, dynamic> json) =>
+      _$InterestCalculatorScenarioFromJson(json);
 
-  Map<String, dynamic> toJson() => _$LotCalculatorScenarioToJson(this);
+  Map<String, dynamic> toJson() => _$InterestCalculatorScenarioToJson(this);
 
-  LotCalculatorScenario copyWith({
+  InterestCalculatorScenario copyWith({
     String? name,
-    LotCalculatorInput? input,
-    LotCalculatorResult? result,
+    InterestCalculatorInput? input,
+    InterestCalculatorResult? result,
   }) {
-    return LotCalculatorScenario(
+    return InterestCalculatorScenario(
       name: name ?? this.name,
       input: input ?? this.input,
       result: result ?? this.result,

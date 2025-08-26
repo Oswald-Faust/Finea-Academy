@@ -72,7 +72,7 @@ class PositioningAlertCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Alerte de positionnement',
+                    'Calculateur de Lot',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -91,7 +91,7 @@ class PositioningAlertCard extends StatelessWidget {
                           border: Border.all(color: Colors.green.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'BTCUSDT',
+                          'Position',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -104,12 +104,12 @@ class PositioningAlertCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.3),
+                          color: Colors.blue.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red.withOpacity(0.5), width: 1),
+                          border: Border.all(color: Colors.blue.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'ETHUSDT',
+                          'Risque',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -137,7 +137,7 @@ class PositioningAlertCard extends StatelessWidget {
                   border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
                 ),
                 child: const Icon(
-                  Icons.trending_up,
+                  Icons.calculate,
                   color: Colors.white,
                   size: 20,
                 ),

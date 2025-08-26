@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class FineaVisionSection extends StatelessWidget {
   const FineaVisionSection({super.key});
@@ -11,60 +12,68 @@ class FineaVisionSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Titre de la section
-          const Text(
-            'La vision de Finéa',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
+          // Titre de la section sans design arrondi
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: const Text(
+              'La vision de Finéa',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+                letterSpacing: 0.5,
+              ),
             ),
           ),
           
           const SizedBox(height: 24),
           
-          // Premier élément : Rendre l'investissement accessible à tous
-          _buildVisionCard(
-            title: 'Rendre l\'investissement accessible à tous',
-            description: 'On guide chacun, pas à pas, pour comprendre les bases de l\'investissement et faire ses premiers choix en toute confiance.',
-            icon: Icons.lock_open,
-            iconColor: Colors.purple,
-            iconPosition: IconPosition.right,
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Deuxième élément : Comprendre l'économie
-          _buildVisionCard(
-            title: 'Comprendre l\'économie',
-            description: 'Parce qu\'investir sans comprendre le monde qui nous entoure, c\'est naviguer à l\'aveugle. On aide chacun à décrypter l\'économie pour mieux agir.',
-            icon: Icons.account_balance_wallet,
-            iconColor: Colors.purple,
-            iconPosition: IconPosition.left,
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Troisième élément : Créer un vrai plan de développement
-          _buildVisionCard(
-            title: 'Créer un vrai plan de développement personnel et financier',
-            description: 'On propose des stratégies concrètes pour développer son capital, mais aussi pour structurer une activité durable autour de l\'investissement.',
-            icon: Icons.explore,
-            iconColor: Colors.purple,
-            iconPosition: IconPosition.right,
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Quatrième élément : Accompagnement simple et humain
-          _buildVisionCard(
-            title: 'Un accompagnement simple, clair et humain',
-            description: 'Pas de jargon, pas de barrière : notre mission, c\'est de rendre l\'éducation financière simple et utile, pour que chacun prenne le contrôle de son avenir.',
-            icon: Icons.people,
-            iconColor: Colors.purple,
-            iconPosition: IconPosition.left,
+          // Liste des éléments de vision sans animations
+          Column(
+            children: [
+              // Premier élément : Rendre l'investissement accessible à tous
+              _buildVisionCard(
+                title: 'Rendre l\'investissement accessible à tous',
+                description: 'On guide chacun, pas à pas, pour comprendre les bases de l\'investissement et faire ses premiers choix en toute confiance.',
+                imagePath: 'assets/images/key.png',
+                imagePosition: ImagePosition.right,
+                isFirst: true,
+                isLast: false,
+              ),
+              
+              // Deuxième élément : Comprendre l'économie
+              _buildVisionCard(
+                title: 'Comprendre l\'économie',
+                description: 'Parce qu\'investir sans comprendre le monde qui nous entoure, c\'est naviguer à l\'aveugle. On aide chacun à décrypter l\'économie pour mieux agir.',
+                imagePath: 'assets/images/money.png',
+                imagePosition: ImagePosition.left,
+                isFirst: false,
+                isLast: false,
+              ),
+              
+              // Troisième élément : Créer un vrai plan de développement
+              _buildVisionCard(
+                title: 'Créer un vrai plan de développement personnel et financier',
+                description: 'On propose des stratégies concrètes pour développer son capital, mais aussi pour structurer une activité durable autour de l\'investissement.',
+                imagePath: 'assets/images/horloge.png',
+                imagePosition: ImagePosition.right,
+                isFirst: false,
+                isLast: false,
+              ),
+              
+              // Quatrième élément : Accompagnement simple et humain
+              _buildVisionCard(
+                title: 'Un accompagnement simple, clair et humain',
+                description: 'Pas de jargon, pas de barrière : notre mission, c\'est de rendre l\'éducation financière simple et utile, pour que chacun prenne le contrôle de son avenir.',
+                imagePath: 'assets/images/person.png',
+                imagePosition: ImagePosition.left,
+                isFirst: false,
+                isLast: true,
+              ),
+            ],
           ),
         ],
       ),
@@ -74,37 +83,46 @@ class FineaVisionSection extends StatelessWidget {
   Widget _buildVisionCard({
     required String title,
     required String description,
-    required IconData icon,
-    required Color iconColor,
-    required IconPosition iconPosition,
+    required String imagePath,
+    required ImagePosition imagePosition,
+    bool isFirst = false,
+    bool isLast = false,
   }) {
+    // Définir les bordures arrondies selon la position
+    BorderRadius borderRadius;
+    if (isFirst) {
+      // Première section : arrondie partout sauf en bas
+      borderRadius = const BorderRadius.only(
+        topLeft: Radius.circular(12),
+        topRight: Radius.circular(12),
+        bottomLeft: Radius.circular(0),
+        bottomRight: Radius.circular(0),
+      );
+    } else if (isLast) {
+      // Dernière section : arrondie partout sauf en haut
+      borderRadius = const BorderRadius.only(
+        topLeft: Radius.circular(0),
+        topRight: Radius.circular(0),
+        bottomLeft: Radius.circular(12),
+        bottomRight: Radius.circular(12),
+      );
+    } else {
+      // Sections du milieu : arrondies partout
+      borderRadius = BorderRadius.circular(12);
+    }
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1a1a2e).withOpacity(0.8),
-            const Color(0xFF16213e).withOpacity(0.6),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.purple, width: 1),
+        borderRadius: borderRadius,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (iconPosition == IconPosition.left) ...[
-            _buildIconContainer(icon, iconColor),
+          if (imagePosition == ImagePosition.left) ...[
+            _buildImageContainer(imagePath),
             const SizedBox(width: 16),
           ],
           
@@ -116,17 +134,18 @@ class FineaVisionSection extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
+                    height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   description,
                   style: const TextStyle(
-                    color: Color(0xFFE6E6E6),
-                    fontSize: 14,
+                    color: Colors.white,
+                    fontSize: 12,
                     height: 1.4,
                     fontFamily: 'Poppins',
                   ),
@@ -135,45 +154,25 @@ class FineaVisionSection extends StatelessWidget {
             ),
           ),
           
-          if (iconPosition == IconPosition.right) ...[
+          if (imagePosition == ImagePosition.right) ...[
             const SizedBox(width: 16),
-            _buildIconContainer(icon, iconColor),
+            _buildImageContainer(imagePath),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildIconContainer(IconData icon, Color color) {
+  Widget _buildImageContainer(String imagePath) {
     return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withOpacity(0.3),
-            color.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Icon(
-        icon,
-        color: color,
-        size: 24,
+      width: 120,
+      height: 120,
+      child: Image.asset(
+        imagePath,
+        fit: BoxFit.contain,
       ),
     );
   }
 }
 
-enum IconPosition { left, right } 
+enum ImagePosition { left, right } 

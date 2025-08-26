@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/formation_card.dart';
-import 'profile_screen.dart'; // Added import for ProfileScreen
+import 'profile_screen.dart';
+import 'formation_modules_screen.dart';
 
 class AcademieScreen extends StatelessWidget {
   const AcademieScreen({super.key});
@@ -53,10 +54,12 @@ class AcademieScreen extends StatelessWidget {
               actionIcon: Icons.trending_up,
               actionIconColor: Colors.red,
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Redirection vers la formation Bourse...'),
-                    backgroundColor: Colors.green,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const FormationModulesScreen(
+                      formationType: 'Bourse',
+                      formationTitle: 'FORMATION BOURSE',
+                    ),
                   ),
                 );
               },
@@ -71,10 +74,12 @@ class AcademieScreen extends StatelessWidget {
               actionIcon: Icons.bar_chart,
               actionIconColor: Colors.blue,
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Redirection vers la formation Trading...'),
-                    backgroundColor: Colors.blue,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const FormationModulesScreen(
+                      formationType: 'Trading',
+                      formationTitle: 'FORMATION TRADING',
+                    ),
                   ),
                 );
               },
@@ -82,22 +87,22 @@ class AcademieScreen extends StatelessWidget {
             
             const SizedBox(height: 24),
             
-            // Formation Marketing
-            FormationCard(
-              title: 'MARKETING',
-              subtitle: 'Marketing',
-              additionalText: 'CRÉATION DE / CLOSING',
-              actionIcon: Icons.campaign,
-              actionIconColor: Colors.purple,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Redirection vers la formation Marketing...'),
-                    backgroundColor: Colors.purple,
-                  ),
-                );
-              },
-            ),
+            // Formation Marketing (commentée)
+            // FormationCard(
+            //   title: 'MARKETING',
+            //   subtitle: 'Marketing',
+            //   additionalText: 'CRÉATION DE / CLOSING',
+            //   actionIcon: Icons.campaign,
+            //   actionIconColor: Colors.purple,
+            //   onTap: () {
+            //     ScaffoldMessenger.of(context).showSnackBar(
+            //       const SnackBar(
+            //         content: Text('Formation Marketing en développement...'),
+            //         backgroundColor: Colors.purple,
+            //       ),
+            //     );
+            //   },
+            // ),
           ],
         ),
       ),

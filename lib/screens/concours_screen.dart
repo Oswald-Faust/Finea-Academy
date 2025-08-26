@@ -7,6 +7,7 @@ import '../widgets/winner_announcement_card.dart';
 import '../widgets/youtube_video_player.dart';
 import '../config/youtube_config.dart';
 import 'profile_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ConcoursScreen extends StatefulWidget {
   const ConcoursScreen({super.key});
@@ -267,6 +268,36 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           // Bouton principal "Prendre mes places !"
           _buildMainActionButton(),
           
+          const SizedBox(height: 16),
+          
+          // Texte explicatif
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: const Text(
+              '💡 Achetez vos tickets sur notre site, puis revenez ici pour participer au concours !',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                height: 1.4,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Bouton secondaire pour participer au concours
+          _buildSecondaryActionButton(),
+          
           const SizedBox(height: 24),
           
           // Icônes des réseaux sociaux
@@ -335,7 +366,22 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isParticipating ? null : _joinContest,
+        onPressed: _isParticipating ? null : () async {
+          // Rediriger vers le site Shopify pour prendre les places
+          final url = 'https://ifgdfg-es.myshopify.com/';
+          try {
+            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Impossible d\'ouvrir le site'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: _isParticipating ? Colors.grey : const Color(0xFF1E40AF),
           foregroundColor: Colors.white,
@@ -346,21 +392,17 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           elevation: 8,
           shadowColor: const Color(0xFF1E40AF).withOpacity(0.4),
         ),
-        child: _isJoining
+        child: _isParticipating
             ? const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
+                  Icon(
+                    Icons.check_circle,
+                    size: 24,
                   ),
                   SizedBox(width: 12),
                   Text(
-                    'Inscription en cours...',
+                    'Déjà inscrit !',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -373,15 +415,75 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    _isParticipating ? Icons.check_circle : Icons.add,
+                    Icons.shopping_cart,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    _isParticipating ? 'Déjà inscrit !' : 'Prendre mes places !',
+                    'Acheter mes tickets !',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryActionButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isParticipating ? null : _joinContest,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _isParticipating ? Colors.grey : const Color(0xFF374151),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 4,
+          shadowColor: const Color(0xFF374151).withOpacity(0.3),
+        ),
+        child: _isJoining
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Inscription en cours...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _isParticipating ? Icons.check_circle : Icons.emoji_events,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _isParticipating ? 'Déjà inscrit au concours !' : 'Participer au concours',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       fontFamily: 'Poppins',
                     ),
                   ),
@@ -397,8 +499,21 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
       children: [
         // Instagram
         GestureDetector(
-          onTap: () {
-            _showSocialMediaInfo('Instagram', 'Suivez-nous sur Instagram pour plus de contenu !');
+          onTap: () async {
+            // Ouvrir directement le profil Instagram Finea
+            final url = 'https://www.instagram.com/finea.fr?igsh=MXVjd2tkOWZ1ODB3Zg%3D%3D&utm_source=qr';
+            try {
+              await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Impossible d\'ouvrir Instagram'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
           },
           child: Container(
             width: 60,

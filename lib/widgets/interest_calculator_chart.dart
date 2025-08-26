@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../models/lot_calculator_model.dart';
+import '../models/interest_calculator_model.dart';
 
-class LotCalculatorChart extends StatefulWidget {
-  final LotCalculatorResult result;
+class InterestCalculatorChart extends StatefulWidget {
+  final InterestCalculatorResult result;
   final bool showInvestedAmount;
   final bool showTotalCapital;
 
-  const LotCalculatorChart({
+  const InterestCalculatorChart({
     super.key,
     required this.result,
     this.showInvestedAmount = true,
@@ -15,10 +15,10 @@ class LotCalculatorChart extends StatefulWidget {
   });
 
   @override
-  State<LotCalculatorChart> createState() => _LotCalculatorChartState();
+  State<InterestCalculatorChart> createState() => _InterestCalculatorChartState();
 }
 
-class _LotCalculatorChartState extends State<LotCalculatorChart> {
+class _InterestCalculatorChartState extends State<InterestCalculatorChart> {
   List<Color> get availableColors => const [
         Colors.blue,
         Colors.green,

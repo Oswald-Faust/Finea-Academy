@@ -233,16 +233,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             
-            const SizedBox(height: 24),
-            
-            // SECTION ALERTES CLÔTURÉES
-            AlertsSection(alerts: alerts),
-            
-            const SizedBox(height: 24),
+            const SizedBox(height: 40),
             
             // SECTION GAGNANT DU CONCOURS
             const Text(
               "Le gagnant du jeu concours !",
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -287,6 +283,11 @@ class _HomeScreenState extends State<HomeScreen> {
             
             // SECTION LA VISION DE FINÉA
             const FineaVisionSection(),
+            
+            const SizedBox(height: 24),
+            
+            // SECTION ALERTES CLÔTURÉES
+            AlertsSection(alerts: alerts),
           ],
         ),
       ),

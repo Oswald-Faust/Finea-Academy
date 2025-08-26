@@ -4,6 +4,7 @@ import '../widgets/lot_calculator_card.dart';
 import '../widgets/currency_converter_card.dart';
 import 'profile_screen.dart';
 import 'currency_converter_screen.dart';
+import 'interest_calculator_screen.dart';
 import 'lot_calculator_screen.dart';
 
 class OutilsScreen extends StatelessWidget {
@@ -34,13 +35,12 @@ class OutilsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // SECTION ALERTE DE POSITIONNEMENT
+            // SECTION CALCULATEUR DE LOT
             PositioningAlertCard(
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Ouverture des alertes de positionnement...'),
-                    backgroundColor: Colors.green,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const LotCalculatorScreen(),
                   ),
                 );
               },
@@ -48,12 +48,12 @@ class OutilsScreen extends StatelessWidget {
             
             const SizedBox(height: 16),
             
-            // SECTION CALCULATRICE DE LOT
+            // SECTION CALCULATEUR D'INTÉRÊT
             LotCalculatorCard(
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const LotCalculatorScreen(),
+                    builder: (context) => const InterestCalculatorScreen(),
                   ),
                 );
               },
