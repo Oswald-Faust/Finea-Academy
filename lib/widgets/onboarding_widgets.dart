@@ -28,23 +28,29 @@ class OnboardingPageWidget extends StatelessWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0), // Réduit de 24/40 à 20/20
           child: Column(
+            mainAxisSize: MainAxisSize.min, // Ajout pour éviter l'expansion excessive
             children: [
               // Traitement spécial pour la première page (logo centré)
               if (page.pageIndex == 0) ...[
-                Expanded(
+                Flexible( // Changé de Expanded à Flexible
                   child: Center(
                     child: FadeInUp(
                       duration: const Duration(milliseconds: 1000),
                       delay: Duration(milliseconds: isVisible ? 400 : 0),
                       child: Container(
-                        constraints: const BoxConstraints(maxWidth: 200),
+                        constraints: BoxConstraints(
+                          maxWidth: 180, // Réduit de 200 à 180
+                          maxHeight: MediaQuery.of(context).size.height * 0.4, // Ajout d'une contrainte de hauteur
+                        ),
                         child: Image.asset(
                           page.imagePath,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
+                              width: 180, // Réduit de 200 à 180
+                              height: 120, // Hauteur fixe pour l'erreur
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
@@ -52,7 +58,7 @@ class OnboardingPageWidget extends StatelessWidget {
                               child: const Icon(
                                 Icons.image_not_supported,
                                 color: Colors.white,
-                                size: 80,
+                                size: 60, // Réduit de 80 à 60
                               ),
                             );
                           },
@@ -63,7 +69,7 @@ class OnboardingPageWidget extends StatelessWidget {
                 ),
               ] else ...[
                 // Nouveau layout pour tous les autres slides (1-7)
-                const SizedBox(height: 40),
+                const SizedBox(height: 20), // Réduit de 40 à 20
                 
                 // Titre en haut
                 FadeInLeft(
@@ -74,16 +80,16 @@ class OnboardingPageWidget extends StatelessWidget {
                     child: Text(
                       page.title,
                       style: const TextStyle(
-                        fontSize: 28,
+                        fontSize: 28, // Augmenté de 24 à 28
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        height: 1.2,
+                        height: 1.2, // Augmenté de 1.1 à 1.2
                       ),
                     ),
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 16), // Augmenté de 12 à 16
                 
                 // Description juste en dessous
                 FadeInLeft(
@@ -94,54 +100,55 @@ class OnboardingPageWidget extends StatelessWidget {
                     child: Text(
                       page.description,
                       style: TextStyle(
-                        fontSize: 14, // Taille réduite
+                        fontSize: 15, // Augmenté de 13 à 15
                         color: Colors.white.withOpacity(0.9),
-                        height: 1.4, // Hauteur de ligne légèrement réduite
+                        height: 1.4, // Augmenté de 1.3 à 1.4
                       ),
                     ),
                   ),
                 ),
                 
-                                                  // Image positionnée à droite au bord
-                 Expanded(
-                   child: Stack(
-                     children: [
-                                                                       Positioned(
-                          right: page.pageIndex == 2 ? -20 : -100, // Moins coupée pour le cadeau, normale pour tous les autres
-                          top: 0,
-                          bottom: 0,
-                          child: FadeInRight(
-                            duration: const Duration(milliseconds: 1000),
-                            delay: Duration(milliseconds: isVisible ? 1000 : 0),
-                            child: Container(
-                              constraints: BoxConstraints(
-                                maxWidth: page.pageIndex == 2 ? 550 : 600, // Légèrement plus petit pour le cadeau, normal pour tous les autres
-                              ),
-                              child: Image.asset(
-                                page.imagePath,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: page.pageIndex == 2 ? 550 : 600,
-                                    height: page.pageIndex == 2 ? 550 : 600,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Icon(
-                                      Icons.image_not_supported,
-                                      color: Colors.white,
-                                      size: 80,
-                                    ),
-                                  );
-                                },
-                              ),
+                // Image positionnée à droite au bord avec layout flexible
+                Flexible( // Changé de Expanded à Flexible
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -20, // Style uniforme pour toutes les pages
+                        top: 0,
+                        bottom: 0,
+                        child: FadeInRight(
+                          duration: const Duration(milliseconds: 1000),
+                          delay: Duration(milliseconds: isVisible ? 1000 : 0),
+                          child: Container(
+                            constraints: BoxConstraints(
+                              maxWidth: 400, // Style uniforme pour toutes les pages
+                              maxHeight: MediaQuery.of(context).size.height * 0.5, // Ajout d'une contrainte de hauteur
+                            ),
+                            child: Image.asset(
+                              page.imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: page.pageIndex == 2 ? 400 : 450,
+                                  height: 300, // Hauteur fixe pour l'erreur
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.white,
+                                    size: 60, // Réduit de 80 à 60
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),
-                     ],
-                   ),
-                 ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ],
           ),
@@ -176,7 +183,7 @@ class OnboardingBottomSheet extends StatelessWidget {
     final isLastPage = currentPage == totalPages - 1;
     
     return Container(
-      height: isLastPage ? 140 : 120,
+      height: isLastPage ? 160 : 120, // Augmenté de 140 à 160 pour éviter l'overflow
       decoration: BoxDecoration(
         // Suppression du fond blanc - transparent
         color: Colors.transparent,
@@ -186,10 +193,11 @@ class OnboardingBottomSheet extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0), // Réduit de 20 à 16
         child: isLastPage
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min, // Ajout pour éviter l'expansion
                 children: [
                   // Bouton Connexion
                   FadeInUp(
@@ -201,7 +209,7 @@ class OnboardingBottomSheet extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF000D64),
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 50),
+                          minimumSize: const Size(double.infinity, 48), // Réduit de 50 à 48
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
@@ -219,7 +227,7 @@ class OnboardingBottomSheet extends StatelessWidget {
                     ),
                   ),
                   
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10), // Réduit de 12 à 10
                   
                   // Bouton Inscription
                   FadeInUp(
@@ -232,7 +240,7 @@ class OnboardingBottomSheet extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white, width: 2),
-                          minimumSize: const Size(double.infinity, 50),
+                          minimumSize: const Size(double.infinity, 48), // Réduit de 50 à 48
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),

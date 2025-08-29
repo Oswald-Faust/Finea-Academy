@@ -1,12 +1,12 @@
 class OnboardingPage {
   final String title;
   final String description;
-  final String imagePath;
+  final String imagePath;  
   final int pageIndex;
   final List<String> keyFeatures;
 
   const OnboardingPage({
-    required this.title,
+    required this.title, 
     required this.description,
     required this.imagePath,
     required this.pageIndex,
@@ -27,28 +27,28 @@ class OnboardingData {
       const OnboardingPage(
         title: "Les mouvements du monde, analysés pour vous",
         description: "Recevez une analyse claire et synthétique de l'économie mondiale, rédigée par un professionnel du secteur bancaire, régulé par l'AMF.\nUn point de vue fiable, sans bruit, pour mieux comprendre les enjeux actuels.",
-        imagePath: "assets/images/letters.png",
+        imagePath: "assets/images/1-removebg-preview-removebg-preview.png",
         pageIndex: 1,
-        keyFeatures: [],
+        keyFeatures: ["Analyse professionnelle", "Régulation AMF", "Vue d'ensemble"],
       ),
       const OnboardingPage(
         title: "Découvre une nouvelle approche innovante",
         description: "Nous proposons une nouvelle approche accessible de l'investissement : une solution innovante qui permet de découvrir le monde de l'investissement à partir de seulement 2€.",
-        imagePath: "assets/images/cadaux-removebg-preview.png",
+        imagePath: "assets/images/4-removebg-preview.png",
         pageIndex: 2,
         keyFeatures: ["Accessible dès 2€", "Innovation constante", "Simplicité d'usage"],
       ),
       const OnboardingPage(
         title: "Plus que des infos, une vraie transmission en temps réel",
         description: "Notre IA partage l'entrée, le suivi et la sortie des trades en temps réel, pour un transfert de gestion fluide et 100 % encadré.",
-        imagePath: "assets/images/notifs.png",
+        imagePath: "assets/images/2-removebg-preview.png",
         pageIndex: 3,
         keyFeatures: ["Temps réel", "IA avancée", "Gestion encadrée"],
       ),
       const OnboardingPage(
         title: "Construisez votre avenir selon votre profil",
         description: "Nous mettons à votre disposition un outil simple et rapide pour déterminer votre profil investisseur. Il s'adapte à votre situation, vos objectifs et votre tolérance au risque afin de vous orienter vers les solutions les plus cohérentes.",
-        imagePath: "assets/images/profile-image.png",
+        imagePath: "assets/images/3-removebg-preview.png",
         pageIndex: 4,
         keyFeatures: ["Analyses expertes", "Régulation AMF", "Synthèses claires"],
         
@@ -56,21 +56,21 @@ class OnboardingData {
       const OnboardingPage(
         title: "Pilotez votre argent avec précision",
         description: "Accédez à des calculateurs simples et puissants pour gérer vos lots de trading, simuler l'effet des intérêts composés et estimer vos capacités d'emprunt bancaire.",
-                 imagePath: "assets/images/calculate.png",
+        imagePath: "assets/images/9-removebg-preview.png",
         pageIndex: 5,
         keyFeatures: ["Calculateurs avancés", "Simulations précises", "Gestion optimisée"],
       ),
       const OnboardingPage(
         title: "L'éducation financière qui transforme vos décisions",
         description: "Un centre de formation complet pour comprendre, maîtriser et appliquer les bases de l'investissement, quel que soit votre profil.",
-                 imagePath: "assets/images/diploma.png",
+        imagePath: "assets/images/6-removebg-preview.png",
         pageIndex: 6,
         keyFeatures: ["Formations certifiées", "Expertise reconnue", "Méthodes éprouvées"],
       ),
       const OnboardingPage(
         title: "Nos Partenaires",
         description: "Pour garantir sécurité et performance, nous avons sélectionné uniquement des partenaires régulés, reconnus pour leur fiabilité et leur conformité.",
-        imagePath: "assets/images/pqrt.png",
+        imagePath: "assets/images/7-removebg-preview.png",
         pageIndex: 7,
         keyFeatures: ["Partenaires régulés", "Sécurité garantie", "Confiance établie"],
       ),
