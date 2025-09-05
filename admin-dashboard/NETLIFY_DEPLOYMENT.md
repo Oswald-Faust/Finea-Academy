@@ -13,7 +13,7 @@
 Dans l'interface Netlify, ajoutez ces variables :
 
 ```env
-REACT_APP_API_URL=https://finea-api-production.up.railway.app/api 
+REACT_APP_API_URL=https://finea-api.up.railway.app/api 
 ```
 
 ### **2. Configuration de build**
@@ -45,7 +45,7 @@ npm run build
 
 ## 🔗 **URLs importantes**
 
-- **API Backend** : `https://finea-api-production.up.railway.app`
+- **API Backend** : `https://finea-api.up.railway.app`
 - **Dashboard Admin** : `https://votre-site.netlify.app`
 
 ## 🧪 **Test après déploiement**

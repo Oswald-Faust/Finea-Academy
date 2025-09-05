@@ -5,7 +5,7 @@ void main() async {
   print('🧪 Test de connexion à l\'API Finéa...');
   
   final dio = Dio();
-  const String apiUrl = 'https://finea-api-production.up.railway.app/api ';
+  const String apiUrl = 'https://finea-api.up.railway.app/api ';
   
   try {
     // Test 1: Endpoint de santé

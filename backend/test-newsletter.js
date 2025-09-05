@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://finea-api-production.up.railway.app/api ';
+const BASE_URL = 'https://finea-api.up.railway.app/api ';
 
 const testNewsletterAPI = async () => {
   console.log('🚀 Test de l\'API Newsletter Finéa Académie\n');

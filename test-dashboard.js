@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'https://finea-api-production.up.railway.app/api ';
+const API_BASE_URL = 'https://finea-api.up.railway.app/api ';
 
 async function testDashboardAPI() {
   console.log('🧪 Test des routes du dashboard...\n');

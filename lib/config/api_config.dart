@@ -19,7 +19,7 @@ class ApiConfig {
       }
     } else {
       // En production, utiliser l'URL de production
-      return 'https://finea-api-production.up.railway.app';
+      return 'https://finea-api.up.railway.app';
     }
   }
 

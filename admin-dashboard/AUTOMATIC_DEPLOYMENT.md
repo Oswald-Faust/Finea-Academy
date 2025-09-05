@@ -36,7 +36,7 @@
 Dans "Build & deploy" → "Environment variables" :
 
 ```env
-REACT_APP_API_URL=https://finea-api-production.up.railway.app/api 
+REACT_APP_API_URL=https://finea-api.up.railway.app/api 
 ```
 
 ## ✅ **Résultat**

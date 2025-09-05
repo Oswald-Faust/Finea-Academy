@@ -127,7 +127,7 @@ npm run dev
 ### 2. Tester l'API
 ```bash
 # Test de santé de l'API
-curl https://finea-api-production.up.railway.app/api /health
+curl https://finea-api.up.railway.app/api /health
 ```
 
 ### 3. Démarrer l'application Flutter
@@ -159,7 +159,7 @@ Pour changer l'URL du backend, modifiez dans `lib/services/api_service.dart` :
 
 ```dart
 static const String baseUrl = kDebugMode 
-    ? 'https://finea-api-production.up.railway.app/api '  // Développement
+    ? 'https://finea-api.up.railway.app/api '  // Développement
     : 'https://your-api-domain.com/api';  // Production
 ```
 
