@@ -2,7 +2,7 @@ const axios = require('axios');
 
 // Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
-const PRODUCTION_URL = 'https://finea-api.up.railway.app/api';
+const PRODUCTION_URL = 'https://finea-academy-1.onrender.com/api';
 
 // Utiliser l'URL locale par défaut, production en option
 const baseURL = process.env.USE_PRODUCTION === 'true' ? PRODUCTION_URL : API_BASE_URL;

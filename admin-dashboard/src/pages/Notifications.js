@@ -25,7 +25,7 @@ const getApiBaseUrl = () => {
   if (isDevelopment) {
     return 'http://localhost:5000/api';
   } else {
-    return 'https://finea-api.up.railway.app/api';
+    return 'https://finea-academy-1.onrender.com/api';
   }
 };
 

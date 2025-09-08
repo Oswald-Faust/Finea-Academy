@@ -199,13 +199,13 @@ await WeeklyContestService.cleanupOldContests();
 
 ```bash
 # Vérifier le statut du planificateur
-curl https://finea-api.up.railway.app/api/scheduler/status
+curl https://finea-academy-1.onrender.com/api/scheduler/status
 
 # Obtenir le concours actuel
-curl https://finea-api.up.railway.app/api/contests/weekly/current
+curl https://finea-academy-1.onrender.com/api/contests/weekly/current
 
 # Vérifier la santé de l'API
-curl https://finea-api.up.railway.app/api/health
+curl https://finea-academy-1.onrender.com/api/health
 ```
 
 ## 📞 Support

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://finea-api.up.railway.app/api ';
+const BASE_URL = 'https://finea-academy-1.onrender.com/api ';
 
 const testRoutes = async () => {
   console.log('🚀 Test des nouvelles routes de l\'API Finéa Académie\n');

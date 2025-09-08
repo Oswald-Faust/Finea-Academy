@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "admin-dashboard/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "admin-dashboard/$1"
+    }
+  ],
+  "buildCommand": "cd admin-dashboard && npm run build",
+  "outputDirectory": "admin-dashboard/build",
+  "installCommand": "cd admin-dashboard && npm install"
+}
