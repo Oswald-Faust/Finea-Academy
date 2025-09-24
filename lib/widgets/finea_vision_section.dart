@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class FineaVisionSection extends StatelessWidget {
   const FineaVisionSection({super.key});
@@ -165,8 +164,8 @@ class FineaVisionSection extends StatelessWidget {
 
   Widget _buildImageContainer(String imagePath) {
     return Container(
-      width: 120,
-      height: 120,
+      width: 160,
+      height: 160,
       child: Image.asset(
         imagePath,
         fit: BoxFit.contain,

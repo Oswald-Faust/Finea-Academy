@@ -1,17 +1,14 @@
 {
-  "dependencies": {
-    "@editorjs/checklist": "^1.6.0",
-    "@editorjs/code": "^2.9.3",
-    "@editorjs/delimiter": "^1.4.2",
-    "@editorjs/editorjs": "^2.30.8",
-    "@editorjs/embed": "^2.7.6",
-    "@editorjs/header": "^2.8.8",
-    "@editorjs/image": "^2.10.3",
-    "@editorjs/link": "^2.6.2",
-    "@editorjs/list": "^2.0.8",
-    "@editorjs/marker": "^1.4.0",
-    "@editorjs/paragraph": "^2.11.7",
-    "@editorjs/quote": "^2.7.6",
-    "@editorjs/warning": "^1.4.1"
-  }
+  "name": "finea-academy-root",
+  "version": "1.0.0",
+  "description": "Finéa Académie - Projet principal",
+  "private": true,
+  "scripts": {
+    "build": "cd admin-dashboard && npm install && npm run build",
+    "start": "cd admin-dashboard && npm start",
+    "dev": "cd admin-dashboard && npm start"
+  },
+  "workspaces": [
+    "admin-dashboard"
+  ]
 }

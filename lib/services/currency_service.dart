@@ -6,7 +6,12 @@ class CurrencyService {
   // API alternative gratuite qui ne nécessite pas de clé
   static const String _baseUrl = 'https://api.fxratesapi.com';
   static const String _fallbackUrl = 'https://api.exchangerate-api.com/v4';
-  static const Duration _timeout = Duration(seconds: 30);
+  static const Duration _timeout = Duration(seconds: 5);
+  static const Duration _cacheTimeout = Duration(minutes: 5);
+  
+  // Cache pour éviter les appels répétés
+  static final Map<String, CurrencyConversionResponse> _conversionCache = {};
+  static final Map<String, DateTime> _cacheTimestamps = {};
 
   /// Convertit un montant d'une devise vers une autre
   static Future<CurrencyConversionResponse> convertCurrency({
@@ -14,6 +19,13 @@ class CurrencyService {
     required String to,
     required double amount,
   }) async {
+    // Vérifier le cache d'abord
+    final cacheKey = '${from.toUpperCase()}_${to.toUpperCase()}_$amount';
+    if (_isConversionCached(cacheKey)) {
+      print('💾 Utilisation du cache pour la conversion');
+      return _conversionCache[cacheKey]!;
+    }
+
     try {
       // Première tentative avec fxratesapi.com
       final uri = Uri.parse('$_baseUrl/latest')
@@ -28,7 +40,7 @@ class CurrencyService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('✅ Réponse API conversion reçue: $data');
+        print('✅ Réponse API conversion reçue');
         
         // Adapter la réponse au format attendu
         if (data['success'] == true && data['rates'] != null) {
@@ -36,36 +48,41 @@ class CurrencyService {
           if (rate != null) {
             final result = amount * rate;
             
-            return CurrencyConversionResponse(
+            final conversion = CurrencyConversionResponse(
               success: true,
               query: Query(from: from, to: to, amount: amount),
               info: ConversionInfo(rate: rate.toDouble()),
               date: data['date'] ?? DateTime.now().toIso8601String().split('T')[0],
               result: result,
             );
+            
+            // Mettre en cache
+            _conversionCache[cacheKey] = conversion;
+            _cacheTimestamps[cacheKey] = DateTime.now();
+            
+            return conversion;
           }
         }
       }
       
       // Fallback vers exchangerate-api.com
-      return _convertWithFallbackAPI(from, to, amount);
+      return await _convertWithFallbackAPI(from, to, amount, cacheKey);
       
     } catch (e) {
       print('❌ Erreur lors de la conversion: $e');
       // Essayer avec l'API de fallback
       try {
-        return _convertWithFallbackAPI(from, to, amount);
+        return await _convertWithFallbackAPI(from, to, amount, cacheKey);
       } catch (fallbackError) {
-        throw CurrencyServiceException(
-          'Impossible de convertir la devise: ${e.toString()}',
-        );
+        print('⚠️ Toutes les APIs ont échoué, utilisation des taux par défaut');
+        return _convertWithDefaultRate(from, to, amount, cacheKey);
       }
     }
   }
 
   /// API de fallback pour la conversion
   static Future<CurrencyConversionResponse> _convertWithFallbackAPI(
-    String from, String to, double amount) async {
+    String from, String to, double amount, String cacheKey) async {
     
     final uri = Uri.parse('$_fallbackUrl/latest/$from');
     print('🔄 Tentative avec API de fallback: $uri');
@@ -80,17 +97,57 @@ class CurrencyService {
       if (rate != null) {
         final result = amount * rate;
         
-        return CurrencyConversionResponse(
+        final conversion = CurrencyConversionResponse(
           success: true,
           query: Query(from: from, to: to, amount: amount),
           info: ConversionInfo(rate: rate.toDouble()),
           date: data['date'] ?? DateTime.now().toIso8601String().split('T')[0],
           result: result,
         );
+        
+        // Mettre en cache
+        _conversionCache[cacheKey] = conversion;
+        _cacheTimestamps[cacheKey] = DateTime.now();
+        
+        return conversion;
       }
     }
     
-    throw CurrencyServiceException('Toutes les APIs ont échoué');
+    throw CurrencyServiceException('API de fallback a échoué');
+  }
+
+  /// Conversion avec taux par défaut en cas d'échec des APIs
+  static CurrencyConversionResponse _convertWithDefaultRate(
+    String from, String to, double amount, String cacheKey) {
+    
+    final rate = _getDefaultRate(from, to);
+    final result = amount * rate;
+    
+    print('📊 Utilisation du taux par défaut: $rate pour ${from.toUpperCase()}/${to.toUpperCase()}');
+    
+    final conversion = CurrencyConversionResponse(
+      success: true,
+      query: Query(from: from, to: to, amount: amount),
+      info: ConversionInfo(rate: rate),
+      date: DateTime.now().toIso8601String().split('T')[0],
+      result: result,
+    );
+    
+    // Mettre en cache même les taux par défaut
+    _conversionCache[cacheKey] = conversion;
+    _cacheTimestamps[cacheKey] = DateTime.now();
+    
+    return conversion;
+  }
+
+  /// Vérifie si une conversion est en cache et valide
+  static bool _isConversionCached(String cacheKey) {
+    if (!_conversionCache.containsKey(cacheKey) || !_cacheTimestamps.containsKey(cacheKey)) {
+      return false;
+    }
+    
+    final cacheAge = DateTime.now().difference(_cacheTimestamps[cacheKey]!);
+    return cacheAge < _cacheTimeout;
   }
 
   /// Récupère l'historique des taux de change pour le graphique
@@ -165,7 +222,7 @@ class CurrencyService {
   static double _getDefaultRate(String from, String to) {
     final pair = '${from.toUpperCase()}/${to.toUpperCase()}';
     
-    // Taux approximatifs pour les paires courantes
+    // Taux approximatifs pour les paires courantes (devises fiat)
     switch (pair) {
       case 'EUR/USD': return 1.0852;
       case 'USD/EUR': return 0.9215;
@@ -177,6 +234,95 @@ class CurrencyService {
       case 'USD/JPY': return 151.34;
       case 'EUR/CHF': return 0.9456;
       case 'USD/CHF': return 0.8712;
+      case 'EUR/CAD': return 1.4650;
+      case 'USD/CAD': return 1.3500;
+      case 'EUR/AUD': return 1.6200;
+      case 'USD/AUD': return 1.4900;
+      case 'EUR/CNY': return 7.8500;
+      case 'USD/CNY': return 7.2300;
+      
+      // Devises exotiques
+      case 'USD/AED': return 3.6725;
+      case 'EUR/AED': return 3.9850;
+      case 'USD/ZAR': return 18.5000;
+      case 'EUR/ZAR': return 20.1000;
+      case 'USD/MXN': return 17.2000;
+      case 'EUR/MXN': return 18.6500;
+      case 'USD/THB': return 35.8000;
+      case 'EUR/THB': return 38.8500;
+      case 'USD/TRY': return 30.5000;
+      case 'EUR/TRY': return 33.1000;
+      case 'USD/ILS': return 3.7500;
+      case 'EUR/ILS': return 4.0700;
+      case 'USD/EGP': return 30.9000;
+      case 'EUR/EGP': return 33.5500;
+      case 'USD/PHP': return 55.8000;
+      case 'EUR/PHP': return 60.5000;
+      case 'USD/MYR': return 4.6500;
+      case 'EUR/MYR': return 5.0500;
+      case 'USD/IDR': return 15500.0;
+      case 'EUR/IDR': return 16800.0;
+      case 'USD/VND': return 24500.0;
+      case 'EUR/VND': return 26600.0;
+      case 'USD/UAH': return 36.5000;
+      case 'EUR/UAH': return 39.6000;
+      
+      // Cryptomonnaies (taux approximatifs en USD)
+      case 'USD/BTC': return 0.000023;
+      case 'BTC/USD': return 43000.0;
+      case 'EUR/BTC': return 0.000021;
+      case 'BTC/EUR': return 47000.0;
+      case 'USD/ETH': return 0.00037;
+      case 'ETH/USD': return 2700.0;
+      case 'EUR/ETH': return 0.00034;
+      case 'ETH/EUR': return 2900.0;
+      case 'USD/USDT': return 1.0;
+      case 'USDT/USD': return 1.0;
+      case 'EUR/USDT': return 0.92;
+      case 'USDT/EUR': return 1.08;
+      case 'USD/USDC': return 1.0;
+      case 'USDC/USD': return 1.0;
+      case 'USD/BNB': return 0.0018;
+      case 'BNB/USD': return 550.0;
+      case 'USD/ADA': return 0.45;
+      case 'ADA/USD': return 2.22;
+      case 'USD/SOL': return 0.0037;
+      case 'SOL/USD': return 270.0;
+      case 'USD/XRP': return 0.62;
+      case 'XRP/USD': return 1.61;
+      case 'USD/DOT': return 0.12;
+      case 'DOT/USD': return 8.33;
+      case 'USD/DOGE': return 0.08;
+      case 'DOGE/USD': return 12.5;
+      case 'USD/AVAX': return 0.037;
+      case 'AVAX/USD': return 27.0;
+      case 'USD/MATIC': return 0.83;
+      case 'MATIC/USD': return 1.20;
+      case 'USD/LINK': return 0.045;
+      case 'LINK/USD': return 22.0;
+      case 'USD/UNI': return 0.12;
+      case 'UNI/USD': return 8.33;
+      case 'USD/LTC': return 0.0037;
+      case 'LTC/USD': return 270.0;
+      case 'USD/BCH': return 0.0045;
+      case 'BCH/USD': return 220.0;
+      case 'USD/ATOM': return 0.12;
+      case 'ATOM/USD': return 8.33;
+      case 'USD/FTM': return 0.45;
+      case 'FTM/USD': return 2.22;
+      case 'USD/NEAR': return 0.12;
+      case 'NEAR/USD': return 8.33;
+      case 'USD/ALGO': return 0.18;
+      case 'ALGO/USD': return 5.56;
+      
+      // Paires inverses pour les cryptomonnaies
+      case 'BTC/ETH': return 15.9;
+      case 'ETH/BTC': return 0.063;
+      case 'BTC/USDT': return 43000.0;
+      case 'USDT/BTC': return 0.000023;
+      case 'ETH/USDT': return 2700.0;
+      case 'USDT/ETH': return 0.00037;
+      
       default: return 1.0; // Taux par défaut
     }
   }
@@ -228,10 +374,6 @@ class CurrencyService {
         .contains(currencyCode.toUpperCase());
   }
 
-  /// Formate une date au format YYYY-MM-DD
-  static String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
 }
 
 /// Exception personnalisée pour les erreurs du service de devises
@@ -322,3 +464,4 @@ class CurrencyConverterState {
     return '${amount.toStringAsFixed(2)} ${fromCurrency.code} = ${result.toStringAsFixed(2)} ${toCurrency.code}';
   }
 }
+

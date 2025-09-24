@@ -12,15 +12,15 @@ class PositioningAlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 120,
+      height: 140,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -28,23 +28,30 @@ class PositioningAlertCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Fond avec graphiques financiers
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.green.withOpacity(0.3),
-                    Colors.red.withOpacity(0.2),
-                    Colors.blue.withOpacity(0.1),
-                  ],
-                ),
-              ),
-              child: CustomPaint(
-                painter: FinancialChartPainter(),
+            // Image de fond - Alertes de positionnement
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/alertes-de-posi.jpeg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback en cas d'erreur de chargement de l'image
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.green.withOpacity(0.3),
+                          Colors.red.withOpacity(0.2),
+                          Colors.blue.withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: CustomPaint(
+                      painter: FinancialChartPainter(),
+                    ),
+                  );
+                },
               ),
             ),
             
@@ -57,8 +64,8 @@ class PositioningAlertCard extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.black.withOpacity(0.4),
-                    Colors.black.withOpacity(0.2),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.3),
                   ],
                 ),
               ),
@@ -72,12 +79,35 @@ class PositioningAlertCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Calculateur de Lot',
+                    'Alertes de Positionnement',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          blurRadius: 3,
+                          color: Colors.black54,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Notifications en temps réel',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                          color: Colors.black54,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -86,12 +116,12 @@ class PositioningAlertCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.3),
+                          color: Colors.red.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.green.withOpacity(0.5), width: 1),
+                          border: Border.all(color: Colors.red.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'Position',
+                          'Alertes',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -104,12 +134,12 @@ class PositioningAlertCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.3),
+                          color: Colors.orange.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.withOpacity(0.5), width: 1),
+                          border: Border.all(color: Colors.orange.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'Risque',
+                          'Trading',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -137,7 +167,7 @@ class PositioningAlertCard extends StatelessWidget {
                   border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
                 ),
                 child: const Icon(
-                  Icons.calculate,
+                  Icons.notifications_active,
                   color: Colors.white,
                   size: 20,
                 ),

@@ -12,15 +12,15 @@ class CurrencyConverterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 120,
+      height: 140,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -28,23 +28,30 @@ class CurrencyConverterCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Fond avec graphique multicolore
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.purple.withOpacity(0.3),
-                    Colors.blue.withOpacity(0.2),
-                    Colors.green.withOpacity(0.1),
-                  ],
-                ),
-              ),
-              child: CustomPaint(
-                painter: CurrencyChartPainter(),
+            // Image de fond - Convertisseur
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/conver.jpeg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback en cas d'erreur de chargement de l'image
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.purple.withOpacity(0.3),
+                          Colors.blue.withOpacity(0.2),
+                          Colors.green.withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: CustomPaint(
+                      painter: CurrencyChartPainter(),
+                    ),
+                  );
+                },
               ),
             ),
             
@@ -57,8 +64,8 @@ class CurrencyConverterCard extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.black.withOpacity(0.4),
-                    Colors.black.withOpacity(0.2),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.3),
                   ],
                 ),
               ),
@@ -72,12 +79,35 @@ class CurrencyConverterCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Convertisseur de devise',
+                    'Convertisseur de Devise',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          blurRadius: 3,
+                          color: Colors.black54,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Taux de change en temps réel',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                          color: Colors.black54,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),

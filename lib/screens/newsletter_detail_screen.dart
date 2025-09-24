@@ -83,10 +83,6 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
                 ),
                 onPressed: _toggleBookmark,
               ),
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.white),
-                onPressed: _shareArticle,
-              ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -113,26 +109,6 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
                           Colors.transparent,
                           Colors.black.withOpacity(0.7),
                         ],
-                      ),
-                    ),
-                  ),
-                  // Note en haut
-                  Positioned(
-                    top: 60,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        '(Après avoir cliquer sur l\'annonce de la newsletter)',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                        ),
                       ),
                     ),
                   ),
@@ -445,23 +421,7 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
     );
   }
 
-  void _shareArticle() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fonctionnalité de partage à implémenter'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-  }
 
-  void _readMore() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fonctionnalité "Lire plus" à implémenter'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-  }
 
   String _formatDate(DateTime date) {
     final months = [

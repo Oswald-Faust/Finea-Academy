@@ -66,6 +66,10 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'Calculateur d\'Intérêt',
           style: TextStyle(
@@ -111,8 +115,8 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.withValues(alpha: 0.1),
-            Colors.purple.withValues(alpha: 0.1),
+            const Color(0xFF000D64).withValues(alpha: 0.1),
+            const Color(0xFF1A237E).withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -126,7 +130,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.2),
+                  color: const Color(0xFF000D64).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -322,7 +326,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.blue),
+              borderSide: const BorderSide(color: Color(0xFF000D64)),
             ),
           ),
           validator: (value) {
@@ -381,7 +385,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.blue),
+              borderSide: const BorderSide(color: Color(0xFF000D64)),
             ),
           ),
           items: Frequency.values.map((frequency) {
@@ -533,14 +537,14 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
       child: ElevatedButton(
         onPressed: _isCalculating ? null : _calculate,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: const Color(0xFF000D64),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 8,
-          shadowColor: Colors.blue.withValues(alpha: 0.4),
+          shadowColor: const Color(0xFF000D64).withValues(alpha: 0.4),
         ),
         child: _isCalculating
             ? const Row(
@@ -607,8 +611,8 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.green.withValues(alpha: 0.1),
-            Colors.teal.withValues(alpha: 0.1),
+            const Color(0xFF000D64).withValues(alpha: 0.1),
+            const Color(0xFF1A237E).withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -619,7 +623,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
         children: [
           const Row(
             children: [
-              Icon(Icons.analytics, color: Colors.green, size: 24),
+              Icon(Icons.analytics, color: Colors.blue, size: 24),
               SizedBox(width: 8),
               Text(
                 'Résultats de simulation',

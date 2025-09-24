@@ -113,73 +113,9 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
       backgroundColor: const Color(0xFF0f0f23),
       body: CustomScrollView(
         slivers: [
-          // Header avec logo et titre
+          // Section d'études en haut
           SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Logo et titre
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF000D64),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.public,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'finéa',
-                        style: TextStyle(
-                          color: Color(0xFF000D64),
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      const Spacer(),
-                      // Graphique en ligne
-                      Container(
-                        width: 60,
-                        height: 30,
-                        child: CustomPaint(
-                          painter: LineChartPainter(),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Newsletter',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: _buildStudiesSection(),
           ),
           
           // État de chargement
@@ -204,7 +140,6 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
                 decoration: BoxDecoration(
                   color: Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
                 ),
                 child: Column(
                   children: [
@@ -302,20 +237,95 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
     );
   }
 
-  Widget _buildArticleCard(NewsletterArticle article) {
+  Widget _buildStudiesSection() {
     return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _openArticle(article),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.school,
+                  color: Colors.blue,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Études Finéa',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Étude plus poussée (à la une)',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Cette section sera bientôt disponible avec des analyses approfondies et des études détaillées.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Bientôt disponible',
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArticleCard(NewsletterArticle article) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openArticle(article),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 // Image de l'article
@@ -377,7 +387,6 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 

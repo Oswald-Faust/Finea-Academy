@@ -3,8 +3,8 @@ import '../models/contest_model.dart';
 import '../services/contest_service.dart';
 import '../widgets/contest_countdown_section.dart';
 import '../widgets/mt5_account_card.dart';
-import '../widgets/winner_announcement_card.dart';
 import '../widgets/youtube_video_player.dart';
+import '../widgets/myfxbook_widget.dart';
 import '../config/youtube_config.dart';
 import 'profile_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,9 +20,6 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
   Contest? _currentContest;
   bool _isLoading = true;
   bool _isParticipating = false;
-  bool _isJoining = false;
-  Map<String, dynamic>? _contestWinners;
-  bool _isUserWinner = false;
 
   @override
   void initState() {
@@ -37,14 +34,10 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
 
     try {
       final contest = await ContestService.getCurrentWeeklyContest();
-      final winners = await ContestService.getCurrentContestWinners();
-      final isUserWinner = await ContestService.checkIfUserWon();
       
       if (mounted) {
         setState(() {
           _currentContest = contest;
-          _contestWinners = winners;
-          _isUserWinner = isUserWinner;
           _isLoading = false;
         });
 
@@ -77,49 +70,7 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
     }
   }
 
-  Future<void> _joinContest() async {
-    if (_currentContest == null) return;
 
-    setState(() {
-      _isJoining = true;
-    });
-
-    try {
-      final success = await ContestService.participateInWeeklyContest();
-      
-      if (mounted) {
-        if (success) {
-          setState(() {
-            _isParticipating = true;
-          });
-          _showSuccessSnackBar('Inscription réussie au concours !');
-          _loadContestData();
-        } else {
-          _showErrorSnackBar('Erreur lors de l\'inscription');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Erreur lors de l\'inscription: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isJoining = false;
-        });
-      }
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -172,75 +123,15 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
   }
 
   Widget _buildNoContestView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.emoji_events_outlined,
-            size: 80,
-            color: Colors.grey[600],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Aucun concours actif',
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Revenez plus tard pour participer\nau prochain concours hebdomadaire !',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 16,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _loadContestData,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Actualiser'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContestView() {
-    final contest = _currentContest!;
-    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Affichage des gagnants (toujours visible)
-          if (_contestWinners != null)
-            WinnerAnnouncementCard(
-              contestTitle: _contestWinners!['contestTitle'] ?? '',
-              hasWinners: _contestWinners!['hasWinners'] ?? false,
-              winners: _contestWinners!['winners'] != null 
-                ? List<Map<String, dynamic>>.from(_contestWinners!['winners'])
-                : null,
-              drawDate: DateTime.tryParse(_contestWinners!['drawDate'] ?? DateTime.now().toIso8601String()) ?? DateTime.now(),
-              isCurrentUserWinner: _isUserWinner,
-            ),
-          
           // En-tête principal avec titre et logo
           _buildMainHeader(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           
           // Section vidéo YouTube
           YouTubeVideoPlayer(
@@ -254,21 +145,17 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             },
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           
-          // Compte à rebours jusqu'au tirage
-          if (!contest.drawCompleted)
-            ContestCountdownSection(
-              targetDate: contest.drawDate,
-              title: 'Prochain tirage dans :',
-            ),
+          // Compte à rebours jusqu'au prochain dimanche
+          _buildNextSundayCountdown(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           
           // Bouton principal "Prendre mes places !"
           _buildMainActionButton(),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           
           // Texte explicatif
           Container(
@@ -293,22 +180,9 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             ),
           ),
           
-          const SizedBox(height: 16),
-          
-          // Bouton secondaire pour participer au concours
-          _buildSecondaryActionButton(),
-          
           const SizedBox(height: 24),
           
-          // Icônes des réseaux sociaux
-          _buildSocialMediaIcons(),
-          
-          // Section des gains et informations (COMMENTÉE)
-          // _buildPrizesSection(),
-          
-          const SizedBox(height: 24),
-          
-          // Section MT5
+          // Section MT5 - Découvrir tous les gagnants
           MT5AccountCard(
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -319,6 +193,107 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
               );
             },
           ),
+          
+          const SizedBox(height: 24),
+          
+          // Widget Myfxbook - Graphique de portfolio
+          _buildMyfxbookSection(),
+          
+          const SizedBox(height: 60), // Marge importante en bas
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContestView() {
+    final contest = _currentContest!;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // En-tête principal avec titre et logo
+          _buildMainHeader(),
+          
+          const SizedBox(height: 8),
+          
+          // Section vidéo YouTube
+          YouTubeVideoPlayer(
+            videoId: YouTubeConfig.weeklyContestVideoId,
+            title: YouTubeConfig.weeklyContestVideoTitle,
+            description: YouTubeConfig.weeklyContestVideoDescription,
+            thumbnailPath: YouTubeConfig.weeklyContestThumbnailPath,
+            onVideoPlayed: () {
+              // Callback optionnel pour tracker les vues
+              print('Vidéo YouTube lancée: ${YouTubeConfig.weeklyContestVideoUrl}');
+            },
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // Compte à rebours jusqu'au tirage
+          if (!contest.drawCompleted)
+            ContestCountdownSection(
+              targetDate: contest.drawDate,
+              title: 'Prochain tirage dans :',
+            ),
+          
+          const SizedBox(height: 8),
+          
+          // Bouton principal "Prendre mes places !"
+          _buildMainActionButton(),
+          
+          const SizedBox(height: 8),
+          
+          // Texte explicatif
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: const Text(
+              '💡 Achetez vos tickets sur notre site, puis revenez ici pour participer au concours !',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                height: 1.4,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Section MT5 - Découvrir tous les gagnants
+          MT5AccountCard(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Accès au compte MT5'),
+                  backgroundColor: Colors.purple,
+                ),
+              );
+            },
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Widget Myfxbook - Graphique de portfolio
+          _buildMyfxbookSection(),
+          
+          const SizedBox(height: 24),
+          
+          // Section des gains et informations (COMMENTÉE)
+          // _buildPrizesSection(),
+          
+          const SizedBox(height: 60), // Marge importante en bas
         ],
       ),
     );
@@ -335,24 +310,36 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               fontFamily: 'Poppins',
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'FINEA',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.3),
-              fontSize: 16,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMyfxbookSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Performance du Portfolio',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        const SizedBox(height: 12),
+        MyfxbookWidget(
+          portfolioId: '11701131', // ID du portfolio "Jeu concours Finea"
+          height: 400,
+        ),
+      ],
     );
   }
 
@@ -383,14 +370,18 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: _isParticipating ? Colors.grey : const Color(0xFF1E40AF),
+          backgroundColor: _isParticipating ? Colors.grey : Colors.transparent,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 20),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: _isParticipating ? Colors.grey : const Color(0xFF3B82F6),
+              width: 1,
+            ),
           ),
-          elevation: 8,
-          shadowColor: const Color(0xFF1E40AF).withOpacity(0.4),
+          elevation: 0,
+          shadowColor: Colors.transparent,
         ),
         child: _isParticipating
             ? const Row(
@@ -433,65 +424,6 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
     );
   }
 
-  Widget _buildSecondaryActionButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isParticipating ? null : _joinContest,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _isParticipating ? Colors.grey : const Color(0xFF374151),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
-          shadowColor: const Color(0xFF374151).withOpacity(0.3),
-        ),
-        child: _isJoining
-            ? const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Inscription en cours...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _isParticipating ? Icons.check_circle : Icons.emoji_events,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _isParticipating ? 'Déjà inscrit au concours !' : 'Participer au concours',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
 
   Widget _buildSocialMediaIcons() {
     return Row(
@@ -516,27 +448,13 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             }
           },
           child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE4405F), Color(0xFF833AB4)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFE4405F).withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            width: 120,
+            height: 120,
             child: const Center(
               child: Image(
-                image: AssetImage('assets/images/logo_instagram.png'),
-                width: 32,
-                height: 32,
-                color: Colors.white,
+                image: AssetImage('assets/images/instagram.png'),
+                width: 100,
+                height: 100,
               ),
             ),
           ),
@@ -550,33 +468,143 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             _showSocialMediaInfo('TikTok', 'Découvrez nos vidéos courtes sur TikTok !');
           },
           child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF25F4EE), Color(0xFFFE2C55)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF25F4EE).withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            width: 120,
+            height: 120,
             child: const Center(
               child: Image(
-                image: AssetImage('assets/images/logo_tiktok.png'),
-                width: 32,
-                height: 32,
-                color: Colors.white,
+                image: AssetImage('assets/images/tiktok.png'),
+                width: 100,
+                height: 100,
               ),
             ),
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildNextSundayCountdown() {
+    return Column(
+      children: [
+        Text(
+          'Prochain tirage dans :',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildCountdownTimer(),
+        const SizedBox(height: 6),
+        _buildNextSundayDate(),
+        const SizedBox(height: 8),
+        _buildSocialMediaIcons(),
+      ],
+    );
+  }
+
+  Widget _buildCountdownTimer() {
+    return StreamBuilder<Duration>(
+      stream: Stream.periodic(const Duration(seconds: 1), (_) {
+        final now = DateTime.now();
+        final nextSunday = _getNextSunday(now);
+        return nextSunday.difference(now);
+      }),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator(color: Colors.blue);
+        }
+
+        final duration = snapshot.data!;
+        final days = duration.inDays;
+        final hours = duration.inHours % 24;
+        final minutes = duration.inMinutes % 60;
+        final seconds = duration.inSeconds % 60;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildTimeUnit(days.toString(), 'j'),
+            const SizedBox(width: 8),
+            _buildTimeUnit(hours.toString().padLeft(2, '0'), 'h'),
+            const SizedBox(width: 8),
+            _buildTimeUnit(minutes.toString().padLeft(2, '0'), 'm'),
+            const SizedBox(width: 8),
+            _buildTimeUnit(seconds.toString().padLeft(2, '0'), 's'),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTimeUnit(String value, String unit) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          unit,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNextSundayDate() {
+    final now = DateTime.now();
+    final nextSunday = _getNextSunday(now);
+    
+    final weekdays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    final months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    
+    final weekday = weekdays[nextSunday.weekday - 1];
+    final day = nextSunday.day;
+    final month = months[nextSunday.month - 1];
+    final year = nextSunday.year;
+    final hour = nextSunday.hour;
+    final minute = nextSunday.minute.toString().padLeft(2, '0');
+    
+    return Text(
+      '$weekday $day $month $year à ${hour}h$minute',
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.8),
+        fontSize: 16,
+        fontFamily: 'Poppins',
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  DateTime _getNextSunday(DateTime now) {
+    // Calculer le prochain dimanche à 19h
+    int daysUntilSunday = (7 - now.weekday) % 7;
+    if (daysUntilSunday == 0) {
+      // Si c'est déjà dimanche, vérifier si c'est avant 19h
+      if (now.hour < 19) {
+        daysUntilSunday = 0; // Aujourd'hui à 19h
+      } else {
+        daysUntilSunday = 7; // Dimanche prochain
+      }
+    }
+    
+    final nextSunday = now.add(Duration(days: daysUntilSunday));
+    return DateTime(nextSunday.year, nextSunday.month, nextSunday.day, 19, 0);
   }
 
   void _showSocialMediaInfo(String platform, String message) {

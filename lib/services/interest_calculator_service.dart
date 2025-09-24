@@ -32,10 +32,9 @@ class InterestCalculatorService {
       double interestEarned = 0;
       
       if (input.interestType == InterestType.compound) {
-        // Intérêt composé : appliqué sur tout le capital
-        final newCapital = capital * (1 + periodInterestRate);
-        interestEarned = newCapital - capital;
-        capital = newCapital;
+        // Intérêt composé : appliqué sur tout le capital actuel
+        interestEarned = capital * periodInterestRate;
+        capital += interestEarned;
       } else {
         // Intérêt simple : appliqué seulement sur le capital initial
         interestEarned = input.initialCapital * periodInterestRate;

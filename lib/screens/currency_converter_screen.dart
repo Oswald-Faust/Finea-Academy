@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/currency_model.dart';
 import '../services/currency_service.dart';
+import '../widgets/searchable_dropdown.dart';
 
 class CurrencyConverterScreen extends StatefulWidget {
   const CurrencyConverterScreen({super.key});
@@ -18,6 +20,9 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
   final TextEditingController _amountController = TextEditingController(text: '100');
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  
+  // Timer pour le debouncing
+  Timer? _debounceTimer;
   
   // État du convertisseur
   CurrencyConverterState _state = CurrencyConverterState(
@@ -55,6 +60,14 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
     _loadChartData();
   }
 
+  /// Conversion avec debouncing pour éviter les appels multiples
+  void _convertCurrencyDebounced() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _convertCurrency();
+    });
+  }
+
   Future<void> _convertCurrency() async {
     if (_state.amount <= 0) return;
     
@@ -69,20 +82,24 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
         amount: _state.amount,
       );
 
-      setState(() {
-        _state = _state.copyWith(
-          loadingState: LoadingState.success,
-          conversionResult: result,
-          errorMessage: null,
-        );
-      });
+      if (mounted) {
+        setState(() {
+          _state = _state.copyWith(
+            loadingState: LoadingState.success,
+            conversionResult: result,
+            errorMessage: null,
+          );
+        });
+      }
     } catch (e) {
-      setState(() {
-        _state = _state.copyWith(
-          loadingState: LoadingState.error,
-          errorMessage: e.toString(),
-        );
-      });
+      if (mounted) {
+        setState(() {
+          _state = _state.copyWith(
+            loadingState: LoadingState.error,
+            errorMessage: e.toString(),
+          );
+        });
+      }
     }
   }
 
@@ -100,6 +117,18 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
     } catch (e) {
       print('Erreur lors du chargement du graphique: $e');
     }
+  }
+
+  /// Filtre les devises pour éviter les paires identiques
+  List<Currency> _getFilteredCurrencies() {
+    final currentFromCurrency = _state.fromCurrency;
+    final currentToCurrency = _state.toCurrency;
+    
+    // Retourner toutes les devises sauf celle déjà sélectionnée dans l'autre dropdown
+    return SupportedCurrencies.currencies.where((currency) {
+      return currency.code != currentFromCurrency.code && 
+             currency.code != currentToCurrency.code;
+    }).toList();
   }
 
   void _swapCurrencies() async {
@@ -122,6 +151,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
       setState(() {
         _state = _state.copyWith(amount: amount);
       });
+      // Utiliser le debouncing pour éviter les appels multiples
+      _convertCurrencyDebounced();
     }
   }
 
@@ -130,6 +161,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
       setState(() {
         _state = _state.copyWith(fromCurrency: currency);
       });
+      // Conversion immédiate pour le changement de devise
       await _convertCurrency();
       await _loadChartData();
     }
@@ -140,6 +172,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
       setState(() {
         _state = _state.copyWith(toCurrency: currency);
       });
+      // Conversion immédiate pour le changement de devise
       await _convertCurrency();
       await _loadChartData();
     }
@@ -158,6 +191,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
   void dispose() {
     _amountController.dispose();
     _animationController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -210,8 +244,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.purple.withOpacity(0.1),
-            Colors.blue.withOpacity(0.05),
+            const Color(0xFF000D64).withOpacity(0.1),
+            const Color(0xFF1A237E).withOpacity(0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -310,23 +344,24 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
     return Row(
       children: [
         // Devise source
-        Expanded(child: _buildCurrencyDropdown(
+        Expanded(child: SearchableCurrencyDropdown(
           label: 'Devise source',
           value: _state.fromCurrency,
           onChanged: _onFromCurrencyChanged,
+          currencies: _getFilteredCurrencies(),
         )),
         
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         
         // Bouton d'inversion
         Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: Colors.purple.withOpacity(0.2),
+            color: const Color(0xFF000D64).withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.purple.withOpacity(0.3),
+              color: const Color(0xFF000D64).withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -344,95 +379,28 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
           ),
         ),
         
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         
         // Devise cible
-        Expanded(child: _buildCurrencyDropdown(
+        Expanded(child: SearchableCurrencyDropdown(
           label: 'Devise cible',
           value: _state.toCurrency,
           onChanged: _onToCurrencyChanged,
+          currencies: _getFilteredCurrencies(),
         )),
       ],
     );
   }
 
-  Widget _buildCurrencyDropdown({
-    required String label,
-    required Currency value,
-    required void Function(Currency?) onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: DropdownButtonFormField<Currency>(
-            value: value,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            dropdownColor: const Color(0xFF1a1a3a),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Poppins',
-            ),
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-            items: SupportedCurrencies.currencies.map((currency) {
-              return DropdownMenuItem<Currency>(
-                value: currency,
-                child: Row(
-                  children: [
-                    Text(
-                      currency.code,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      currency.symbol,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildConvertButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _state.loadingState == LoadingState.loading ? null : _convertCurrency,
+        onPressed: _state.loadingState == LoadingState.loading ? null : _convertCurrencyDebounced,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.purple,
+          backgroundColor: const Color(0xFF000D64),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -495,54 +463,60 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.green.withOpacity(0.3),
-          width: 1,
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.green.withOpacity(0.3),
+            width: 1,
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          // Résultat principal
-          Text(
-            _state.formattedConversionResult,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Résultat principal
+            Text(
+              _state.formattedConversionResult,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Taux de change
-          Text(
-            _state.formattedCurrentRate,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
-              fontFamily: 'Poppins',
+            
+            const SizedBox(height: 8),
+            
+            // Taux de change
+            Text(
+              _state.formattedCurrentRate,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+                fontFamily: 'Poppins',
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Note sur la mise à jour
-          Text(
-            'Taux mis à jour en temps réel.',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-              fontFamily: 'Poppins',
+            
+            const SizedBox(height: 8),
+            
+            // Note sur la mise à jour
+            Text(
+              'Taux mis à jour en temps réel.',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                fontFamily: 'Poppins',
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -556,8 +530,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.withOpacity(0.1),
-            Colors.purple.withOpacity(0.05),
+            const Color(0xFF000D64).withOpacity(0.1),
+            const Color(0xFF1A237E).withOpacity(0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -618,7 +592,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.purple : Colors.transparent,
+                color: isSelected ? const Color(0xFF000D64) : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -641,7 +615,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
     if (!_state.hasChartData) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF000D64)),
         ),
       );
     }
@@ -717,8 +691,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
             isCurved: true,
             gradient: LinearGradient(
               colors: [
-                Colors.purple,
-                Colors.blue,
+                const Color(0xFF000D64),
+                const Color(0xFF1A237E),
               ],
             ),
             barWidth: 3,
@@ -732,8 +706,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.purple.withOpacity(0.3),
-                  Colors.blue.withOpacity(0.1),
+                  const Color(0xFF000D64).withOpacity(0.3),
+                  const Color(0xFF1A237E).withOpacity(0.1),
                 ],
               ),
             ),

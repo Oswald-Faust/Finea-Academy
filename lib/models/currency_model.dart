@@ -159,6 +159,7 @@ enum ChartPeriod {
 /// Liste des devises supportées
 class SupportedCurrencies {
   static const List<Currency> currencies = [
+    // Devises fiat principales
     Currency(code: 'EUR', name: 'Euro', symbol: '€'),
     Currency(code: 'USD', name: 'Dollar américain', symbol: '\$'),
     Currency(code: 'GBP', name: 'Livre sterling', symbol: '£'),
@@ -179,6 +180,46 @@ class SupportedCurrencies {
     Currency(code: 'KRW', name: 'Won sud-coréen', symbol: '₩'),
     Currency(code: 'SGD', name: 'Dollar de Singapour', symbol: 'S\$'),
     Currency(code: 'NZD', name: 'Dollar néo-zélandais', symbol: 'NZ\$'),
+    
+    // Devises fiat exotiques
+    Currency(code: 'AED', name: 'Dirham émirati', symbol: 'د.إ'),
+    Currency(code: 'ZAR', name: 'Rand sud-africain', symbol: 'R'),
+    Currency(code: 'MXN', name: 'Peso mexicain', symbol: '\$'),
+    Currency(code: 'THB', name: 'Baht thaïlandais', symbol: '฿'),
+    Currency(code: 'TRY', name: 'Livre turque', symbol: '₺'),
+    Currency(code: 'ILS', name: 'Shekel israélien', symbol: '₪'),
+    Currency(code: 'EGP', name: 'Livre égyptienne', symbol: '£'),
+    Currency(code: 'PHP', name: 'Peso philippin', symbol: '₱'),
+    Currency(code: 'MYR', name: 'Ringgit malaisien', symbol: 'RM'),
+    Currency(code: 'IDR', name: 'Roupie indonésienne', symbol: 'Rp'),
+    Currency(code: 'VND', name: 'Dong vietnamien', symbol: '₫'),
+    Currency(code: 'UAH', name: 'Hryvnia ukrainienne', symbol: '₴'),
+    Currency(code: 'RON', name: 'Leu roumain', symbol: 'lei'),
+    Currency(code: 'BGN', name: 'Lev bulgare', symbol: 'лв'),
+    Currency(code: 'HRK', name: 'Kuna croate', symbol: 'kn'),
+    Currency(code: 'RSD', name: 'Dinar serbe', symbol: 'дин'),
+    
+    // Cryptomonnaies populaires
+    Currency(code: 'BTC', name: 'Bitcoin', symbol: '₿'),
+    Currency(code: 'ETH', name: 'Ethereum', symbol: 'Ξ'),
+    Currency(code: 'USDT', name: 'Tether USD', symbol: '₮'),
+    Currency(code: 'USDC', name: 'USD Coin', symbol: '₮'),
+    Currency(code: 'BNB', name: 'Binance Coin', symbol: 'BNB'),
+    Currency(code: 'ADA', name: 'Cardano', symbol: '₳'),
+    Currency(code: 'SOL', name: 'Solana', symbol: '◎'),
+    Currency(code: 'XRP', name: 'Ripple', symbol: 'XRP'),
+    Currency(code: 'DOT', name: 'Polkadot', symbol: '●'),
+    Currency(code: 'DOGE', name: 'Dogecoin', symbol: 'Ð'),
+    Currency(code: 'AVAX', name: 'Avalanche', symbol: 'AVAX'),
+    Currency(code: 'MATIC', name: 'Polygon', symbol: 'MATIC'),
+    Currency(code: 'LINK', name: 'Chainlink', symbol: 'LINK'),
+    Currency(code: 'UNI', name: 'Uniswap', symbol: 'UNI'),
+    Currency(code: 'LTC', name: 'Litecoin', symbol: 'Ł'),
+    Currency(code: 'BCH', name: 'Bitcoin Cash', symbol: 'BCH'),
+    Currency(code: 'ATOM', name: 'Cosmos', symbol: 'ATOM'),
+    Currency(code: 'FTM', name: 'Fantom', symbol: 'FTM'),
+    Currency(code: 'NEAR', name: 'NEAR Protocol', symbol: 'NEAR'),
+    Currency(code: 'ALGO', name: 'Algorand', symbol: 'ALGO'),
   ];
 
   static Currency? getCurrencyByCode(String code) {

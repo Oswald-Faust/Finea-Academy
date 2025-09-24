@@ -1,12 +1,78 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
-class MT5AccountCard extends StatelessWidget {
+class MT5AccountCard extends StatefulWidget {
   final VoidCallback? onTap;
 
   const MT5AccountCard({
     super.key,
     this.onTap,
   });
+
+  @override
+  State<MT5AccountCard> createState() => _MT5AccountCardState();
+}
+
+class _MT5AccountCardState extends State<MT5AccountCard> {
+  late PageController _pageController;
+  late Timer _timer;
+  int _currentIndex = 0;
+
+  // Données fictives pour le slider des gagnants
+  final List<Map<String, dynamic>> _winnersData = [
+    {
+      'date': '01/01/2025',
+      'winner': '@trader_pro',
+      'prize': '1000€',
+    },
+    {
+      'date': '08/01/2025',
+      'winner': '@crypto_master',
+      'prize': '600€',
+    },
+    {
+      'date': '15/01/2025',
+      'winner': '@investor_elite',
+      'prize': '300€',
+    },
+    {
+      'date': '22/01/2025',
+      'winner': '@trading_guru',
+      'prize': '800€',
+    },
+    {
+      'date': '29/01/2025',
+      'winner': '@market_wizard',
+      'prize': '500€',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        _currentIndex = (_currentIndex + 1) % _winnersData.length;
+        _pageController.animateToPage(
+          _currentIndex,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,112 +92,43 @@ class MT5AccountCard extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
-          // Carte MT5
+          // Slider des tirages
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1a1a2e).withOpacity(0.8),
-                  const Color(0xFF16213e).withOpacity(0.6),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Informations MT5
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'MT5',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 12),
-                      
-                      _buildInfoRow('Login :', ''),
-                      const SizedBox(height: 8),
-                      _buildInfoRow('Mot de passe :', ''),
-                      const SizedBox(height: 8),
-                      _buildInfoRow('Serveur :', ''),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(width: 16),
-                
-                // Icône clé 3D
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.purple.withOpacity(0.8),
-                        Colors.blue.withOpacity(0.6),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.purple.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.key,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ],
+            height: 200,
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemCount: _winnersData.length,
+              itemBuilder: (context, index) {
+                final winner = _winnersData[index];
+                return _buildTirageCard(winner);
+              },
             ),
           ),
           
           const SizedBox(height: 16),
           
-          // Texte explicatif
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-            ),
-            child: const Text(
-              'Les mots de passe investisseur sont partagés uniquement le samedi et le dimanche, puis modifiés apres le tirage au sort chaque dimanche. Cela permet d\'éviter tout vol ou copie des trades en cours de semaine. Grâce à ces accès, vous pourrez suivre en toute transparence tous les trades via l\'application MT4',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                height: 1.4,
-                fontFamily: 'Poppins',
+          // Indicateurs de position
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _winnersData.length,
+              (index) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == index
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.3),
+                ),
               ),
             ),
           ),
@@ -140,28 +137,89 @@ class MT5AccountCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Poppins',
-          ),
+  Widget _buildTirageCard(Map<String, dynamic> winner) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.blue,
+          width: 1,
         ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontFamily: 'Poppins',
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Contenu textuel
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tirage du : ${winner['date'] ?? '01/01/2025'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Gagnant : ${winner['winner'] ?? '@gagnant'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Gains : ${winner['prize'] ?? '300€'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Adresse ETHscan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Image trophée
+              Container(
+                width: 120,
+                height: 120,
+                child: Image.asset(
+                  'assets/images/trophee.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          
+          const SizedBox(height: 8),
+          
+          // Chevron vers le bas
+          const Icon(
+            Icons.keyboard_arrow_down,
+            color: Colors.white,
+            size: 20,
+          ),
+        ],
+      ),
     );
   }
-} 
+
+}

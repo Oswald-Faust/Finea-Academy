@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class LotCalculatorCard extends StatelessWidget {
+class InterestCalculatorCard extends StatelessWidget {
   final VoidCallback? onTap;
 
-  const LotCalculatorCard({
+  const InterestCalculatorCard({
     super.key,
     this.onTap,
   });
@@ -28,10 +28,10 @@ class LotCalculatorCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Image de fond - Calculette
+            // Image de fond - Calculatrice d'intérêts
             Positioned.fill(
               child: Image.asset(
-                'assets/images/calcu.jpeg',
+                'assets/images/c.jpeg',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback en cas d'erreur de chargement de l'image
@@ -41,14 +41,14 @@ class LotCalculatorCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          const Color(0xFF000D64).withOpacity(0.3),
-                          const Color(0xFF1A237E).withOpacity(0.2),
-                          const Color(0xFF3F51B5).withOpacity(0.1),
+                          Colors.purple.withOpacity(0.3),
+                          Colors.blue.withOpacity(0.2),
+                          Colors.green.withOpacity(0.1),
                         ],
                       ),
                     ),
                     child: CustomPaint(
-                      painter: SmartphonePainter(),
+                      painter: InterestChartPainter(),
                     ),
                   );
                 },
@@ -79,7 +79,7 @@ class LotCalculatorCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Calculateur de Lot',
+                    'Calculateur d\'Intérêts',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -96,7 +96,7 @@ class LotCalculatorCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Calcul de position et gestion du risque',
+                    'Croissance de capital et investissements',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 12,
@@ -116,12 +116,12 @@ class LotCalculatorCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF000D64).withOpacity(0.3),
+                          color: Colors.purple.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFF000D64).withOpacity(0.5), width: 1),
+                          border: Border.all(color: Colors.purple.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'Position',
+                          'Simple',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -134,12 +134,12 @@ class LotCalculatorCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.3),
+                          color: Colors.blue.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.green.withOpacity(0.5), width: 1),
+                          border: Border.all(color: Colors.blue.withOpacity(0.5), width: 1),
                         ),
                         child: const Text(
-                          'Risque',
+                          'Composé',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -167,7 +167,7 @@ class LotCalculatorCard extends StatelessWidget {
                   border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
                 ),
                 child: const Icon(
-                  Icons.calculate,
+                  Icons.trending_up,
                   color: Colors.white,
                   size: 20,
                 ),
@@ -192,47 +192,50 @@ class LotCalculatorCard extends StatelessWidget {
   }
 }
 
-class SmartphonePainter extends CustomPainter {
+class InterestChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..strokeWidth = 2
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
-    // Dessiner un smartphone stylisé
-    final phoneRect = Rect.fromLTWH(size.width * 0.6, size.height * 0.2, size.width * 0.3, size.height * 0.6);
+    final path = Path();
     
-    // Contour du smartphone
-    paint.color = Colors.white.withOpacity(0.2);
-    paint.style = PaintingStyle.stroke;
-    canvas.drawRRect(RRect.fromRectAndRadius(phoneRect, const Radius.circular(8)), paint);
+    // Ligne de croissance exponentielle (intérêts composés)
+    paint.color = Colors.green.withOpacity(0.4);
+    path.reset();
+    path.moveTo(0, size.height * 0.8);
+    path.quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * 0.4, size.height * 0.6);
+    path.quadraticBezierTo(size.width * 0.6, size.height * 0.4, size.width * 0.8, size.height * 0.2);
+    path.quadraticBezierTo(size.width, size.height * 0.1, size.width, size.height * 0.05);
+    canvas.drawPath(path, paint);
     
-    // Écran du smartphone
-    final screenRect = Rect.fromLTWH(
-      phoneRect.left + 2,
-      phoneRect.top + 2,
-      phoneRect.width - 4,
-      phoneRect.height - 4,
-    );
-    paint.color = const Color(0xFF000D64).withOpacity(0.3);
-    canvas.drawRRect(RRect.fromRectAndRadius(screenRect, const Radius.circular(6)), paint);
+    // Ligne de croissance linéaire (intérêts simples)
+    paint.color = Colors.blue.withOpacity(0.4);
+    path.reset();
+    path.moveTo(0, size.height * 0.8);
+    path.lineTo(size.width * 0.3, size.height * 0.7);
+    path.lineTo(size.width * 0.6, size.height * 0.6);
+    path.lineTo(size.width * 0.9, size.height * 0.5);
+    path.lineTo(size.width, size.height * 0.45);
+    canvas.drawPath(path, paint);
     
-    // Boutons de la calculatrice
-    paint.color = Colors.white.withOpacity(0.3);
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        final buttonRect = Rect.fromLTWH(
-          screenRect.left + 4 + (i * 8),
-          screenRect.top + 20 + (j * 8),
-          6,
-          6,
-        );
-        canvas.drawRRect(RRect.fromRectAndRadius(buttonRect, const Radius.circular(2)), paint);
-      }
-    }
+    // Points sur les lignes
+    paint.style = PaintingStyle.fill;
+    
+    // Points pour la ligne composée
+    paint.color = Colors.green.withOpacity(0.6);
+    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.7), 3, paint);
+    canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.5), 3, paint);
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 3, paint);
+    
+    // Points pour la ligne simple
+    paint.color = Colors.blue.withOpacity(0.6);
+    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.7), 3, paint);
+    canvas.drawCircle(Offset(size.width * 0.6, size.height * 0.6), 3, paint);
+    canvas.drawCircle(Offset(size.width * 0.9, size.height * 0.5), 3, paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-} 
+}

@@ -184,70 +184,6 @@ class WinnerAnnouncementCard extends StatelessWidget {
                 
                 const SizedBox(height: 24),
                 
-                // Section MT5
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.vpn_key,
-                            color: Colors.white.withOpacity(0.8),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'MT5',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                                             _buildMT5Field('Login :', hasWinners && winners != null && winners!.isNotEmpty 
-                         ? (winners!.first['mt5Access']?['login'] ?? '•••••••••') 
-                         : '•••••••••'),
-                       const SizedBox(height: 8),
-                       _buildMT5Field('Mot de passe :', hasWinners && winners != null && winners!.isNotEmpty 
-                         ? (winners!.first['mt5Access']?['password'] ?? '•••••••••') 
-                         : '•••••••••'),
-                       const SizedBox(height: 8),
-                       _buildMT5Field('Serveur :', hasWinners && winners != null && winners!.isNotEmpty 
-                         ? (winners!.first['mt5Access']?['server'] ?? '•••••••••') 
-                         : '•••••••••'),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Note explicative
-                Text(
-                  'Les mots de passe investisseur sont partagés uniquement le samedi et le dimanche, puis modifiés après le tirage au sort chaque dimanche. Cela permet d\'éviter tout vol ou copie des trades en cours de semaine. Grâce à ces accès, vous pourrez suivre en toute transparence tous les trades via l\'application MT4',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                    fontFamily: 'Poppins',
-                    height: 1.4,
-                  ),
-                ),
               ],
             ),
           ),
@@ -256,34 +192,6 @@ class WinnerAnnouncementCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMT5Field(String label, String value) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 14,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value.isEmpty ? '•••••••••' : value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';

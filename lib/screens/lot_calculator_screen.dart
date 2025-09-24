@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/trading_data_model.dart';
 import '../services/trading_api_service.dart';
+import '../widgets/searchable_currency_pair_dropdown.dart';
 
 class LotCalculatorScreen extends StatefulWidget {
   const LotCalculatorScreen({super.key});
@@ -69,6 +70,10 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'Calculateur de Lot',
           style: TextStyle(
@@ -113,8 +118,8 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.purple.withValues(alpha: 0.1),
-            Colors.blue.withValues(alpha: 0.1),
+            const Color(0xFF000D64).withValues(alpha: 0.2),
+            const Color(0xFF1A237E).withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -128,12 +133,12 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.2),
+                  color: const Color(0xFF000D64).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.analytics,
-                  color: Colors.purple,
+                  color: Colors.blue,
                   size: 24,
                 ),
               ),
@@ -178,8 +183,8 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.withValues(alpha: 0.1),
-            Colors.green.withValues(alpha: 0.1),
+            const Color(0xFF000D64).withValues(alpha: 0.1),
+            const Color(0xFF1A237E).withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -319,7 +324,7 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
             hintStyle: TextStyle(
               color: Colors.white.withValues(alpha: 0.5),
             ),
-            prefixIcon: Icon(icon, color: Colors.purple),
+            prefixIcon: Icon(icon, color: Colors.blue),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
@@ -332,7 +337,7 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.purple),
+              borderSide: const BorderSide(color: Color(0xFF000D64)),
             ),
           ),
         ),
@@ -346,14 +351,14 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
       child: ElevatedButton(
         onPressed: _isCalculating ? null : _calculate,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.purple,
+          backgroundColor: const Color(0xFF000D64),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 8,
-          shadowColor: Colors.purple.withValues(alpha: 0.4),
+          shadowColor: const Color(0xFF000D64).withValues(alpha: 0.4),
         ),
         child: _isCalculating 
           ? const Row(
@@ -405,14 +410,14 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.green.withValues(alpha: 0.1),
-              Colors.teal.withValues(alpha: 0.1),
-            ],
-          ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF000D64).withValues(alpha: 0.1),
+            const Color(0xFF1A237E).withValues(alpha: 0.1),
+          ],
+        ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
@@ -421,7 +426,7 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
           children: [
             Row(
               children: [
-                const Icon(Icons.analytics, color: Colors.green, size: 24),
+                const Icon(Icons.analytics, color: Colors.blue, size: 24),
                 const SizedBox(width: 8),
                 const Text(
                   'Résultats du calcul',
@@ -447,13 +452,13 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.purple.withValues(alpha: 0.2),
+                color: const Color(0xFF000D64).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFF000D64).withValues(alpha: 0.3)),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.analytics, color: Colors.purple, size: 32),
+                  const Icon(Icons.analytics, color: Colors.blue, size: 32),
                   const SizedBox(height: 8),
                   const Text(
                     'Taille de lot recommandée',
@@ -467,7 +472,7 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
                   Text(
                     _result!.formattedLotSize,
                     style: const TextStyle(
-                      color: Colors.purple,
+                      color: Colors.blue,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
@@ -478,7 +483,7 @@ class _LotCalculatorScreenState extends State<LotCalculatorScreen>
                   Text(
                     '${_result!.recommendedLotSize.toStringAsFixed(4)} lots',
                     style: TextStyle(
-                      color: Colors.purple.withValues(alpha: 0.8),
+                      color: Colors.blue.withValues(alpha: 0.8),
                       fontSize: 12,
                       fontFamily: 'Poppins',
                     ),
@@ -687,60 +692,25 @@ Generated by Finéa Academy
   // Nouvelles méthodes
 
   Widget _buildPairSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Paire de devises',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _selectedPair,
-          onChanged: (value) {
-            setState(() {
-              _selectedPair = value!;
-            });
-            _loadCurrentPrice();
-          },
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Poppins',
-          ),
-          dropdownColor: const Color(0xFF2a2a3e),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.blue),
-            ),
-          ),
-          items: PopularCurrencyPairs.allPairs.map((pair) {
-            return DropdownMenuItem<String>(
-              value: pair.symbol,
-              child: Text(
-                pair.displayName,
-                style: const TextStyle(fontSize: 14),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+    return SearchableCurrencyPairDropdown(
+      label: 'Paire de devises',
+      value: _selectedPair,
+      onChanged: (value) {
+        setState(() {
+          _selectedPair = value!;
+        });
+        _loadCurrentPrice();
+      },
+      currencyPairs: _getFilteredCurrencyPairs(),
     );
+  }
+
+  /// Filtre les paires de devises pour éviter les paires identiques
+  List<CurrencyPair> _getFilteredCurrencyPairs() {
+    // Retourner toutes les paires sauf celles avec des devises identiques
+    return PopularCurrencyPairs.allPairs.where((pair) {
+      return pair.baseCurrency != pair.quoteCurrency;
+    }).toList();
   }
 
   Widget _buildCurrencySelector() {
@@ -782,7 +752,7 @@ Generated by Finéa Academy
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.blue),
+              borderSide: const BorderSide(color: Color(0xFF000D64)),
             ),
           ),
           items: AccountCurrency.values.map((currency) {

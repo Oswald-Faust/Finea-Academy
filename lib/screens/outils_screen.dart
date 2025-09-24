@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import '../widgets/positioning_alert_card.dart';
 import '../widgets/lot_calculator_card.dart';
 import '../widgets/currency_converter_card.dart';
+import '../widgets/interest_calculator_card.dart';
 import 'profile_screen.dart';
 import 'currency_converter_screen.dart';
-import 'interest_calculator_screen.dart';
 import 'lot_calculator_screen.dart';
+import 'interest_calculator_screen.dart';
+import 'positioning_alerts_screen.dart';
 
 class OutilsScreen extends StatelessWidget {
   const OutilsScreen({super.key});
@@ -17,6 +19,14 @@ class OutilsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        title: const Text(
+          'Outils de Trading',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
@@ -35,12 +45,12 @@ class OutilsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // SECTION CALCULATEUR DE LOT
+            // SECTION ALERTES DE POSITIONNEMENT
             PositioningAlertCard(
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const LotCalculatorScreen(),
+                    builder: (context) => const PositioningAlertsScreen(),
                   ),
                 );
               },
@@ -48,12 +58,12 @@ class OutilsScreen extends StatelessWidget {
             
             const SizedBox(height: 16),
             
-            // SECTION CALCULATEUR D'INTÉRÊT
+            // SECTION CALCULATEUR DE LOT
             LotCalculatorCard(
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const InterestCalculatorScreen(),
+                    builder: (context) => const LotCalculatorScreen(),
                   ),
                 );
               },
@@ -71,6 +81,21 @@ class OutilsScreen extends StatelessWidget {
                 );
               },
             ),
+            
+            const SizedBox(height: 16),
+            
+            // SECTION CALCULATEUR D'INTÉRÊTS
+            InterestCalculatorCard(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const InterestCalculatorScreen(),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 32), // Marge en bas
           ],
         ),
       ),

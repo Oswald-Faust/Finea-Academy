@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'dart:math' as math;
-import 'package:http/http.dart' as http;
 import '../models/trading_data_model.dart';
 
 class TradingApiService {
   // Pour une démo, nous utiliserons des données simulées
   // En production, vous pouvez intégrer avec OANDA, Forex.com, ou autre API
-  static const String _baseUrl = 'https://api.fxpig.com/v1'; // API exemple gratuite
   static const Duration _cacheTimeout = Duration(seconds: 30);
   
   static final Map<String, PriceData> _priceCache = {};
@@ -169,6 +166,8 @@ class TradingApiService {
     final currencyPair = PopularCurrencyPairs.findBySymbol(symbol);
     
     double basePrice;
+    
+    // Paires de devises majeures
     switch (symbol) {
       case 'EUR_USD':
         basePrice = 1.0850 + (random.nextDouble() - 0.5) * 0.02;
@@ -191,11 +190,176 @@ class TradingApiService {
       case 'NZD_USD':
         basePrice = 0.5950 + (random.nextDouble() - 0.5) * 0.02;
         break;
+      // Paires croisées
+      case 'EUR_GBP':
+        basePrice = 0.8534 + (random.nextDouble() - 0.5) * 0.01;
+        break;
+      case 'EUR_JPY':
+        basePrice = 164.25 + (random.nextDouble() - 0.5) * 2.0;
+        break;
+      case 'GBP_JPY':
+        basePrice = 192.50 + (random.nextDouble() - 0.5) * 3.0;
+        break;
+      case 'EUR_AUD':
+        basePrice = 1.6200 + (random.nextDouble() - 0.5) * 0.03;
+        break;
+      case 'EUR_CAD':
+        basePrice = 1.4650 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      case 'GBP_AUD':
+        basePrice = 1.8900 + (random.nextDouble() - 0.5) * 0.03;
+        break;
+      case 'AUD_JPY':
+        basePrice = 98.50 + (random.nextDouble() - 0.5) * 1.5;
+        break;
+      case 'CAD_JPY':
+        basePrice = 109.50 + (random.nextDouble() - 0.5) * 1.5;
+        break;
+      case 'NZD_JPY':
+        basePrice = 90.50 + (random.nextDouble() - 0.5) * 1.5;
+        break;
+      case 'EUR_CHF':
+        basePrice = 0.9456 + (random.nextDouble() - 0.5) * 0.01;
+        break;
+      case 'GBP_CHF':
+        basePrice = 1.1100 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      case 'AUD_CHF':
+        basePrice = 0.5800 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      case 'NZD_CHF':
+        basePrice = 0.5400 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      case 'AUD_CAD':
+        basePrice = 0.8900 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      case 'NZD_CAD':
+        basePrice = 0.8200 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      case 'AUD_NZD':
+        basePrice = 1.0800 + (random.nextDouble() - 0.5) * 0.02;
+        break;
+      // Indices boursiers
+      case 'US30':
+        basePrice = 35000 + (random.nextDouble() - 0.5) * 500;
+        break;
+      case 'SPX500':
+        basePrice = 4500 + (random.nextDouble() - 0.5) * 50;
+        break;
+      case 'NAS100':
+        basePrice = 15000 + (random.nextDouble() - 0.5) * 200;
+        break;
+      case 'UK100':
+        basePrice = 7500 + (random.nextDouble() - 0.5) * 100;
+        break;
+      case 'GER30':
+        basePrice = 16000 + (random.nextDouble() - 0.5) * 200;
+        break;
+      case 'FRA40':
+        basePrice = 7200 + (random.nextDouble() - 0.5) * 100;
+        break;
+      case 'JPN225':
+        basePrice = 32000 + (random.nextDouble() - 0.5) * 500;
+        break;
+      case 'AUS200':
+        basePrice = 7200 + (random.nextDouble() - 0.5) * 100;
+        break;
+      case 'CAN60':
+        basePrice = 20000 + (random.nextDouble() - 0.5) * 200;
+        break;
+      case 'SWI20':
+        basePrice = 11000 + (random.nextDouble() - 0.5) * 100;
+        break;
+      // Matières premières
+      case 'XAUUSD':
+        basePrice = 2000 + (random.nextDouble() - 0.5) * 50;
+        break;
+      case 'XAGUSD':
+        basePrice = 25 + (random.nextDouble() - 0.5) * 2;
+        break;
+      case 'XAU_EUR':
+        basePrice = 1850 + (random.nextDouble() - 0.5) * 40;
+        break;
+      case 'XAG_EUR':
+        basePrice = 23 + (random.nextDouble() - 0.5) * 2;
+        break;
+      case 'WTIUSD':
+        basePrice = 75 + (random.nextDouble() - 0.5) * 5;
+        break;
+      case 'BRENTUSD':
+        basePrice = 80 + (random.nextDouble() - 0.5) * 5;
+        break;
+      case 'NATGAS':
+        basePrice = 3.5 + (random.nextDouble() - 0.5) * 0.5;
+        break;
+      case 'COPPER':
+        basePrice = 3.8 + (random.nextDouble() - 0.5) * 0.2;
+        break;
+      case 'PLATINUM':
+        basePrice = 950 + (random.nextDouble() - 0.5) * 30;
+        break;
+      case 'PALLADIUM':
+        basePrice = 1200 + (random.nextDouble() - 0.5) * 50;
+        break;
+      // Cryptomonnaies
+      case 'BTCUSD':
+        basePrice = 43000 + (random.nextDouble() - 0.5) * 2000;
+        break;
+      case 'ETHUSD':
+        basePrice = 2700 + (random.nextDouble() - 0.5) * 200;
+        break;
+      case 'LTCUSD':
+        basePrice = 70 + (random.nextDouble() - 0.5) * 10;
+        break;
+      case 'XRPUSD':
+        basePrice = 0.62 + (random.nextDouble() - 0.5) * 0.1;
+        break;
+      case 'ADAUSD':
+        basePrice = 0.45 + (random.nextDouble() - 0.5) * 0.05;
+        break;
+      case 'DOTUSD':
+        basePrice = 6.5 + (random.nextDouble() - 0.5) * 1.0;
+        break;
+      case 'LINKUSD':
+        basePrice = 14 + (random.nextDouble() - 0.5) * 2;
+        break;
+      case 'UNIUSD':
+        basePrice = 6.5 + (random.nextDouble() - 0.5) * 1.0;
+        break;
+      case 'AVAXUSD':
+        basePrice = 25 + (random.nextDouble() - 0.5) * 3;
+        break;
+      case 'SOLUSD':
+        basePrice = 100 + (random.nextDouble() - 0.5) * 10;
+        break;
       default:
         basePrice = 1.0000 + (random.nextDouble() - 0.5) * 0.1;
     }
 
-    final spread = currencyPair?.isJpyPair == true ? 0.02 : 0.00015;
+    // Calculer le spread basé sur le type d'instrument
+    double spread;
+    if (currencyPair?.isJpyPair == true) {
+      spread = 0.02;
+    } else if (symbol.startsWith('XAU') || symbol.startsWith('XAG') || symbol.startsWith('XPT') || symbol.startsWith('XPD')) {
+      // Métaux précieux
+      spread = basePrice * 0.0005; // 0.05% du prix
+    } else if (symbol.startsWith('WTI') || symbol.startsWith('BRENT') || symbol.startsWith('NATGAS') || symbol.startsWith('COPPER')) {
+      // Matières premières
+      spread = basePrice * 0.001; // 0.1% du prix
+    } else if (symbol.startsWith('BTC') || symbol.startsWith('ETH') || symbol.startsWith('LTC') || 
+               symbol.startsWith('XRP') || symbol.startsWith('ADA') || symbol.startsWith('DOT') ||
+               symbol.startsWith('LINK') || symbol.startsWith('UNI') || symbol.startsWith('AVAX') || symbol.startsWith('SOL')) {
+      // Cryptomonnaies
+      spread = basePrice * 0.002; // 0.2% du prix
+    } else if (symbol.startsWith('US30') || symbol.startsWith('SPX') || symbol.startsWith('NAS') ||
+               symbol.startsWith('UK') || symbol.startsWith('GER') || symbol.startsWith('FRA') ||
+               symbol.startsWith('JPN') || symbol.startsWith('AUS') || symbol.startsWith('CAN') || symbol.startsWith('SWI')) {
+      // Indices
+      spread = basePrice * 0.0001; // 0.01% du prix
+    } else {
+      spread = 0.00015; // Spread par défaut pour les devises
+    }
+
     final bid = basePrice - spread / 2;
     final ask = basePrice + spread / 2;
 

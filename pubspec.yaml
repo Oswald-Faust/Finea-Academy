@@ -41,6 +41,9 @@ dependencies:
   
   # Graphiques pour la calculatrice de lot et le convertisseur de devise
   fl_chart: ^0.68.0
+  
+  # WebView pour intégrer Myfxbook
+  webview_flutter: ^4.4.2
 
 dev_dependencies:
   flutter_test:
