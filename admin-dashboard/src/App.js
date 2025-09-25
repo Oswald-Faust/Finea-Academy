@@ -14,7 +14,6 @@ import AllParticipants from './pages/AllParticipants';
 import AdminFavorites from './pages/AdminFavorites';
 import Settings from './pages/Settings';
 import Stats from './pages/Stats';
-
 function App() {
   return (
     <Router>

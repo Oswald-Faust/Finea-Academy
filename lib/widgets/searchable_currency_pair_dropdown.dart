@@ -1,5 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/trading_data_model.dart';
+
+class _SearchResult {
+  final CurrencyPair pair;
+  final int score;
+  
+  _SearchResult({required this.pair, required this.score});
+}
 
 class SearchableCurrencyPairDropdown extends StatefulWidget {
   final String label;
@@ -22,31 +30,102 @@ class SearchableCurrencyPairDropdown extends StatefulWidget {
 class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairDropdown> {
   late TextEditingController _searchController;
   List<CurrencyPair> _filteredPairs = [];
+  Timer? _debounceTimer;
+  String _currentQuery = '';
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    _filteredPairs = widget.currencyPairs;
+    _filteredPairs = List.from(widget.currencyPairs);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
-  void _filterPairs(String query) {
+  void _onSearchChanged(String query) {
+    _currentQuery = query;
+    _debounceTimer?.cancel();
+    
+    // Afficher l'indicateur de recherche immédiatement
+    if (query.isNotEmpty) {
+      setState(() {
+        _isSearching = true;
+      });
+    }
+    
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(query);
+    });
+  }
+
+  void _performSearch(String query) {
+    if (!mounted) return;
+    
     setState(() {
+      _isSearching = false;
+      
       if (query.isEmpty) {
-        _filteredPairs = widget.currencyPairs;
+        _filteredPairs = List.from(widget.currencyPairs);
       } else {
-        _filteredPairs = widget.currencyPairs.where((pair) {
-          return pair.symbol.toLowerCase().contains(query.toLowerCase()) ||
-                 pair.name.toLowerCase().contains(query.toLowerCase()) ||
-                 pair.baseCurrency.toLowerCase().contains(query.toLowerCase()) ||
-                 pair.quoteCurrency.toLowerCase().contains(query.toLowerCase());
-        }).toList();
+        try {
+          final lowerQuery = query.toLowerCase();
+          final results = <_SearchResult>[];
+          
+          for (final pair in widget.currencyPairs) {
+            int score = 0;
+            
+            // Score basé sur la correspondance exacte du symbole
+            if (pair.symbol.toLowerCase() == lowerQuery) {
+              score += 100;
+            } else if (pair.symbol.toLowerCase().startsWith(lowerQuery)) {
+              score += 80;
+            } else if (pair.symbol.toLowerCase().contains(lowerQuery)) {
+              score += 60;
+            }
+            
+            // Score basé sur le nom
+            if (pair.name.toLowerCase().contains(lowerQuery)) {
+              score += 40;
+            }
+            
+            // Score basé sur les devises
+            if (pair.baseCurrency.toLowerCase().contains(lowerQuery)) {
+              score += 20;
+            }
+            if (pair.quoteCurrency.toLowerCase().contains(lowerQuery)) {
+              score += 20;
+            }
+            
+            // Score basé sur le displayName
+            if (pair.displayName.toLowerCase().contains(lowerQuery)) {
+              score += 30;
+            }
+            
+            if (score > 0) {
+              results.add(_SearchResult(pair: pair, score: score));
+            }
+          }
+          
+          // Trier par score décroissant, puis par nom alphabétique
+          results.sort((a, b) {
+            if (a.score != b.score) {
+              return b.score.compareTo(a.score);
+            }
+            return a.pair.name.compareTo(b.pair.name);
+          });
+          
+          _filteredPairs = results.map((result) => result.pair).toList();
+        } catch (e) {
+          // En cas d'erreur, garder la liste actuelle
+          print('Erreur lors du filtrage: $e');
+          _filteredPairs = List.from(widget.currencyPairs);
+        }
       }
     });
   }
@@ -70,15 +149,17 @@ class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairD
                   children: [
                     // En-tête
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Rechercher ${widget.label.toLowerCase()}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Poppins',
+                        Expanded(
+                          child: Text(
+                            'Rechercher ${widget.label.toLowerCase()}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Poppins',
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         IconButton(
@@ -92,7 +173,7 @@ class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairD
                     // Barre de recherche
                     TextField(
                       controller: _searchController,
-                      onChanged: _filterPairs,
+                      onChanged: _onSearchChanged,
                       style: const TextStyle(
                         color: Colors.white,
                         fontFamily: 'Poppins',
@@ -122,11 +203,58 @@ class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairD
                     ),
                     const SizedBox(height: 16),
                     
+                    // Indicateur de recherche
+                    if (_isSearching)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF000D64)),
+                          ),
+                        ),
+                      ),
+                    
                     // Liste des paires filtrées
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: _filteredPairs.length,
-                        itemBuilder: (context, index) {
+                      child: _filteredPairs.isEmpty && _currentQuery.isNotEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  color: Colors.white.withOpacity(0.5),
+                                  size: 48,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Aucun résultat trouvé',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 16,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Essayez avec d\'autres mots-clés',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 14,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _filteredPairs.length,
+                            itemBuilder: (context, index) {
+                          // Protection contre les erreurs d'indexation
+                          if (index >= _filteredPairs.length) {
+                            return const SizedBox.shrink();
+                          }
+                          
                           final pair = _filteredPairs[index];
                           final isSelected = widget.value == pair.symbol;
                           
@@ -174,7 +302,9 @@ class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairD
                                 ),
                               ),
                               subtitle: Text(
-                                '${pair.baseCurrency}/${pair.quoteCurrency}',
+                                pair.baseCurrency == pair.quoteCurrency 
+                                  ? pair.symbol
+                                  : '${pair.baseCurrency}/${pair.quoteCurrency}',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.7),
                                   fontSize: 14,
@@ -259,7 +389,10 @@ class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairD
                       Expanded(
                         child: Center(
                           child: Container(
-                            width: 80,
+                            constraints: const BoxConstraints(
+                              minWidth: 60,
+                              maxWidth: 100,
+                            ),
                             height: 40,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
@@ -278,13 +411,17 @@ class _SearchableCurrencyPairDropdownState extends State<SearchableCurrencyPairD
                             ),
                             child: Center(
                               child: Text(
-                                '${selectedPair.baseCurrency}/${selectedPair.quoteCurrency}',
+                                selectedPair.baseCurrency == selectedPair.quoteCurrency 
+                                  ? selectedPair.symbol
+                                  : '${selectedPair.baseCurrency}/${selectedPair.quoteCurrency}',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Poppins',
                                 ),
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),

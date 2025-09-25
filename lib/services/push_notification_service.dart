@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -9,14 +9,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 // Handler de notifications en arrière-plan (doit être déclaré au niveau global)
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print('🔥 Notification reçue en arrière-plan: ${message.messageId}');
-  
-  // Traiter la notification en arrière-plan si nécessaire
-  await PushNotificationService._handleBackgroundMessage(message);
-}
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp();
+//   print('🔥 Notification reçue en arrière-plan: ${message.messageId}');
+//   
+//   // Traiter la notification en arrière-plan si nécessaire
+//   await PushNotificationService._handleBackgroundMessage(message);
+// }
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
@@ -26,41 +26,31 @@ class PushNotificationService {
   static const String _tokenKey = 'fcm_token';
   static const String _deviceIdKey = 'device_id';
   
-  FirebaseMessaging? _firebaseMessaging;
+  // FirebaseMessaging? _firebaseMessaging;
   FlutterLocalNotificationsPlugin? _localNotifications;
   String? _currentToken;
   bool _isInitialized = false;
 
-  // Callback pour les notifications reçues
-  Function(RemoteMessage)? onMessageReceived;
-  Function(RemoteMessage)? onMessageOpenedApp;
-  Function(RemoteMessage)? onBackgroundMessage;
+  // Callback pour les notifications reçues (simplifiés sans Firebase)
+  Function(Map<String, dynamic>)? onMessageReceived;
+  Function(Map<String, dynamic>)? onMessageOpenedApp;
+  Function(Map<String, dynamic>)? onBackgroundMessage;
 
-  /// Initialise le service de notifications push
+  /// Initialise le service de notifications push (version simplifiée sans Firebase)
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      // Initialiser Firebase
-      await Firebase.initializeApp();
-      _firebaseMessaging = FirebaseMessaging.instance;
-
-      // Initialiser les notifications locales
+      // Initialiser les notifications locales seulement
       await _initializeLocalNotifications();
 
       // Demander les permissions
       await _requestPermissions();
 
-      // Configurer les handlers de messages
-      await _setupMessageHandlers();
-
-      // Obtenir et enregistrer le token FCM
-      await _getAndRegisterToken();
-
       _isInitialized = true;
-      print('✅ Service de notifications push initialisé');
+      print('✅ Service de notifications locales initialisé (sans Firebase)');
     } catch (e) {
-      print('❌ Erreur lors de l\'initialisation des notifications push: $e');
+      print('❌ Erreur lors de l\'initialisation des notifications: $e');
     }
   }
 
@@ -114,77 +104,61 @@ class PushNotificationService {
     }
   }
 
-  /// Demande les permissions de notifications
+  /// Demande les permissions de notifications (version simplifiée)
   Future<void> _requestPermissions() async {
-    if (Platform.isIOS) {
-      await _firebaseMessaging!.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-    }
-
-    // Pour Android 13+, demander les permissions de notifications
-    if (Platform.isAndroid) {
-      // Note: requestPermission() n'est pas disponible dans cette version
-      // Les permissions sont gérées automatiquement par le système
-      print('📱 Permissions de notifications Android configurées');
-    }
+    // Pour les notifications locales, les permissions sont gérées automatiquement
+    print('📱 Permissions de notifications locales configurées');
   }
 
-  /// Configure les handlers de messages
-  Future<void> _setupMessageHandlers() async {
-    // Handler pour les messages en arrière-plan
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // /// Configure les handlers de messages (commenté - Firebase non utilisé)
+  // Future<void> _setupMessageHandlers() async {
+  //   // Handler pour les messages en arrière-plan
+  //   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Handler pour les messages reçus quand l'app est au premier plan
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📱 Notification reçue au premier plan: ${message.notification?.title}');
-      _handleForegroundMessage(message);
-      onMessageReceived?.call(message);
-    });
+  //   // Handler pour les messages reçus quand l'app est au premier plan
+  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  //     print('📱 Notification reçue au premier plan: ${message.notification?.title}');
+  //     _handleForegroundMessage(message);
+  //     onMessageReceived?.call(message);
+  //   });
 
-    // Handler pour quand l'utilisateur tape sur une notification
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('👆 Notification tapée: ${message.notification?.title}');
-      _handleNotificationTap(message);
-      onMessageOpenedApp?.call(message);
-    });
+  //   // Handler pour quand l'utilisateur tape sur une notification
+  //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  //     print('👆 Notification tapée: ${message.notification?.title}');
+  //     _handleNotificationTap(message);
+  //     onMessageOpenedApp?.call(message);
+  //   });
 
-    // Vérifier si l'app a été ouverte depuis une notification
-    RemoteMessage? initialMessage = await _firebaseMessaging!.getInitialMessage();
-    if (initialMessage != null) {
-      print('🚀 App ouverte depuis une notification: ${initialMessage.notification?.title}');
-      _handleNotificationTap(initialMessage);
-    }
-  }
+  //   // Vérifier si l'app a été ouverte depuis une notification
+  //   RemoteMessage? initialMessage = await _firebaseMessaging!.getInitialMessage();
+  //   if (initialMessage != null) {
+  //     print('🚀 App ouverte depuis une notification: ${initialMessage.notification?.title}');
+  //     _handleNotificationTap(initialMessage);
+  //   }
+  // }
 
-  /// Obtient et enregistre le token FCM
-  Future<void> _getAndRegisterToken() async {
-    try {
-      String? token = await _firebaseMessaging!.getToken();
-      if (token != null) {
-        _currentToken = token;
-        await _saveTokenLocally(token);
-        await _registerTokenWithServer(token);
-        print('🔑 Token FCM obtenu: ${token.substring(0, 20)}...');
-      }
+  // /// Obtient et enregistre le token FCM (commenté - Firebase non utilisé)
+  // Future<void> _getAndRegisterToken() async {
+  //   try {
+  //     String? token = await _firebaseMessaging!.getToken();
+  //     if (token != null) {
+  //       _currentToken = token;
+  //       await _saveTokenLocally(token);
+  //       await _registerTokenWithServer(token);
+  //       print('🔑 Token FCM obtenu: ${token.substring(0, 20)}...');
+  //     }
 
-      // Écouter les changements de token
-      _firebaseMessaging!.onTokenRefresh.listen((String newToken) {
-        _currentToken = newToken;
-        _saveTokenLocally(newToken);
-        _registerTokenWithServer(newToken);
-        print('🔄 Token FCM rafraîchi');
-      });
-    } catch (e) {
-      print('❌ Erreur lors de l\'obtention du token: $e');
-    }
-  }
+  //     // Écouter les changements de token
+  //     _firebaseMessaging!.onTokenRefresh.listen((String newToken) {
+  //       _currentToken = newToken;
+  //       _saveTokenLocally(newToken);
+  //       _registerTokenWithServer(newToken);
+  //       print('🔄 Token FCM rafraîchi');
+  //     });
+  //   } catch (e) {
+  //     print('❌ Erreur lors de l\'obtention du token: $e');
+  //   }
+  // }
 
   /// Sauvegarde le token localement
   Future<void> _saveTokenLocally(String token) async {
@@ -192,46 +166,50 @@ class PushNotificationService {
     await prefs.setString(_tokenKey, token);
   }
 
-  /// Enregistre le token sur le serveur
-  Future<void> _registerTokenWithServer(String token) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? deviceId = prefs.getString(_deviceIdKey);
-      
-      // Générer un device ID unique si nécessaire
-      if (deviceId == null) {
-        deviceId = DateTime.now().millisecondsSinceEpoch.toString();
-        await prefs.setString(_deviceIdKey, deviceId);
-      }
+  // /// Enregistre le token sur le serveur (commenté - Firebase non utilisé)
+  // Future<void> _registerTokenWithServer(String token) async {
+  //   try {
+  //     final prefs = await SharedPreferences.getInstance();
+  //     String? deviceId = prefs.getString(_deviceIdKey);
+  //     
+  //     // Générer un device ID unique si nécessaire
+  //     if (deviceId == null) {
+  //       deviceId = DateTime.now().millisecondsSinceEpoch.toString();
+  //       await prefs.setString(_deviceIdKey, deviceId);
+  //     }
 
-      String platform = Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'web';
+  //     String platform = Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'web';
 
-      final response = await ApiService.registerFCMToken(
-        token: token,
-        platform: platform,
-        deviceId: deviceId,
-      );
+  //     final response = await ApiService.registerFCMToken(
+  //       token: token,
+  //       platform: platform,
+  //       deviceId: deviceId,
+  //     );
 
-      if (response['success'] == true) {
-        print('✅ Token FCM enregistré sur le serveur');
-      } else {
-        print('❌ Erreur lors de l\'enregistrement du token: ${response['error']}');
-      }
-    } catch (e) {
-      print('❌ Erreur lors de l\'enregistrement du token sur le serveur: $e');
-    }
-  }
+  //     if (response['success'] == true) {
+  //       print('✅ Token FCM enregistré sur le serveur');
+  //     } else {
+  //       print('❌ Erreur lors de l\'enregistrement du token: ${response['error']}');
+  //     }
+  //   } catch (e) {
+  //     print('❌ Erreur lors de l\'enregistrement du token sur le serveur: $e');
+  //   }
+  // }
 
-  /// Gère les messages reçus au premier plan
-  void _handleForegroundMessage(RemoteMessage message) {
-    // Afficher une notification locale sur Android
-    if (Platform.isAndroid && message.notification != null) {
-      _showLocalNotification(message);
-    }
-  }
+  // /// Gère les messages reçus au premier plan (commenté - Firebase non utilisé)
+  // void _handleForegroundMessage(RemoteMessage message) {
+  //   // Afficher une notification locale sur Android
+  //   if (Platform.isAndroid && message.notification != null) {
+  //     _showLocalNotification(message);
+  //   }
+  // }
 
-  /// Affiche une notification locale
-  Future<void> _showLocalNotification(RemoteMessage message) async {
+  /// Affiche une notification locale (version simplifiée)
+  Future<void> _showLocalNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'finea_notifications',
@@ -256,11 +234,11 @@ class PushNotificationService {
     );
 
     await _localNotifications!.show(
-      message.hashCode,
-      message.notification?.title ?? 'Finéa Académie',
-      message.notification?.body ?? '',
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title,
+      body,
       platformChannelSpecifics,
-      payload: jsonEncode(message.data),
+      payload: data != null ? jsonEncode(data) : null,
     );
   }
 
@@ -276,10 +254,10 @@ class PushNotificationService {
     }
   }
 
-  /// Gère le tap sur une notification push
-  void _handleNotificationTap(RemoteMessage message) {
-    _handleNotificationData(message.data);
-  }
+  // /// Gère le tap sur une notification push (commenté - Firebase non utilisé)
+  // void _handleNotificationTap(RemoteMessage message) {
+  //   _handleNotificationData(message.data);
+  // }
 
   /// Gère les données de notification pour la navigation
   void _handleNotificationData(Map<String, dynamic> data) {
@@ -309,14 +287,14 @@ class PushNotificationService {
     }
   }
 
-  /// Handler statique pour les messages en arrière-plan
-  static Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-    // Traitement des notifications en arrière-plan
-    print('📱 Traitement notification arrière-plan: ${message.notification?.title}');
-    
-    // Ici vous pouvez ajouter de la logique spécifique pour l'arrière-plan
-    // comme sauvegarder des données localement, etc.
-  }
+  // /// Handler statique pour les messages en arrière-plan (commenté - Firebase non utilisé)
+  // static Future<void> _handleBackgroundMessage(RemoteMessage message) async {
+  //   // Traitement des notifications en arrière-plan
+  //   print('📱 Traitement notification arrière-plan: ${message.notification?.title}');
+  //   
+  //   // Ici vous pouvez ajouter de la logique spécifique pour l'arrière-plan
+  //   // comme sauvegarder des données localement, etc.
+  // }
 
   /// Obtient le token FCM actuel
   String? get currentToken => _currentToken;
@@ -324,46 +302,42 @@ class PushNotificationService {
   /// Vérifie si le service est initialisé
   bool get isInitialized => _isInitialized;
 
-  /// Supprime le token du serveur lors de la déconnexion
-  Future<void> unregisterToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? deviceId = prefs.getString(_deviceIdKey);
-      
-      if (deviceId != null) {
-        final response = await ApiService.unregisterFCMToken(deviceId: deviceId);
-        
-        if (response['success'] == true) {
-          print('✅ Token FCM supprimé du serveur');
-        }
-      }
-      
-      // Supprimer localement
-      await prefs.remove(_tokenKey);
-      _currentToken = null;
-    } catch (e) {
-      print('❌ Erreur lors de la suppression du token: $e');
-    }
-  }
+  // /// Supprime le token du serveur lors de la déconnexion (commenté - Firebase non utilisé)
+  // Future<void> unregisterToken() async {
+  //   try {
+  //     final prefs = await SharedPreferences.getInstance();
+  //     String? deviceId = prefs.getString(_deviceIdKey);
+  //     
+  //     if (deviceId != null) {
+  //       final response = await ApiService.unregisterFCMToken(deviceId: deviceId);
+  //       
+  //       if (response['success'] == true) {
+  //         print('✅ Token FCM supprimé du serveur');
+  //       }
+  //     }
+  //     
+  //     // Supprimer localement
+  //     await prefs.remove(_tokenKey);
+  //     _currentToken = null;
+  //   } catch (e) {
+  //     print('❌ Erreur lors de la suppression du token: $e');
+  //   }
+  // }
 
-  /// Méthode pour tester les notifications
+  /// Méthode pour tester les notifications (version simplifiée)
   Future<void> sendTestNotification() async {
     await _showLocalNotification(
-      RemoteMessage(
-        notification: const RemoteNotification(
-          title: '🧪 Test Notification',
-          body: 'Ceci est une notification de test !',
-        ),
-        data: {'type': 'test', 'timestamp': DateTime.now().millisecondsSinceEpoch.toString()},
-      ),
+      title: '🧪 Test Notification',
+      body: 'Ceci est une notification de test !',
+      data: {'type': 'test', 'timestamp': DateTime.now().millisecondsSinceEpoch.toString()},
     );
   }
 
-  /// Configure les callbacks personnalisés
+  /// Configure les callbacks personnalisés (version simplifiée)
   void setCallbacks({
-    Function(RemoteMessage)? onMessageReceived,
-    Function(RemoteMessage)? onMessageOpenedApp,
-    Function(RemoteMessage)? onBackgroundMessage,
+    Function(Map<String, dynamic>)? onMessageReceived,
+    Function(Map<String, dynamic>)? onMessageOpenedApp,
+    Function(Map<String, dynamic>)? onBackgroundMessage,
   }) {
     this.onMessageReceived = onMessageReceived;
     this.onMessageOpenedApp = onMessageOpenedApp;
@@ -372,7 +346,7 @@ class PushNotificationService {
 
   /// Nettoie les ressources
   void dispose() {
-    _firebaseMessaging = null;
+    // _firebaseMessaging = null;
     _localNotifications = null;
     _currentToken = null;
     _isInitialized = false;

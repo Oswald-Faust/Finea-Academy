@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,27 +12,27 @@ import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'services/push_notification_service.dart';
 import 'screens/login_screen.dart';
-import 'firebase_options.dart';
+// import 'firebase_options.dart';
 
-Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  // You can handle background notifications here
-}
+// Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp();
+//   // You can handle background notifications here
+// }
 
 final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('Firebase initialisé avec succès');
-  } catch (e) {
-    print('Erreur lors de l\'initialisation Firebase: $e');
-    // Continuer sans Firebase si l'initialisation échoue
-  }
+  // try {
+  //   await Firebase.initializeApp(
+  //     options: DefaultFirebaseOptions.currentPlatform,
+  //   );
+  //   print('Firebase initialisé avec succès');
+  // } catch (e) {
+  //   print('Erreur lors de l\'initialisation Firebase: $e');
+  //   // Continuer sans Firebase si l'initialisation échoue
+  // }
 
   // Init local notifications (Android seulement)
   if (!kIsWeb) {
@@ -40,7 +40,7 @@ Future<void> main() async {
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
       await notificationsPlugin.initialize(const InitializationSettings(android: androidSettings));
       
-      FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+      // FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
       print('Notifications locales initialisées');
     } catch (e) {
       print('Erreur lors de l\'initialisation des notifications: $e');
@@ -90,17 +90,17 @@ class _MyAppState extends State<MyApp> {
       // Initialiser les notifications push
       await pushNotificationService.initialize();
       
-      // Configurer les callbacks des notifications
+      // Configurer les callbacks des notifications (version simplifiée)
       pushNotificationService.setCallbacks(
-        onMessageReceived: (RemoteMessage message) {
-          print('📱 Notification reçue: ${message.notification?.title}');
+        onMessageReceived: (Map<String, dynamic> data) {
+          print('📱 Notification reçue: ${data['title']}');
           // Ici vous pouvez ajouter une logique personnalisée
-          _showInAppNotification(message);
+          _showInAppNotification(data);
         },
-        onMessageOpenedApp: (RemoteMessage message) {
-          print('👆 App ouverte depuis notification: ${message.notification?.title}');
+        onMessageOpenedApp: (Map<String, dynamic> data) {
+          print('👆 App ouverte depuis notification: ${data['title']}');
           // Naviguer selon le type de notification
-          _handleNotificationNavigation(message);
+          _handleNotificationNavigation(data);
         },
       );
 
@@ -111,15 +111,15 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _showInAppNotification(RemoteMessage message) {
+  void _showInAppNotification(Map<String, dynamic> data) {
     // Afficher une notification in-app si nécessaire
-    if (mounted && message.notification != null) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message.notification!.body ?? 'Nouvelle notification'),
+          content: Text(data['body'] ?? 'Nouvelle notification'),
           action: SnackBarAction(
             label: 'Voir',
-            onPressed: () => _handleNotificationNavigation(message),
+            onPressed: () => _handleNotificationNavigation(data),
           ),
           duration: const Duration(seconds: 4),
         ),
@@ -127,9 +127,9 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _handleNotificationNavigation(RemoteMessage message) {
+  void _handleNotificationNavigation(Map<String, dynamic> data) {
     // Logique de navigation selon le type de notification
-    final String? type = message.data['type'];
+    final String? type = data['type'];
     
     switch (type) {
       case 'course':
@@ -142,7 +142,7 @@ class _MyAppState extends State<MyApp> {
         break;
       case 'article':
         // Naviguer vers l'article spécifique
-        final String? articleId = message.data['articleId'];
+        final String? articleId = data['articleId'];
         if (articleId != null) {
           navigatorKey.currentState?.pushNamed('/article/$articleId');
         }

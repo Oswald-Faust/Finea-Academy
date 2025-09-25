@@ -9,13 +9,13 @@ class ApiConfig {
       // En mode développement, on détecte si on est sur un émulateur Android
       if (Platform.isAndroid) {
         // 10.0.2.2 est l'adresse IP spéciale de l'émulateur Android pour accéder au PC hôte
-        return 'http://10.0.2.2:5000';
+        return 'http://10.0.2.2:5001';
       } else if (Platform.isIOS) {
         // Pour l'émulateur iOS, localhost fonctionne
-        return 'http://localhost:5000';
+        return 'http://localhost:5001';
       } else {
         // Pour desktop (Windows, macOS, Linux)
-        return 'http://localhost:5000';
+        return 'http://localhost:5001';
       }
     } else {
       // En production, utiliser l'URL de production

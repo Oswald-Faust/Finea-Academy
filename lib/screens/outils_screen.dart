@@ -3,11 +3,13 @@ import '../widgets/positioning_alert_card.dart';
 import '../widgets/lot_calculator_card.dart';
 import '../widgets/currency_converter_card.dart';
 import '../widgets/interest_calculator_card.dart';
+import '../widgets/tally_form_card.dart';
 import 'profile_screen.dart';
 import 'currency_converter_screen.dart';
 import 'lot_calculator_screen.dart';
 import 'interest_calculator_screen.dart';
 import 'positioning_alerts_screen.dart';
+import 'tally_form_screen.dart';
 
 class OutilsScreen extends StatelessWidget {
   const OutilsScreen({super.key});
@@ -90,6 +92,19 @@ class OutilsScreen extends StatelessWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const InterestCalculatorScreen(),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // SECTION PROFIL INVESTISSEUR - TALLY
+            TallyFormCard(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const TallyFormScreen(),
                   ),
                 );
               },

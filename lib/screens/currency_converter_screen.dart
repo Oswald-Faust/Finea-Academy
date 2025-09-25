@@ -545,17 +545,20 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
         children: [
           // En-tête avec titre et toggle période
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Évolution du taux de change',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins',
+              Expanded(
+                child: const Text(
+                  'Évolution du taux de change',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               _buildPeriodToggle(),
             ],
           ),
@@ -587,21 +590,25 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen>
         mainAxisSize: MainAxisSize.min,
         children: ChartPeriod.values.map((period) {
           final isSelected = period == _state.chartPeriod;
-          return GestureDetector(
-            onTap: () => _onChartPeriodChanged(period),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF000D64) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                period.label,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  fontFamily: 'Poppins',
+          return Flexible(
+            child: GestureDetector(
+              onTap: () => _onChartPeriodChanged(period),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF000D64) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  period.label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontFamily: 'Poppins',
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
