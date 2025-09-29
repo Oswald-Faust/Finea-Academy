@@ -249,7 +249,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
               Expanded(
                 child: _buildFrequencyDropdown(
                   value: _interestFrequency,
-                  label: 'Périodicité',
+                  label: 'Périodicité du taux',
                   onChanged: (value) {
                     setState(() {
                       _interestFrequency = value!;
@@ -265,7 +265,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
           // Durée
           _buildInputField(
             controller: _periodsController,
-            label: 'Nombre de périodes',
+            label: 'Nombre de mois',
             hint: '12',
             icon: Icons.schedule,
           ),
@@ -777,11 +777,14 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
         ),
         content: const Text(
           'Cette calculatrice simule la croissance de votre capital avec :\n\n'
+          '• Investissement initial\n'
           '• Investissements récurrents\n'
           '• Intérêts simples ou composés\n'
-          '• Différentes fréquences de calcul\n'
           '• Graphiques interactifs\n\n'
-          'Utilisez-la pour planifier vos investissements et comparer différents scénarios.',
+          'IMPORTANT :\n'
+          '• La périodicité du taux détermine la fréquence des intérêts\n'
+          '• Le nombre de périodes est toujours en mois\n'
+          '• Les investissements récurrents sont convertis en montants mensuels',
           style: TextStyle(
             color: Colors.white,
             fontSize: 14,

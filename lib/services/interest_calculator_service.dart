@@ -9,41 +9,40 @@ class InterestCalculatorService {
     double capital = input.initialCapital;
     double totalInvested = input.initialCapital;
     
-    // Convertir le taux d'intérêt selon la fréquence
-    final double periodInterestRate = _convertInterestRate(
+    // Convertir le taux d'intérêt selon la fréquence (toujours en mensuel)
+    final double monthlyInterestRate = _convertToMonthlyRate(
       input.interestRate,
       input.interestFrequency,
-      input.recurringFrequency,
     );
     
-    // Calculer le montant récurrent selon la fréquence
-    final double periodRecurringAmount = _convertRecurringAmount(
+    // Calculer le montant récurrent mensuel
+    final double monthlyRecurringAmount = _convertToMonthlyAmount(
       input.recurringAmount,
       input.recurringFrequency,
-      input.interestFrequency,
     );
     
-    for (int i = 1; i <= input.periods; i++) {
-      // Ajouter l'investissement récurrent
-      capital += periodRecurringAmount;
-      totalInvested += periodRecurringAmount;
+    // Le nombre de périodes est toujours en mois
+    for (int month = 1; month <= input.periods; month++) {
+      // Ajouter l'investissement récurrent mensuel
+      capital += monthlyRecurringAmount;
+      totalInvested += monthlyRecurringAmount;
       
       // Calculer les intérêts
       double interestEarned = 0;
       
       if (input.interestType == InterestType.compound) {
         // Intérêt composé : appliqué sur tout le capital actuel
-        interestEarned = capital * periodInterestRate;
+        interestEarned = capital * monthlyInterestRate;
         capital += interestEarned;
       } else {
         // Intérêt simple : appliqué seulement sur le capital initial
-        interestEarned = input.initialCapital * periodInterestRate;
+        interestEarned = input.initialCapital * monthlyInterestRate;
         capital += interestEarned;
       }
       
       // Ajouter à l'historique
       history.add(InterestCalculatorPeriodResult(
-        period: i,
+        period: month,
         capital: capital,
         totalInvested: totalInvested,
         interestEarned: capital - totalInvested,
@@ -62,38 +61,32 @@ class InterestCalculatorService {
     );
   }
   
-  /// Convertit le taux d'intérêt selon les fréquences
-  static double _convertInterestRate(
+  /// Convertit le taux d'intérêt en taux mensuel
+  static double _convertToMonthlyRate(
     double annualRate,
     Frequency interestFrequency,
-    Frequency calculationFrequency,
   ) {
-    final interestPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(interestFrequency);
-    final calculationPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(calculationFrequency);
+    final periodsPerYear = InterestCalculatorInput.getPeriodsPerYear(interestFrequency);
     
-    // Convertir le taux annuel en taux par période d'intérêt
-    final ratePerInterestPeriod = annualRate / interestPeriodsPerYear;
-    
-    // Ajuster selon la fréquence de calcul
-    final periodsRatio = interestPeriodsPerYear / calculationPeriodsPerYear;
-    
-    return ratePerInterestPeriod * periodsRatio;
+    // Convertir le taux annuel en taux mensuel
+    // Si le taux est annuel, on le divise par 12
+    // Si le taux est trimestriel, on le divise par 3
+    // Si le taux est mensuel, on le garde tel quel
+    return annualRate / (12 / periodsPerYear);
   }
   
-  /// Convertit le montant récurrent selon les fréquences
-  static double _convertRecurringAmount(
+  /// Convertit le montant récurrent en montant mensuel
+  static double _convertToMonthlyAmount(
     double amount,
     Frequency recurringFrequency,
-    Frequency calculationFrequency,
   ) {
-    final recurringPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(recurringFrequency);
-    final calculationPeriodsPerYear = InterestCalculatorInput.getPeriodsPerYear(calculationFrequency);
+    final periodsPerYear = InterestCalculatorInput.getPeriodsPerYear(recurringFrequency);
     
-    // Convertir le montant annuel
-    final annualAmount = amount * recurringPeriodsPerYear;
-    
-    // Ajuster selon la fréquence de calcul
-    return annualAmount / calculationPeriodsPerYear;
+    // Convertir le montant en montant mensuel
+    // Si c'est annuel, on divise par 12
+    // Si c'est trimestriel, on divise par 3
+    // Si c'est mensuel, on garde tel quel
+    return amount / (12 / periodsPerYear);
   }
   
   /// Compare plusieurs scénarios

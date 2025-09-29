@@ -64,10 +64,11 @@ class InvestorProfileSection extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Ton profil investisseur, c\'est ton GPS financier. On scanne ton rapport au risque, ton cashflow et ton horizon, pour générer une stratégie sur mesure. Plus de pilotage à l\'aveugle. Place à la donnée.',
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 13,
-                          height: 1.5,
+                          fontSize: 10,
+                          height: 1.3,
                           fontFamily: 'Poppins',
                         ),
                       ),
@@ -95,11 +96,12 @@ class InvestorProfileSection extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: RichText(
+                  textAlign: TextAlign.center,
                   text: const TextSpan(
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 13,
-                      height: 1.5,
+                      fontSize: 10,
+                      height: 1.3,
                       fontFamily: 'Poppins',
                     ),
                     children: [

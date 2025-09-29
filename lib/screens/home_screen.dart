@@ -7,7 +7,9 @@ import '../widgets/alerts_section.dart';
 import '../widgets/contest_winner_card.dart';
 import '../widgets/investor_profile_section.dart';
 import '../widgets/finea_vision_section.dart';
+import '../widgets/actus_section.dart';
 import '../models/newsletter_model.dart';
+import '../models/actus_model.dart';
 import '../services/api_service.dart';
 import '../utils/image_utils.dart';
 import 'concours_screen.dart';
@@ -25,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
   NewsletterArticle? _latestArticle;
   bool _isLoadingArticle = true;
-  String _errorMessage = '';
 
   // Initialise FCM, request permissions et récupère le token
   Future<void> initFCM() async {
@@ -86,7 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       setState(() {
         _isLoadingArticle = true;
-        _errorMessage = '';
       });
 
       final response = await _apiService.getNewsletterArticles(
@@ -109,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
         _isLoadingArticle = false;
       });
     }
@@ -232,6 +231,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+            
+            const SizedBox(height: 40),
+            
+            // SECTION ACTUS
+            ActusSection(
+              actus: ActusData.sampleActus,
+              onViewAll: () {
+                // Navigation vers la page complète des actus
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Page des actualités en développement'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+              onArticleTap: (article) {
+                // Navigation vers l'article d'actus
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Ouverture de l\'article: ${article.title}'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+              onBookmark: (article) {
+                // Ajouter/supprimer des favoris
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(article.isBookmarked 
+                        ? 'Article retiré des favoris' 
+                        : 'Article ajouté aux favoris'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+            ),
             
             const SizedBox(height: 40),
             

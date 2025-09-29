@@ -96,7 +96,7 @@ class TallyFormCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Découvrez votre profil et optimisez vos placements',
+                    'Découvrez votre profil personnalisé',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 12,
