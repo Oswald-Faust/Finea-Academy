@@ -8,6 +8,8 @@ import '../widgets/contest_winner_card.dart';
 import '../widgets/investor_profile_section.dart';
 import '../widgets/finea_vision_section.dart';
 import '../widgets/actus_section.dart';
+import '../widgets/myfxbook_widget.dart';
+import '../widgets/newsletter_card.dart';
 import '../models/newsletter_model.dart';
 import '../models/actus_model.dart';
 import '../services/api_service.dart';
@@ -15,6 +17,7 @@ import '../utils/image_utils.dart';
 import 'concours_screen.dart';
 import 'profile_screen.dart';
 import 'newsletter_detail_screen.dart';
+import 'tally_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -141,6 +144,12 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
+        title: Image.asset(
+          'assets/images/finea-logo.png',
+          height: 82,
+          fit: BoxFit.contain,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
@@ -166,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 200,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white.withOpacity(0.1)),
                 ),
                 child: const Center(
@@ -176,14 +185,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               )
             else if (_latestArticle != null)
-              FeaturedArticleCard(
+              NewsletterCard(
                 title: _latestArticle!.title,
-                content: _latestArticle!.content.isNotEmpty 
-                    ? _latestArticle!.content 
-                    : _getTruncatedDescription(_latestArticle!.title),
                 date: "Finéa app ${_formatDate(_latestArticle!.date)}",
                 imagePath: _getImagePath(_latestArticle!.imageUrl),
-                onReadMore: () {
+                onTap: () {
                   // Navigation vers l'article complet
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -206,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 200,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white.withOpacity(0.1)),
                 ),
                 child: const Center(
@@ -232,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
             
             // SECTION ACTUS
             ActusSection(
@@ -272,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
             
             // SECTION GAGNANT DU CONCOURS
             const Text(
-              "Le gagnant du jeu concours !",
+              "Le gagnant du dernier tirage !",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -304,11 +310,10 @@ class _HomeScreenState extends State<HomeScreen> {
             // SECTION PROFIL INVESTISSEUR
             InvestorProfileSection(
               onDiscoverProfile: () {
-                // Navigation vers le profil investisseur
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fonctionnalité en développement'),
-                    backgroundColor: Colors.blue,
+                // Navigation vers l'outil Profil Investisseur
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const TallyFormScreen(),
                   ),
                 );
               },
@@ -318,6 +323,17 @@ class _HomeScreenState extends State<HomeScreen> {
             
             // SECTION LA VISION DE FINÉA
             const FineaVisionSection(),
+            
+            const SizedBox(height: 24),
+            
+           
+            
+            const SizedBox(height: 12),
+            
+            MyfxbookWidget(
+              portfolioId: '11712757', // ID du portfolio "FINÉA"
+              height: 400,
+            ),
             
             const SizedBox(height: 24),
             

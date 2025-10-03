@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 class MyfxbookApiService {
   static const String _baseUrl = 'https://www.myfxbook.com/api';
   static String? _sessionId;
+  static DateTime? _lastAuthAttempt;
+  static bool _isAuthenticating = false;
   
   // Identifiants Myfxbook
   static const String _email = 'finea.academie@gmail.com';
@@ -11,6 +13,24 @@ class MyfxbookApiService {
   
   /// Authentification avec Myfxbook
   static Future<bool> authenticate() async {
+    // Éviter les tentatives multiples simultanées
+    if (_isAuthenticating) {
+      print('Authentification déjà en cours...');
+      return false;
+    }
+    
+    // Éviter les tentatives trop fréquentes (attendre 5 minutes entre les tentatives)
+    if (_lastAuthAttempt != null) {
+      final timeSinceLastAttempt = DateTime.now().difference(_lastAuthAttempt!);
+      if (timeSinceLastAttempt.inMinutes < 5) {
+        print('Tentative d\'authentification trop récente, attendez ${5 - timeSinceLastAttempt.inMinutes} minutes');
+        return false;
+      }
+    }
+    
+    _isAuthenticating = true;
+    _lastAuthAttempt = DateTime.now();
+    
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/login.json'),
@@ -26,15 +46,19 @@ class MyfxbookApiService {
         if (data['error'] == false) {
           _sessionId = data['session'];
           print('Authentification Myfxbook réussie');
+          _isAuthenticating = false;
           return true;
         } else {
           print('Erreur d\'authentification: ${data['message']}');
+          _isAuthenticating = false;
           return false;
         }
       }
+      _isAuthenticating = false;
       return false;
     } catch (e) {
       print('Erreur lors de l\'authentification Myfxbook: $e');
+      _isAuthenticating = false;
       return false;
     }
   }
@@ -43,7 +67,10 @@ class MyfxbookApiService {
   static Future<Map<String, dynamic>?> getPortfolioData(String portfolioId) async {
     if (_sessionId == null) {
       final authSuccess = await authenticate();
-      if (!authSuccess) return null;
+      if (!authSuccess) {
+        print('Impossible de s\'authentifier, utilisation des données de test');
+        return null;
+      }
     }
     
     try {
@@ -89,7 +116,10 @@ class MyfxbookApiService {
   static Future<Map<String, dynamic>?> getPortfolioInfo(String portfolioId) async {
     if (_sessionId == null) {
       final authSuccess = await authenticate();
-      if (!authSuccess) return null;
+      if (!authSuccess) {
+        print('Impossible de s\'authentifier, utilisation des données de test');
+        return null;
+      }
     }
     
     try {
@@ -114,6 +144,13 @@ class MyfxbookApiService {
       print('Erreur lors de la récupération des informations du portfolio: $e');
       return null;
     }
+  }
+  
+  /// Réinitialiser la session (en cas d'erreur)
+  static void resetSession() {
+    _sessionId = null;
+    _isAuthenticating = false;
+    print('Session Myfxbook réinitialisée');
   }
   
   /// Déconnexion

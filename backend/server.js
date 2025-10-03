@@ -54,7 +54,8 @@ const corsOptions = {
       'https://finea-academie.vercel.app',
       'https://finea-academie.web.app',
       'https://finea-academie.firebaseapp.com',
-      'https://finea-admin-dashboard.netlify.app'
+      'https://finea-admin-dashboard.netlify.app',
+      'https://horizon-plus-five.vercel.app'
     ];
     
     // Permettre les requêtes sans origine (comme les applications mobiles)

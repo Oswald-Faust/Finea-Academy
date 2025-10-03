@@ -336,7 +336,7 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         ),
         const SizedBox(height: 12),
         MyfxbookWidget(
-          portfolioId: '11701131', // ID du portfolio "Jeu concours Finea"
+          portfolioId: '11712760', // ID du portfolio "JEU-CONCOURS"
           height: 400,
         ),
       ],

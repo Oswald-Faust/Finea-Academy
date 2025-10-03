@@ -22,7 +22,7 @@ class ContestWinnerCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
           color: const Color(0xFF1a1a2e),
           borderRadius: BorderRadius.circular(16),
@@ -49,43 +49,34 @@ class ContestWinnerCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Gagnant : $winner',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      Text(
+                        'Gagnant : $winner',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
                       Text(
                         'Gains : $gains',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
+                          fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
                       ),
-                      const SizedBox(height: 8),
                       Text(
-                        'Adresse ETHscan :',
+                        'Adresse ETH : ',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      Text(
-                        ethscanAddress,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
                       ),
@@ -93,39 +84,30 @@ class ContestWinnerCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Trophée 3D violet
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(
-                      'assets/images/trophies.png',
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.contain,
-                    ),
+                // Trophée 3D violet - plus grand et incliné
+                Transform.rotate(
+                  angle: 0.2, // Inclinaison vers la droite
+                  child: Image.asset(
+                    'assets/images/trophies.png',
+                    width: 140,
+                    height: 140,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            // Chevron vers le bas
+            // Chevron vers le bas - plus petit
             Center(
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.white,
-                  size: 20,
+                  size: 10,
                 ),
               ),
             ),

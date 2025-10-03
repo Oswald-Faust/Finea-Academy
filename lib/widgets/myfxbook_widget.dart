@@ -78,7 +78,7 @@ class _MyfxbookWidgetState extends State<MyfxbookWidget> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Erreur lors du chargement des données';
+          _error = 'Erreur lors du chargement des données. Utilisation des données de test.';
           _isLoading = false;
         });
       }

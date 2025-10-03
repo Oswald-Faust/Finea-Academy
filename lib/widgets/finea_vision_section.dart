@@ -7,70 +7,62 @@ class FineaVisionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Titre de la section sans design arrondi
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: const Text(
-              'La vision de Finéa',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-                letterSpacing: 0.5,
-              ),
+          // Titre centré
+          const Text(
+            'La vision de Finéa',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
             ),
           ),
           
           const SizedBox(height: 24),
           
-          // Liste des éléments de vision sans animations
+          // Cartes séparées avec bordures individuelles
           Column(
             children: [
-              // Premier élément : Rendre l'investissement accessible à tous
+              // Première carte : Clé à droite (avec bordure du bas à moitié)
               _buildVisionCard(
                 title: 'Rendre l\'investissement accessible à tous',
                 description: 'On guide chacun, pas à pas, pour comprendre les bases de l\'investissement et faire ses premiers choix en toute confiance.',
-                imagePath: 'assets/images/key.png',
-                imagePosition: ImagePosition.right,
-                isFirst: true,
-                isLast: false,
+                imagePath: 'assets/images/cle-removebg-preview.png',
+                iconPosition: IconPosition.right,
+                halfBottomBorder: true,
               ),
               
-              // Deuxième élément : Comprendre l'économie
+              // Deuxième carte : Argent à gauche (avec bordure du haut à moitié)
               _buildVisionCard(
                 title: 'Comprendre l\'économie',
                 description: 'Parce qu\'investir sans comprendre le monde qui nous entoure, c\'est naviguer à l\'aveugle. On aide chacun à décrypter l\'économie pour mieux agir.',
                 imagePath: 'assets/images/money.png',
-                imagePosition: ImagePosition.left,
-                isFirst: false,
-                isLast: false,
+                iconPosition: IconPosition.left,
+                halfTopBorder: true,
               ),
               
-              // Troisième élément : Créer un vrai plan de développement
+              const SizedBox(height: 1),
+              
+              // Troisième carte : Horloge à droite
               _buildVisionCard(
                 title: 'Créer un vrai plan de développement personnel et financier',
                 description: 'On propose des stratégies concrètes pour développer son capital, mais aussi pour structurer une activité durable autour de l\'investissement.',
                 imagePath: 'assets/images/horloge.png',
-                imagePosition: ImagePosition.right,
-                isFirst: false,
-                isLast: false,
+                iconPosition: IconPosition.right,
               ),
               
-              // Quatrième élément : Accompagnement simple et humain
+              const SizedBox(height: 1),
+              
+              // Quatrième carte : Accompagnement à gauche
               _buildVisionCard(
                 title: 'Un accompagnement simple, clair et humain',
                 description: 'Pas de jargon, pas de barrière : notre mission, c\'est de rendre l\'éducation financière simple et utile, pour que chacun prenne le contrôle de son avenir.',
                 imagePath: 'assets/images/person.png',
-                imagePosition: ImagePosition.left,
-                isFirst: false,
-                isLast: true,
+                iconPosition: IconPosition.left,
               ),
             ],
           ),
@@ -83,45 +75,31 @@ class FineaVisionSection extends StatelessWidget {
     required String title,
     required String description,
     required String imagePath,
-    required ImagePosition imagePosition,
-    bool isFirst = false,
-    bool isLast = false,
+    required IconPosition iconPosition,
+    bool hideTopBorder = false,
+    bool hideBottomBorder = false,
+    bool halfTopBorder = false,
+    bool halfBottomBorder = false,
   }) {
-    // Définir les bordures arrondies selon la position
-    BorderRadius borderRadius;
-    if (isFirst) {
-      // Première section : arrondie partout sauf en bas
-      borderRadius = const BorderRadius.only(
-        topLeft: Radius.circular(12),
-        topRight: Radius.circular(12),
-        bottomLeft: Radius.circular(0),
-        bottomRight: Radius.circular(0),
-      );
-    } else if (isLast) {
-      // Dernière section : arrondie partout sauf en haut
-      borderRadius = const BorderRadius.only(
-        topLeft: Radius.circular(0),
-        topRight: Radius.circular(0),
-        bottomLeft: Radius.circular(12),
-        bottomRight: Radius.circular(12),
-      );
-    } else {
-      // Sections du milieu : arrondies partout
-      borderRadius = BorderRadius.circular(12);
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.purple, width: 1),
-        borderRadius: borderRadius,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border(
+              top: hideTopBorder ? BorderSide.none : BorderSide(color: Colors.blue, width: 1.5),
+              left: BorderSide(color: Colors.blue, width: 1.5),
+              right: BorderSide(color: Colors.blue, width: 1.5),
+              bottom: hideBottomBorder ? BorderSide.none : BorderSide(color: Colors.blue, width: 1.5),
+            ),
+          ),
+          child: Row(
         children: [
-          if (imagePosition == ImagePosition.left) ...[
-            _buildImageContainer(imagePath),
+          if (iconPosition == IconPosition.left) ...[
+            _buildIconContainer(imagePath),
             const SizedBox(width: 16),
           ],
           
@@ -133,19 +111,19 @@ class FineaVisionSection extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
-                    height: 1.3,
+                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    height: 1.4,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 10,
+                    height: 1.3,
                     fontFamily: 'Poppins',
                   ),
                 ),
@@ -153,25 +131,59 @@ class FineaVisionSection extends StatelessWidget {
             ),
           ),
           
-          if (imagePosition == ImagePosition.right) ...[
+          if (iconPosition == IconPosition.right) ...[
             const SizedBox(width: 16),
-            _buildImageContainer(imagePath),
+            _buildIconContainer(imagePath),
           ],
         ],
       ),
+        ),
+        
+        // Bordure du haut à moitié
+        if (halfTopBorder)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 100,
+                height: 1.5,
+                color: Colors.blue,
+              ),
+            ),
+          ),
+        
+        // Bordure du bas à moitié
+        if (halfBottomBorder)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 100,
+                height: 1.5,
+                color: Colors.blue,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildImageContainer(String imagePath) {
-    return Container(
-      width: 160,
-      height: 160,
-      child: Image.asset(
-        imagePath,
-        fit: BoxFit.contain,
-      ),
-    );
-  }
+      Widget _buildIconContainer(String imagePath) {
+        return Container(
+          width: 120,
+          height: 120,
+          child: Image.asset(
+            imagePath,
+            fit: BoxFit.scaleDown,
+            width: 120,
+            height: 120,
+          ),
+        );
+      }
 }
 
-enum ImagePosition { left, right } 
+enum IconPosition { left, right }

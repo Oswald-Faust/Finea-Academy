@@ -21,37 +21,6 @@ class ActusSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // En-tête de la section
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Actualités',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            if (onViewAll != null)
-              TextButton(
-                onPressed: onViewAll,
-                child: const Text(
-                  'Voir tout',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ),
-          ],
-        ),
-        
-        const SizedBox(height: 16),
-        
         // Article principal uniquement
         if (actus.isEmpty)
           _buildEmptyState()
@@ -103,7 +72,8 @@ class ActusSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
-        child: IntrinsicHeight(
+        child: Container(
+          height: 260,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -120,62 +90,15 @@ class ActusSection extends StatelessWidget {
                         article.content,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 10,
+                          fontSize: 11,
                           fontFamily: 'Poppins',
-                          height: 1.3,
+                          height: 1.4,
                         ),
-                        maxLines: 12,
+                        maxLines: 16,
                         overflow: TextOverflow.ellipsis,
                       ),
                       
                       const Spacer(),
-                      
-                      // Métadonnées et bouton
-                      Row(
-                        children: [
-                          Text(
-                            article.formattedDate,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 9,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                          if (article.readTime != null) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              '• ${article.readTime} min',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
-                                fontSize: 9,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => onBookmark?.call(article),
-                            child: Icon(
-                              article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                              color: article.isBookmarked ? Colors.yellow : Colors.white.withOpacity(0.6),
-                              size: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 8),
-                      
-                      // Bouton "Lire plus"
-                      Text(
-                        'Lire plus....',
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
                     ],
                   ),
                 ),
