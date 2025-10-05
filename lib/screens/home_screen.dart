@@ -240,26 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             
             // SECTION ACTUS
-            ActusSection(
-              onArticleTap: (article) {
-                // Navigation vers l'article d'actus
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Ouverture de l\'article: ${article.title}'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
-              onBookmark: (article) {
-                // Ajouter/supprimer des favoris
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fonctionnalité de favoris en développement'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
-            ),
+            const ActusSection(),
             
             const SizedBox(height: 40),
             

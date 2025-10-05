@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../services/news_api_service.dart';
 import '../utils/image_utils.dart';
+import '../screens/news_detail_screen.dart';
 
 class ActusSection extends StatefulWidget {
   final VoidCallback? onViewAll;
@@ -195,7 +196,18 @@ class _ActusSectionState extends State<ActusSection> {
 
   Widget _buildFeaturedActusCard(NewsArticle article) {
     return GestureDetector(
-      onTap: () => widget.onArticleTap?.call(article),
+      onTap: () {
+        if (widget.onArticleTap != null) {
+          widget.onArticleTap!(article);
+        } else {
+          // Navigation par défaut vers la page de détails
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => NewsDetailScreen(newsId: article.id),
+            ),
+          );
+        }
+      },
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(

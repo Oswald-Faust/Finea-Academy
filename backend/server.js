@@ -52,6 +52,9 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:62577',
       'http://localhost:63266',
+      'http://192.168.1.230:3000', // IP locale pour Flutter
+      'http://192.168.1.230:3001',
+      'http://192.168.1.230:3002',
       'https://finea-admin.vercel.app',
       'https://finea-academie.vercel.app',
       'https://finea-academie.web.app',

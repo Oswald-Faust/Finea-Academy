@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class NewsApiService {
-  static const String baseUrl = 'http://localhost:5001/api';
+  // Configuration automatique selon l'environnement
+  static String get baseUrl => Environment.baseUrl;
   
   // Récupérer la dernière actualité publiée
   static Future<Map<String, dynamic>?> getLatestNews() async {
