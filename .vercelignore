@@ -36,7 +36,7 @@ Thumbs.db
 # Node modules (seront installés par Vercel)
 node_modules/
 
-# Autres dossiers du projet
+# Autres dossiers du projet (garder admin-dashboard)
 backend/
 lib/
 android/
