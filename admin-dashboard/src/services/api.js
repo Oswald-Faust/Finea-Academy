@@ -13,7 +13,7 @@ const getApiBaseUrl = () => {
                        window.location.hostname === '127.0.0.1';
   
   if (isDevelopment) {
-    return 'http://localhost:5000/api';
+    return 'http://localhost:5001/api';
   } else {
     return 'https://finea-academy-1.onrender.com/api';
   }
@@ -324,6 +324,43 @@ export const pushNotificationAPI = {
   
   // Supprimer un token FCM
   unregisterToken: (deviceId) => api.delete('/push-notifications/unregister', { data: { deviceId } }),
+};
+
+// Services pour les actualités
+export const newsAPI = {
+  // Récupérer toutes les actualités
+  getNews: (params = {}) => api.get('/news', { params }),
+  
+  // Récupérer une actualité par ID
+  getNewsById: (id) => api.get(`/news/${id}`),
+  
+  // Récupérer l'actualité de la semaine actuelle
+  getCurrentWeekNews: () => api.get('/news/current-week'),
+  
+  // Récupérer une actualité par semaine
+  getNewsByWeek: (year, week) => api.get(`/news/week/${year}/${week}`),
+  
+  // Créer une nouvelle actualité
+  createNews: (data) => api.post('/news', data),
+  
+  // Mettre à jour une actualité
+  updateNews: (id, data) => api.put(`/news/${id}`, data),
+  
+  // Supprimer une actualité
+  deleteNews: (id) => api.delete(`/news/${id}`),
+  
+  // Publier une actualité
+  publishNews: (id) => api.patch(`/news/${id}/publish`),
+  
+  // Récupérer les statistiques des actualités
+  getStats: () => api.get('/news/stats/overview'),
+  
+  // Upload d'image pour une actualité
+  uploadImage: (formData) => api.post('/news/upload-image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
 };
 
 // Services pour les concours

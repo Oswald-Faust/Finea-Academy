@@ -14,6 +14,7 @@ import {
   TrophyIcon,
   CalendarIcon,
   HeartIcon,
+  NewspaperIcon,
 } from '@heroicons/react/24/outline';
 import NotificationMenu from './NotificationMenu';
 import logoFinea from '../assets/images/Finea.png';
@@ -28,6 +29,7 @@ const Layout = ({ children }) => {
     { name: 'Concours', href: '/contests', icon: TrophyIcon },
     { name: 'Concours Hebdomadaire', href: '/weekly-contest', icon: CalendarIcon },
     { name: 'Newsletter', href: '/newsletter', icon: EnvelopeIcon },
+    { name: 'Actualités', href: '/news', icon: NewspaperIcon },
     { name: 'Favoris', href: '/admin-favorites', icon: HeartIcon },
     { name: 'Notifications', href: '/notifications', icon: BellIcon },
     { name: 'Push Notifications', href: '/push-notifications', icon: DevicePhoneMobileIcon },

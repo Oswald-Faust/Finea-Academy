@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const newsletterRoutes = require('./routes/newsletters');
+const newsRoutes = require('./routes/news');
 const emailRoutes = require('./routes/email');
 const courseRoutes = require('./routes/courses');
 const analyticsRoutes = require('./routes/analytics');
@@ -47,6 +48,7 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
+      'http://localhost:3002',
       'http://localhost:5173',
       'http://localhost:62577',
       'http://localhost:63266',
@@ -100,10 +102,14 @@ app.get('/api/scheduler/status', (req, res) => {
   });
 });
 
+// Servir les fichiers statiques uploads
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/newsletters', newsletterRoutes);
+app.use('/api/news', newsRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -163,7 +169,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // Démarrage du serveur
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
   try {

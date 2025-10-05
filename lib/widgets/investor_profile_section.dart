@@ -77,13 +77,6 @@ class InvestorProfileSection extends StatelessWidget {
                 TextSpan(
                   text: 'Le profil investisseur, c\'est une sorte de carte d\'identité financière. Il sert à définir quel type d\'investisseur tu es, en fonction de plusieurs critères ',
                 ),
-                TextSpan(
-                  text: 'Lire plus....',
-                  style: TextStyle(
-                    color: Colors.purple,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
               ],
             ),
           ),

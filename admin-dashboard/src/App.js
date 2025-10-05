@@ -12,6 +12,7 @@ import Contests from './pages/Contests';
 import WeeklyContest from './pages/WeeklyContest';
 import AllParticipants from './pages/AllParticipants';
 import AdminFavorites from './pages/AdminFavorites';
+import News from './pages/News';
 import Settings from './pages/Settings';
 import Stats from './pages/Stats';
 function App() {
@@ -43,6 +44,7 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/users/:id" element={<UserDetail />} />
             <Route path="/newsletter" element={<Newsletter />} />
+            <Route path="/news" element={<News />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/push-notifications" element={<PushNotifications />} />
             <Route path="/contests" element={<Contests />} />
