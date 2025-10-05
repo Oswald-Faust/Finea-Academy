@@ -1,32 +1,149 @@
 import 'package:flutter/material.dart';
-import '../models/actus_model.dart';
+import '../models/news_model.dart';
+import '../services/news_api_service.dart';
 import '../utils/image_utils.dart';
 
-class ActusSection extends StatelessWidget {
-  final List<ActusArticle> actus;
+class ActusSection extends StatefulWidget {
   final VoidCallback? onViewAll;
-  final Function(ActusArticle)? onArticleTap;
-  final Function(ActusArticle)? onBookmark;
+  final Function(NewsArticle)? onArticleTap;
+  final Function(NewsArticle)? onBookmark;
 
   const ActusSection({
     super.key,
-    required this.actus,
     this.onViewAll,
     this.onArticleTap,
     this.onBookmark,
   });
 
   @override
+  State<ActusSection> createState() => _ActusSectionState();
+}
+
+class _ActusSectionState extends State<ActusSection> {
+  NewsArticle? latestNews;
+  bool isLoading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestNews();
+  }
+
+  Future<void> _loadLatestNews() async {
+    try {
+      setState(() {
+        isLoading = true;
+        error = null;
+      });
+
+      final newsData = await NewsApiService.getLatestNews();
+      
+      if (newsData != null) {
+        setState(() {
+          latestNews = NewsArticle.fromJson(newsData);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          latestNews = null;
+          isLoading = false;
+          error = 'Aucune actualité disponible';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        error = 'Erreur lors du chargement des actualités';
+      });
+      print('Erreur lors du chargement des actualités: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Article principal uniquement
-        if (actus.isEmpty)
+        if (isLoading)
+          _buildLoadingState()
+        else if (error != null)
+          _buildErrorState()
+        else if (latestNews == null)
           _buildEmptyState()
         else
-          _buildFeaturedActusCard(actus.first),
+          _buildFeaturedActusCard(latestNews!),
       ],
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Colors.white70),
+            SizedBox(height: 16),
+            Text(
+              'Chargement des actualités...',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.red,
+              size: 48,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error ?? 'Erreur de chargement',
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: _loadLatestNews,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Réessayer'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -62,9 +179,23 @@ class ActusSection extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturedActusCard(ActusArticle article) {
+  String _extractTextFromContent(Map<String, dynamic> content) {
+    if (content.containsKey('blocks')) {
+      final blocks = content['blocks'] as List? ?? [];
+      final text = blocks.map((block) {
+        if (block['type'] == 'paragraph' && block['data'] != null) {
+          return block['data']['text'] ?? '';
+        }
+        return '';
+      }).join(' ');
+      return text;
+    }
+    return '';
+  }
+
+  Widget _buildFeaturedActusCard(NewsArticle article) {
     return GestureDetector(
-      onTap: () => onArticleTap?.call(article),
+      onTap: () => widget.onArticleTap?.call(article),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -87,7 +218,7 @@ class ActusSection extends StatelessWidget {
                     children: [
                       // Contenu de l'actualité (sans titre)
                       Text(
-                        article.content,
+                        article.summary ?? _extractTextFromContent(article.content),
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 11,
@@ -123,13 +254,13 @@ class ActusSection extends StatelessWidget {
                     child: Stack(
                       children: [
                         // Image de fond - prend toute la hauteur
-                        if (article.imageUrl != null)
+                        if (article.coverImage != null && article.coverImage!.isNotEmpty)
                           Container(
                             width: double.infinity,
                             height: double.infinity,
                             decoration: BoxDecoration(
                               image: DecorationImage(
-                                image: NetworkImage(ImageUtils.getImageUrl(article.imageUrl!)),
+                                image: NetworkImage(ImageUtils.getImageUrl(article.imageUrl)),
                                 fit: BoxFit.cover,
                               ),
                             ),

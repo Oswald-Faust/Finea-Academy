@@ -11,7 +11,6 @@ import '../widgets/actus_section.dart';
 import '../widgets/myfxbook_widget.dart';
 import '../widgets/newsletter_card.dart';
 import '../models/newsletter_model.dart';
-import '../models/actus_model.dart';
 import '../services/api_service.dart';
 import '../utils/image_utils.dart';
 import 'concours_screen.dart';
@@ -242,16 +241,6 @@ class _HomeScreenState extends State<HomeScreen> {
             
             // SECTION ACTUS
             ActusSection(
-              actus: ActusData.sampleActus,
-              onViewAll: () {
-                // Navigation vers la page complète des actus
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Page des actualités en développement'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
               onArticleTap: (article) {
                 // Navigation vers l'article d'actus
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -264,10 +253,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onBookmark: (article) {
                 // Ajouter/supprimer des favoris
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(article.isBookmarked 
-                        ? 'Article retiré des favoris' 
-                        : 'Article ajouté aux favoris'),
+                  const SnackBar(
+                    content: Text('Fonctionnalité de favoris en développement'),
                     backgroundColor: Colors.blue,
                   ),
                 );

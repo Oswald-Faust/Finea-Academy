@@ -8,6 +8,7 @@ const { body, param, query } = require('express-validator');
 const {
   getAllNews,
   getNewsById,
+  getLatestNews,
   getCurrentWeekNews,
   getNewsByWeek,
   createNews,
@@ -125,6 +126,11 @@ const queryValidation = [
 ];
 
 // Routes publiques
+// @route   GET /api/news/latest
+// @desc    Récupérer la dernière actualité publiée
+// @access  Public
+router.get('/latest', getLatestNews);
+
 // @route   GET /api/news/current-week
 // @desc    Récupérer l'actualité de la semaine actuelle
 // @access  Public
@@ -140,36 +146,36 @@ router.get('/week/:year/:week', weekValidation, getNewsByWeek);
 // @access  Public
 router.get('/', queryValidation, getAllNews);
 
-// @route   GET /api/news/:id
-// @desc    Récupérer une actualité par ID
-// @access  Public
-router.get('/:id', idValidation, getNewsById);
-
 // @route   GET /api/news/stats/overview
 // @desc    Récupérer les statistiques des actualités
 // @access  Public
 router.get('/stats/overview', getNewsStats);
 
-// Routes protégées (nécessitent une authentification)
+// @route   GET /api/news/:id
+// @desc    Récupérer une actualité par ID
+// @access  Public
+router.get('/:id', idValidation, getNewsById);
+
+// Routes publiques pour la gestion des actualités
 // @route   POST /api/news
 // @desc    Créer une nouvelle actualité
-// @access  Private (Admin)
-router.post('/', auth, newsValidation, createNews);
+// @access  Public
+router.post('/', newsValidation, createNews);
 
 // @route   PUT /api/news/:id
 // @desc    Mettre à jour une actualité
-// @access  Private (Admin)
-router.put('/:id', auth, idValidation, newsValidation, updateNews);
+// @access  Public
+router.put('/:id', idValidation, newsValidation, updateNews);
 
 // @route   DELETE /api/news/:id
 // @desc    Supprimer une actualité
-// @access  Private (Admin)
-router.delete('/:id', auth, idValidation, deleteNews);
+// @access  Public
+router.delete('/:id', idValidation, deleteNews);
 
 // @route   PATCH /api/news/:id/publish
 // @desc    Publier une actualité
-// @access  Private (Admin)
-router.patch('/:id/publish', auth, idValidation, publishNews);
+// @access  Public
+router.patch('/:id/publish', idValidation, publishNews);
 
 // Route pour l'upload d'images (réutilise le middleware existant)
 // @route   POST /api/news/upload-image

@@ -111,6 +111,43 @@ const getNewsById = async (req, res) => {
   }
 };
 
+// @desc    Récupérer la dernière actualité publiée
+// @route   GET /api/news/latest
+// @access  Public
+const getLatestNews = async (req, res) => {
+  try {
+    console.log('Récupération de la dernière actualité...');
+    
+    const news = await News.findOne({ status: 'published' })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .populate('author', 'firstName lastName email');
+
+    console.log('Actualité trouvée:', news ? news.title : 'Aucune');
+
+    if (!news) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucune actualité publiée trouvée',
+        data: null
+      });
+    }
+
+    // Incrémenter les vues
+    await news.incrementViews();
+
+    res.json({
+      success: true,
+      data: news
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la dernière actualité:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur serveur lors de la récupération de la dernière actualité'
+    });
+  }
+};
+
 // @desc    Récupérer l'actualité de la semaine actuelle
 // @route   GET /api/news/current-week
 // @access  Public
@@ -183,9 +220,12 @@ const getNewsByWeek = async (req, res) => {
 // @access  Private (Admin)
 const createNews = async (req, res) => {
   try {
+    console.log('Création d\'actualité - Données reçues:', req.body);
+    
     // Vérification des erreurs de validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Erreurs de validation:', errors.array());
       return res.status(400).json({
         success: false,
         error: 'Données invalides',
@@ -231,12 +271,16 @@ const createNews = async (req, res) => {
       targetUsers,
       targetRoles,
       priority,
-      author: req.user.id, // Supposant que req.user est défini par le middleware d'auth
+      author: req.body.authorId || null, // ID de l'auteur fourni dans le body ou null
       weekOfYear
     };
 
+    console.log('Données à sauvegarder:', newsData);
+    
     const news = new News(newsData);
     await news.save();
+
+    console.log('Actualité créée avec succès:', news._id);
 
     // Récupérer l'actualité avec les données de l'auteur
     const populatedNews = await News.findById(news._id)
@@ -320,7 +364,7 @@ const updateNews = async (req, res) => {
 
     // Mise à jour des champs
     const updateData = {
-      lastModifiedBy: req.user.id,
+      lastModifiedBy: req.body.authorId || null,
       lastModifiedAt: new Date(),
       version: news.version + 1
     };
@@ -414,7 +458,7 @@ const publishNews = async (req, res) => {
     // Mettre à jour le statut
     news.status = 'published';
     news.publishedAt = new Date();
-    news.lastModifiedBy = req.user.id;
+    news.lastModifiedBy = req.body.authorId || null;
     news.lastModifiedAt = new Date();
     news.version += 1;
 
@@ -498,6 +542,7 @@ const getNewsStats = async (req, res) => {
 module.exports = {
   getAllNews,
   getNewsById,
+  getLatestNews,
   getCurrentWeekNews,
   getNewsByWeek,
   createNews,
