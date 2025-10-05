@@ -3,7 +3,6 @@
   "outputDirectory": "build",
   "installCommand": "npm install",
   "framework": "create-react-app",
-  "functions": {},
   "rewrites": [
     {
       "source": "/(.*)",
