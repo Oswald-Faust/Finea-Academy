@@ -97,7 +97,7 @@ class _CustomBottomNavigationState extends State<CustomBottomNavigation> {
   }
 
   Widget _buildOutilsIcon(bool isSelected) {
-    return Container(
+    return SizedBox(
       width: 20,
       height: 20,
       child: Stack(

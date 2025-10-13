@@ -20,6 +20,7 @@ import {
 import toast from 'react-hot-toast';
 import CreateContestModal from '../components/CreateContestModal';
 import SelectWinnerModal from '../components/SelectWinnerModal';
+import ManageWinnersModal from '../components/ManageWinnersModal';
 import { contestAPI } from '../services/api';
 
 const Contests = () => {
@@ -33,6 +34,7 @@ const Contests = () => {
   const [searchParams] = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSelectWinnerModalOpen, setIsSelectWinnerModalOpen] = useState(false);
+  const [isManageWinnersModalOpen, setIsManageWinnersModalOpen] = useState(false);
   const [selectedContest, setSelectedContest] = useState(null);
   const [stats, setStats] = useState({
     totalContests: 0,
@@ -126,9 +128,19 @@ const Contests = () => {
     setIsSelectWinnerModalOpen(true);
   };
 
+  const handleManageWinners = (contest) => {
+    setSelectedContest(contest);
+    setIsManageWinnersModalOpen(true);
+  };
+
   const handleWinnerSelected = () => {
     fetchContests();
     toast.success('Vainqueur sélectionné avec succès !');
+  };
+
+  const handleWinnersUpdated = () => {
+    fetchContests();
+    fetchStats();
   };
 
   const getStatusBadge = (status, endDate) => {
@@ -448,6 +460,14 @@ const Contests = () => {
                             </button>
                           )}
                           
+                          <button
+                            onClick={() => handleManageWinners(contest)}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="Gérer les gagnants"
+                          >
+                            <GiftIcon className="h-5 w-5" />
+                          </button>
+                          
                           <Link
                             to={`/contests/${contest._id}/edit`}
                             className="text-blue-600 hover:text-blue-900"
@@ -555,6 +575,16 @@ const Contests = () => {
         }}
         contest={selectedContest}
         onWinnerSelected={handleWinnerSelected}
+      />
+
+      <ManageWinnersModal
+        isOpen={isManageWinnersModalOpen}
+        onClose={() => {
+          setIsManageWinnersModalOpen(false);
+          setSelectedContest(null);
+        }}
+        contest={selectedContest}
+        onWinnersUpdated={handleWinnersUpdated}
       />
     </div>
   );

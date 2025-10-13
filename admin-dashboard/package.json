@@ -53,7 +53,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:vercel": "react-scripts build",
+    "build:netlify": "./build-netlify.sh",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

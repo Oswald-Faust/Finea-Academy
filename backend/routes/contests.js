@@ -22,6 +22,15 @@ const {
   getContestsByType
 } = require('../controllers/contestController');
 
+// Import des nouveaux contrôleurs pour les statistiques et gagnants
+const {
+  getGlobalStats,
+  updateGlobalStats,
+  addManualWinners,
+  getAllWinners,
+  getDisplayStats
+} = require('../controllers/contestStatsController');
+
 // Import du middleware d'authentification pour certaines routes
 const { protect } = require('../middleware/auth');
 
@@ -30,6 +39,9 @@ const router = express.Router();
 // Routes publiques
 router.get('/', getContests);
 router.get('/stats/overview', getContestStats);
+router.get('/stats/global', getGlobalStats);
+router.get('/stats/display', getDisplayStats);
+router.get('/winners/all', getAllWinners);
 router.get('/type/:type', getContestsByType);
 router.get('/participants/all', getAllParticipants);
 
@@ -45,6 +57,9 @@ router.post('/', createContest);
 router.post('/weekly', createWeeklyContest);
 router.post('/weekly/draw', performAutoDraw);
 
+// Routes pour les statistiques (Admin)
+router.put('/stats/global', updateGlobalStats);
+
 // Route générique pour un concours spécifique (APRÈS les routes spécifiques)
 router.get('/:id', getContestById);
 router.put('/:id', updateContest);
@@ -57,6 +72,7 @@ router.delete('/:id/participants/:userId', removeParticipant);
 // Gestion des vainqueurs
 router.post('/:id/winners', selectWinner);
 router.post('/:id/winners/select', selectMultipleWinners);
+router.post('/:id/winners/manual', addManualWinners);
 router.delete('/:id/winners/:userId', removeWinner);
 
 module.exports = router; 

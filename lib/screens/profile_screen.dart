@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../models/user_model.dart';
+import '../widgets/finea_app_bar.dart';
 import 'personal_info_screen.dart';
 import 'security_screen.dart';
 import 'notifications_screen.dart';
@@ -28,23 +28,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         
         return Scaffold(
           backgroundColor: const Color(0xFF0f0f23),
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: const Text(
-              'Mon Profil',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+          appBar: FineaAppBar(
+            showBackButton: true,
           ),
           body: Column(
             children: [

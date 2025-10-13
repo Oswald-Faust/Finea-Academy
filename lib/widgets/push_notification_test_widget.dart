@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/push_notification_service.dart';
 
 class PushNotificationTestWidget extends StatefulWidget {
-  const PushNotificationTestWidget({Key? key}) : super(key: key);
+  const PushNotificationTestWidget({super.key});
 
   @override
   State<PushNotificationTestWidget> createState() => _PushNotificationTestWidgetState();
@@ -277,7 +277,7 @@ class _PushNotificationTestWidgetState extends State<PushNotificationTestWidget>
 
 // Widget simplifié pour utilisation dans les paramètres
 class PushNotificationStatusWidget extends StatelessWidget {
-  const PushNotificationStatusWidget({Key? key}) : super(key: key);
+  const PushNotificationStatusWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

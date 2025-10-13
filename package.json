@@ -1,14 +1,14 @@
 {
-  "name": "finea-academy-root",
+  "name": "finea-academy-admin",
   "version": "1.0.0",
-  "description": "Finéa Académie - Projet principal",
+  "description": "Dashboard administrateur Finéa Académie",
   "private": true,
   "scripts": {
-    "build": "cd admin-dashboard && npm install && npm run build",
+    "build": "./build-admin.sh",
     "start": "cd admin-dashboard && npm start",
-    "dev": "cd admin-dashboard && npm start"
+    "install": "cd admin-dashboard && npm install"
   },
-  "workspaces": [
-    "admin-dashboard"
-  ]
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

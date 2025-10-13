@@ -278,7 +278,7 @@ class _FormationExpandableCardState extends State<FormationExpandableCard>
               moduleContent: _getModuleContent(index),
               actionIconColor: widget.actionIconColor,
             );
-          }).toList(),
+          }),
         ],
       ),
     );

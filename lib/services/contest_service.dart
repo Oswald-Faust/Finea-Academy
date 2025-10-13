@@ -142,7 +142,7 @@ class ContestService {
                   'server': 'Finéa_Académie_${contest.weekNumber}',
                 },
               }).toList(),
-              'drawDate': contest.drawDate?.toIso8601String(),
+              'drawDate': contest.drawDate.toIso8601String(),
               'weekNumber': contest.weekNumber,
             };
           } else {
@@ -150,8 +150,8 @@ class ContestService {
             return {
               'hasWinners': false,
               'contestTitle': contest.title,
-              'drawDate': contest.drawDate?.toIso8601String(),
-              'nextDrawDate': contest.drawDate?.toIso8601String(),
+              'drawDate': contest.drawDate.toIso8601String(),
+              'nextDrawDate': contest.drawDate.toIso8601String(),
               'weekNumber': contest.weekNumber,
             };
           }

@@ -173,7 +173,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
-                              value: _autoLogoutTime,
+                              initialValue: _autoLogoutTime,
                               dropdownColor: const Color(0xFF1a1a2e),
                               style: const TextStyle(color: Colors.white),
                               decoration: const InputDecoration(
@@ -319,7 +319,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.white.withOpacity(0.3),
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey.withOpacity(0.3),

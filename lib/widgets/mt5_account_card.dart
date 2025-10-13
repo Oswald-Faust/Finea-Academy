@@ -95,7 +95,7 @@ class _MT5AccountCardState extends State<MT5AccountCard> {
           const SizedBox(height: 16),
           
           // Slider des tirages
-          Container(
+          SizedBox(
             height: 200,
             child: PageView.builder(
               controller: _pageController,
@@ -112,26 +112,6 @@ class _MT5AccountCardState extends State<MT5AccountCard> {
             ),
           ),
           
-          const SizedBox(height: 16),
-          
-          // Indicateurs de position
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _winnersData.length,
-              (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentIndex == index
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.3),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -198,7 +178,7 @@ class _MT5AccountCardState extends State<MT5AccountCard> {
               ),
               
               // Image trophée
-              Container(
+              SizedBox(
                 width: 120,
                 height: 120,
                 child: Image.asset(

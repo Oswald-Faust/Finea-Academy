@@ -53,17 +53,25 @@ class AuthService extends ChangeNotifier implements TokenProvider {
             if (response.success && response.data != null) {
               _currentUser = response.data!;
               _isLoggedIn = true;
+              print('✅ Connexion automatique réussie pour ${_currentUser!.email}');
             } else {
+              print('❌ Token invalide, nettoyage des données');
               await _clearAuthData();
             }
           } catch (e) {
             // Token invalide, nettoyer les données
+            print('❌ Erreur de validation token: $e');
             await _clearAuthData();
           }
+        } else {
+          print('❌ Données de connexion manquantes, nettoyage');
+          await _clearAuthData();
         }
+      } else {
+        print('ℹ️ Aucune session précédente trouvée');
       }
     } catch (e) {
-      print('Erreur lors de l\'initialisation de l\'authentification: $e');
+      print('❌ Erreur lors de l\'initialisation de l\'authentification: $e');
       await _clearAuthData();
     }
     
@@ -376,7 +384,32 @@ class AuthService extends ChangeNotifier implements TokenProvider {
     }
   }
 
+  // Vérifier si la session est toujours valide
+  Future<bool> validateSession() async {
+    if (!_isLoggedIn) return false;
+
+    try {
+      final response = await _apiService.getCurrentUser();
+      if (response.success && response.data != null) {
+        // Session valide, mettre à jour les données
+        _currentUser = response.data!;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_userKey, _currentUser!.toJson().toString());
+        return true;
+      } else {
+        // Session invalide
+        await logout();
+        return false;
+      }
+    } catch (e) {
+      print('Erreur lors de la validation de session: $e');
+      await logout();
+      return false;
+    }
+  }
+
   // Obtenir le token stocké (utilisé par ApiService)
+  @override
   Future<String?> getStoredToken() async {
     return await _secureStorage.read(key: _tokenKey);
   }
@@ -420,6 +453,7 @@ class AuthService extends ChangeNotifier implements TokenProvider {
     await _secureStorage.write(key: _tokenKey, value: token);
   }
 
+  @override
   Future<void> clearToken() async {
     await _secureStorage.delete(key: _tokenKey);
   }

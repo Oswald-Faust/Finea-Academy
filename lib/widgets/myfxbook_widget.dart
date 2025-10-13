@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/myfxbook_api_service.dart';
 import '../models/portfolio_data_model.dart';
 import 'portfolio_chart_widget.dart';
@@ -9,11 +10,11 @@ class MyfxbookWidget extends StatefulWidget {
   final double width;
 
   const MyfxbookWidget({
-    Key? key,
+    super.key,
     required this.portfolioId,
     this.height = 400,
     this.width = double.infinity,
-  }) : super(key: key);
+  });
 
   @override
   State<MyfxbookWidget> createState() => _MyfxbookWidgetState();
@@ -46,31 +47,49 @@ class _MyfxbookWidgetState extends State<MyfxbookWidget> {
       
           if (mounted) {
         setState(() {
-          _portfolioInfo = portfolioInfo != null ? PortfolioInfo.fromJson(portfolioInfo) : _createTestPortfolioInfo();
+          _portfolioInfo = portfolioInfo != null ? PortfolioInfo.fromJson(portfolioInfo) : null;
           
-          if (portfolioData != null) {
-            print('Données reçues: $portfolioData');
-            
-            // Essayer différents formats de données
-            List<dynamic> dataList = [];
-            
-            if (portfolioData['data'] != null) {
-              dataList = portfolioData['data'] as List;
-            } else if (portfolioData['dailyData'] != null) {
-              dataList = portfolioData['dailyData'] as List;
-            } else if (portfolioData['history'] != null) {
-              dataList = portfolioData['history'] as List;
+            if (portfolioData != null) {
+              print('Données reçues: $portfolioData');
+              
+              // Essayer différents formats de données
+              List<dynamic> dataList = [];
+              
+              if (portfolioData['dataDaily'] != null) {
+                // Format MyFXBook: dataDaily est un tableau de tableaux
+                final dataDaily = portfolioData['dataDaily'] as List;
+                if (dataDaily.isNotEmpty && dataDaily[0] is List) {
+                  // Aplatir le tableau de tableaux
+                  dataList = dataDaily.expand((item) => item as List).toList();
+                  print('Données dataDaily trouvées: ${dataList.length} points');
+                }
+              } else if (portfolioData['data'] != null) {
+                dataList = portfolioData['data'] as List;
+              } else if (portfolioData['dailyData'] != null) {
+                dataList = portfolioData['dailyData'] as List;
+              } else if (portfolioData['history'] != null) {
+                dataList = portfolioData['history'] as List;
+              }
+              
+              if (dataList.isNotEmpty) {
+                try {
+                  // Convertir les données MyFXBook avec calcul du profit cumulé
+                  _portfolioData = _parseMyfxbookDataWithCumulativeProfit(dataList);
+                  print('✅ Données MyFXBook parsées avec succès: ${_portfolioData.length} points');
+                  print('Premier point: Balance=${_portfolioData.first.balance}€, Profit cumulé=${_portfolioData.first.profit}€');
+                  print('Dernier point: Balance=${_portfolioData.last.balance}€, Profit cumulé=${_portfolioData.last.profit}€');
+                } catch (e) {
+                  print('❌ Erreur lors du parsing des données MyFXBook: $e');
+                  print('Structure des données: ${dataList.first}');
+                  _portfolioData = [];
+                  _error = 'Erreur lors du parsing des données MyFXBook';
+                }
+              } else {
+                print('Aucune donnée trouvée dans la réponse');
+                _portfolioData = [];
+                _error = 'Aucune donnée disponible dans l\'API MyFXBook';
+              }
             }
-            
-            if (dataList.isNotEmpty) {
-              _portfolioData = dataList.map((item) => PortfolioData.fromJson(item)).toList();
-              print('Données parsées: ${_portfolioData.length} points');
-            } else {
-              print('Aucune donnée trouvée dans la réponse - Utilisation de données de test');
-              // Créer des données de test basées sur les vraies données Myfxbook
-              _portfolioData = _createTestData();
-            }
-          }
           
           _isLoading = false;
         });
@@ -78,75 +97,93 @@ class _MyfxbookWidgetState extends State<MyfxbookWidget> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Erreur lors du chargement des données. Utilisation des données de test.';
+          _error = 'Erreur lors du chargement des données MyFXBook: $e';
+          _portfolioInfo = null;
+          _portfolioData = [];
           _isLoading = false;
         });
       }
     }
   }
 
-
-  List<PortfolioData> _createTestData() {
-    // Créer des données de test basées sur les vraies données Myfxbook
-    // Balance initiale: 1000€, Balance actuelle: 1046.83€, Gain: +6.03%
-    final List<PortfolioData> testData = [];
-    final DateTime now = DateTime.now();
-    final double initialBalance = 1000.0;
-    final double currentBalance = 1046.83;
-    final double totalGrowth = 6.03;
+  // Méthode pour parser les données MyFXBook avec calcul du profit cumulé
+  List<PortfolioData> _parseMyfxbookDataWithCumulativeProfit(List<dynamic> dataList) {
+    final List<PortfolioData> portfolioData = [];
     
-    // Créer 30 jours de données avec une progression réaliste
-    for (int i = 30; i >= 0; i--) {
-      final DateTime date = now.subtract(Duration(days: i));
-      final double progress = (30 - i) / 30.0;
+    // Trier les données par date pour s'assurer de l'ordre chronologique
+    dataList.sort((a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''));
+    
+    double cumulativeProfit = 0.0;
+    double initialBalance = 0.0;
+    
+    for (int i = 0; i < dataList.length; i++) {
+      final item = dataList[i];
+      final balance = (item['balance'] ?? 0.0).toDouble();
+      final dailyProfit = (item['profit'] ?? 0.0).toDouble();
       
-      // Simulation d'une progression avec des variations réalistes
-      final double baseGrowth = totalGrowth * progress;
-      final double variation = (i % 7 == 0) ? (i % 2 == 0 ? 0.5 : -0.3) : 0.0;
-      final double dailyGrowth = baseGrowth + variation;
+      // Pour le premier point, déterminer la balance initiale
+      if (i == 0) {
+        initialBalance = balance - dailyProfit;
+        cumulativeProfit = dailyProfit;
+      } else {
+        // Ajouter le profit du jour au profit cumulé
+        cumulativeProfit += dailyProfit;
+      }
       
-      final double balance = initialBalance + (currentBalance - initialBalance) * progress;
-      final double equity = balance * (1 + dailyGrowth / 100);
-      final double profit = balance - initialBalance;
-      final double drawdown = i > 20 ? 2.0 : 0.0; // Drawdown récent
+      // Calculer le growth basé sur le profit cumulé
+      final growth = initialBalance > 0 ? (cumulativeProfit / initialBalance) * 100 : 0.0;
       
-      testData.add(PortfolioData(
-        date: date.toIso8601String().split('T')[0],
+      portfolioData.add(PortfolioData(
+        date: item['date'] ?? '',
         balance: balance,
-        equity: equity,
-        profit: profit,
-        growth: dailyGrowth,
-        drawdown: drawdown,
+        equity: balance, // Pour MyFXBook, equity = balance généralement
+        profit: cumulativeProfit, // Profit cumulé depuis le début
+        growth: growth,
+        drawdown: 0.0, // Pas disponible dans les données MyFXBook
       ));
     }
     
-    return testData;
+    return portfolioData;
   }
 
-  PortfolioInfo _createTestPortfolioInfo() {
-    return PortfolioInfo(
-      id: widget.portfolioId,
-      name: 'Jeu concours Finea',
-      currentBalance: 1046.83,
-      currentEquity: 1046.83,
-      totalProfit: 46.83,
-      totalGrowth: 6.03,
-      maxDrawdown: 5.57,
-      broker: 'AGBK Broker',
-      currency: 'EUR',
-      status: 'Live',
-    );
+  // Méthode pour ouvrir la page MyFXBook du portfolio
+  void _openMyfxbookPage() async {
+    final String myfxbookUrl = 'https://www.myfxbook.com/members/${widget.portfolioId}';
+    
+    try {
+      final Uri uri = Uri.parse(myfxbookUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _showErrorSnackBar('Impossible d\'ouvrir MyFXBook');
+      }
+    } catch (e) {
+      print('Erreur lors de l\'ouverture de MyFXBook: $e');
+      _showErrorSnackBar('Erreur lors de l\'ouverture de MyFXBook');
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: widget.height,
       width: widget.width,
       child: Column(
         children: [
-          // En-tête avec informations du portfolio
-          if (_portfolioInfo != null) _buildPortfolioHeader(),
+          // En-tête avec informations du portfolio (toujours affiché)
+          _buildPortfolioHeader(),
           
           // Graphique ou état de chargement
           Expanded(
@@ -157,10 +194,38 @@ class _MyfxbookWidgetState extends State<MyfxbookWidget> {
                     : _portfolioData.isNotEmpty
                         ? PortfolioChartWidget(
                             data: _portfolioData,
-                            title: 'Performance du Portfolio',
-                            height: widget.height - (_portfolioInfo != null ? 120 : 0),
+                            title: 'Profit du Portfolio (€)',
+                            height: widget.height - 160, // Soustraire header + lien discret
                           )
                         : _buildNoDataState(),
+          ),
+          
+          // Lien discret pour rediriger vers MyFXBook
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: GestureDetector(
+              onTap: () => _openMyfxbookPage(),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.open_in_new,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Voir sur MyFXBook',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -168,7 +233,33 @@ class _MyfxbookWidgetState extends State<MyfxbookWidget> {
   }
 
   Widget _buildPortfolioHeader() {
-    if (_portfolioInfo == null) return const SizedBox();
+    if (_portfolioInfo == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.1),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+          ),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Informations du portfolio non disponibles',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     
     return Container(
       padding: const EdgeInsets.all(16),

@@ -4,6 +4,7 @@ import '../models/newsletter_model.dart';
 import '../services/api_service.dart';
 import '../utils/image_utils.dart';
 import 'newsletter_detail_screen.dart';
+import 'profile_screen.dart';
 
 class NewsletterScreen extends StatefulWidget {
   const NewsletterScreen({super.key});
@@ -113,6 +114,31 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
       backgroundColor: const Color(0xFF0f0f23),
       body: CustomScrollView(
         slivers: [
+          // AppBar avec logo Finea
+          SliverAppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            pinned: true,
+            centerTitle: true,
+            title: Image.asset(
+              'assets/images/finea-logo.png',
+              height: 82,
+              fit: BoxFit.contain,
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.person, color: Colors.white),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          
           // Section d'études en haut
           SliverToBoxAdapter(
             child: _buildStudiesSection(),

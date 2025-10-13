@@ -19,10 +19,30 @@ class PortfolioData {
     return PortfolioData(
       date: json['date'] ?? '',
       balance: (json['balance'] ?? 0.0).toDouble(),
-      equity: (json['equity'] ?? 0.0).toDouble(),
+      equity: (json['equity'] ?? json['balance'] ?? 0.0).toDouble(), // Fallback sur balance si pas d'equity
       profit: (json['profit'] ?? 0.0).toDouble(),
-      growth: (json['growth'] ?? 0.0).toDouble(),
+      growth: (json['growth'] ?? json['growthEquity'] ?? 0.0).toDouble(), // Fallback sur growthEquity
       drawdown: (json['drawdown'] ?? 0.0).toDouble(),
+    );
+  }
+  
+  // Méthode spécifique pour les données MyFXBook
+  factory PortfolioData.fromMyfxbookJson(Map<String, dynamic> json) {
+    final balance = (json['balance'] ?? 0.0).toDouble();
+    final profit = (json['profit'] ?? 0.0).toDouble();
+    
+    // Pour MyFXBook, le profit dans les données daily est déjà le profit cumulé
+    // depuis le début du compte, pas le profit du jour
+    final initialBalance = balance - profit; // Balance initiale du compte
+    final growth = initialBalance > 0 ? (profit / initialBalance) * 100 : 0.0;
+    
+    return PortfolioData(
+      date: json['date'] ?? '',
+      balance: balance,
+      equity: balance, // Pour MyFXBook, equity = balance généralement
+      profit: profit, // Profit cumulé depuis le début
+      growth: growth,
+      drawdown: 0.0, // Pas disponible dans les données MyFXBook
     );
   }
 

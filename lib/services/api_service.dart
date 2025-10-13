@@ -545,6 +545,43 @@ class ApiService {
       return null;
     }
   }
+
+  // Récupérer les statistiques des gagnants pour l'affichage
+  Future<ApiResponse<Map<String, dynamic>>> getContestDisplayStats() async {
+    try {
+      final response = await _dio.get('/contests/stats/display');
+      
+      if (response.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          data: response.data['data'],
+          message: 'Statistiques récupérées avec succès',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          error: 'Erreur lors de la récupération des statistiques',
+        );
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Erreur de connexion';
+      if (e.response?.data != null) {
+        errorMessage = e.response!.data['error'] ?? 'Erreur lors de la récupération des statistiques';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      return ApiResponse(
+        success: false,
+        error: errorMessage,
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        error: 'Erreur inattendue: $e',
+      );
+    }
+  }
 }
 
 // Exception personnalisée pour les erreurs API

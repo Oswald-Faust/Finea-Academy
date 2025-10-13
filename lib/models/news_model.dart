@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
+
 class NewsArticle {
   final String id;
   final String title;
-  final Map<String, dynamic> content;
+  final String content;
   final String? coverImage;
   final String? summary;
   final String status;
@@ -47,7 +49,7 @@ class NewsArticle {
     return NewsArticle(
       id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
-      content: json['content'] ?? {},
+      content: json['content'] ?? '',
       coverImage: json['coverImage'],
       summary: json['summary'],
       status: json['status'] ?? 'draft',
@@ -119,22 +121,8 @@ class NewsArticle {
 
   // Calculer le temps de lecture estimé
   int get estimatedReadTime {
-    final textLength = _extractTextFromContent().length;
+    final textLength = content.length;
     return (textLength / 200).ceil(); // 200 caractères par minute
-  }
-
-  String _extractTextFromContent() {
-    if (content.containsKey('blocks')) {
-      final blocks = content['blocks'] as List? ?? [];
-      final text = blocks.map((block) {
-        if (block['type'] == 'paragraph' && block['data'] != null) {
-          return block['data']['text'] ?? '';
-        }
-        return '';
-      }).join(' ');
-      return text;
-    }
-    return '';
   }
 
   // Formater la date de publication
@@ -163,11 +151,31 @@ class NewsArticle {
       if (coverImage!.startsWith('http')) {
         return coverImage!;
       }
-      // Sinon, construire l'URL complète
-      return 'http://localhost:5001$coverImage';
+      // Sinon, construire l'URL complète en utilisant l'URL de base de l'environnement
+      return '${_getBaseUrl()}$coverImage';
     }
     // Image par défaut
     return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=300&fit=crop';
+  }
+
+  // Obtenir l'URL de base selon l'environnement
+  String _getBaseUrl() {
+    // Utiliser la même logique que dans Environment mais pour les uploads
+    const bool isProduction = bool.fromEnvironment('PRODUCTION', defaultValue: false);
+    const bool isStaging = bool.fromEnvironment('STAGING', defaultValue: false);
+    
+    if (isProduction) {
+      return 'https://finea-academy-1.onrender.com';
+    } else if (isStaging) {
+      return 'https://finea-academy-staging.onrender.com';
+    } else {
+      // En développement, utiliser l'IP locale pour mobile et localhost pour web
+      if (kIsWeb) {
+        return 'http://localhost:5001';
+      } else {
+        return 'http://192.168.1.230:5001';
+      }
+    }
   }
 
   // Obtenir les catégories basées sur les tags

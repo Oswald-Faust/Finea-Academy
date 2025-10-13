@@ -365,7 +365,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen>
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<Frequency>(
-          value: value,
+          initialValue: value,
           onChanged: onChanged,
           style: const TextStyle(
             color: Colors.white,

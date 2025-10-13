@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../services/news_api_service.dart';
-import '../utils/image_utils.dart';
 import '../screens/news_detail_screen.dart';
 
 class ActusSection extends StatefulWidget {
@@ -33,6 +32,8 @@ class _ActusSectionState extends State<ActusSection> {
 
   Future<void> _loadLatestNews() async {
     try {
+      print('🔄 ActusSection: Début du chargement des actualités');
+      if (!mounted) return;
       setState(() {
         isLoading = true;
         error = null;
@@ -40,12 +41,19 @@ class _ActusSectionState extends State<ActusSection> {
 
       final newsData = await NewsApiService.getLatestNews();
       
+      print('📰 ActusSection: Données reçues: ${newsData != null ? "Oui" : "Non"}');
+      
       if (newsData != null) {
+        print('✅ ActusSection: Création de l\'objet NewsArticle');
+        if (!mounted) return;
         setState(() {
           latestNews = NewsArticle.fromJson(newsData);
           isLoading = false;
         });
+        print('✅ ActusSection: Actualité chargée avec succès');
       } else {
+        print('❌ ActusSection: Aucune actualité disponible');
+        if (!mounted) return;
         setState(() {
           latestNews = null;
           isLoading = false;
@@ -53,11 +61,12 @@ class _ActusSectionState extends State<ActusSection> {
         });
       }
     } catch (e) {
+      print('❌ ActusSection: Erreur lors du chargement des actualités: $e');
+      if (!mounted) return;
       setState(() {
         isLoading = false;
         error = 'Erreur lors du chargement des actualités';
       });
-      print('Erreur lors du chargement des actualités: $e');
     }
   }
 
@@ -180,18 +189,9 @@ class _ActusSectionState extends State<ActusSection> {
     );
   }
 
-  String _extractTextFromContent(Map<String, dynamic> content) {
-    if (content.containsKey('blocks')) {
-      final blocks = content['blocks'] as List? ?? [];
-      final text = blocks.map((block) {
-        if (block['type'] == 'paragraph' && block['data'] != null) {
-          return block['data']['text'] ?? '';
-        }
-        return '';
-      }).join(' ');
-      return text;
-    }
-    return '';
+  String _extractTextFromContent(String content) {
+    // Le contenu est maintenant directement une String, on peut la retourner telle quelle
+    return content;
   }
 
   Widget _buildFeaturedActusCard(NewsArticle article) {
@@ -215,7 +215,7 @@ class _ActusSectionState extends State<ActusSection> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
-        child: Container(
+        child: SizedBox(
           height: 260,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -272,7 +272,7 @@ class _ActusSectionState extends State<ActusSection> {
                             height: double.infinity,
                             decoration: BoxDecoration(
                               image: DecorationImage(
-                                image: NetworkImage(ImageUtils.getImageUrl(article.imageUrl)),
+                                image: NetworkImage(article.imageUrl),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -320,30 +320,6 @@ class _ActusSectionState extends State<ActusSection> {
                           ),
                         ),
                         
-                        // Titre de l'article en overlay sur l'image
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          right: 8,
-                          child: Text(
-                            article.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(1, 1),
-                                  blurRadius: 2,
-                                  color: Colors.black54,
-                                ),
-                              ],
-                            ),
-                            maxLines: 6,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
                       ],
                     ),
                   ),

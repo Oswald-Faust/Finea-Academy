@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/finea_app_bar.dart';
 import '../widgets/formation_expandable_card.dart';
 import 'profile_screen.dart';
 
@@ -14,18 +15,7 @@ class _AcademieScreenState extends State<AcademieScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f23),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'ACADÉMIE',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
-          ),
-        ),
+      appBar: FineaAppBar(
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../widgets/featured_article_card.dart';
+import '../widgets/finea_app_bar.dart';
 import '../widgets/alerts_section.dart';
 import '../widgets/contest_winner_card.dart';
 import '../widgets/investor_profile_section.dart';
@@ -140,15 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f23),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Image.asset(
-          'assets/images/finea-logo.png',
-          height: 82,
-          fit: BoxFit.contain,
-        ),
+      appBar: FineaAppBar(
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
@@ -245,14 +237,16 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 40),
             
             // SECTION GAGNANT DU CONCOURS
-            const Text(
-              "Le gagnant du dernier tirage !",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
+            const Center(
+              child: Text(
+                "Le gagnant du dernier tirage !",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
               ),
             ),
             

@@ -22,22 +22,17 @@ class ContestWinnerCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF1a1a2e),
+          color: const Color(0xFF1a1a2e).withOpacity(0.8),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.purple.withOpacity(0.3), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.purple.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: Colors.blue.withOpacity(0.3), width: 1),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               children: [
                 Expanded(
@@ -83,7 +78,7 @@ class ContestWinnerCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 10),
                 // Trophée 3D violet - plus grand et incliné
                 Transform.rotate(
                   angle: 0.2, // Inclinaison vers la droite
@@ -96,22 +91,8 @@ class ContestWinnerCard extends StatelessWidget {
                 ),
               ],
             ),
-            // Chevron vers le bas - plus petit
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.white,
-                  size: 10,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

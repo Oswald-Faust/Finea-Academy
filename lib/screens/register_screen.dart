@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:provider/provider.dart';
-import '../main.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'main_navigation_screen.dart';

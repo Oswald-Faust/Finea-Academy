@@ -8,11 +8,11 @@ class PortfolioChartWidget extends StatelessWidget {
   final double height;
 
   const PortfolioChartWidget({
-    Key? key,
+    super.key,
     required this.data,
     this.title = 'Performance du Portfolio',
     this.height = 300,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +142,7 @@ class PortfolioChartWidget extends StatelessWidget {
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          '${value.toStringAsFixed(0)}%',
+                          '${value.toStringAsFixed(0)}€',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 10,
@@ -192,7 +192,7 @@ class PortfolioChartWidget extends StatelessWidget {
     if (data.isEmpty) return const SizedBox();
     
     final latestData = data.last;
-    final isPositive = latestData.growth >= 0;
+    final isPositive = latestData.profit >= 0;
     
     return Row(
       children: [
@@ -203,7 +203,7 @@ class PortfolioChartWidget extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          '${latestData.growth.toStringAsFixed(2)}%',
+          '${latestData.profit.toStringAsFixed(2)}€',
           style: TextStyle(
             color: isPositive ? Colors.green : Colors.red,
             fontSize: 14,
@@ -217,27 +217,28 @@ class PortfolioChartWidget extends StatelessWidget {
 
   List<FlSpot> _getSpots() {
     return data.asMap().entries.map((entry) {
-      return FlSpot(entry.key.toDouble(), entry.value.growth);
+      return FlSpot(entry.key.toDouble(), entry.value.profit);
     }).toList();
   }
 
   double _getMinY() {
     if (data.isEmpty) return 0;
-    final minGrowth = data.map((d) => d.growth).reduce((a, b) => a < b ? a : b);
-    return minGrowth - 2; // Marge de 2%
+    final minProfit = data.map((d) => d.profit).reduce((a, b) => a < b ? a : b);
+    return minProfit - 5; // Marge de 5€
   }
 
   double _getMaxY() {
-    if (data.isEmpty) return 10;
-    final maxGrowth = data.map((d) => d.growth).reduce((a, b) => a > b ? a : b);
-    return maxGrowth + 2; // Marge de 2%
+    if (data.isEmpty) return 100;
+    final maxProfit = data.map((d) => d.profit).reduce((a, b) => a > b ? a : b);
+    return maxProfit + 5; // Marge de 5€
   }
 
   double _getYAxisInterval() {
     final range = _getMaxY() - _getMinY();
-    if (range <= 10) return 2;
     if (range <= 20) return 5;
-    return 10;
+    if (range <= 50) return 10;
+    if (range <= 100) return 20;
+    return 50;
   }
 
   double _getInterval() {

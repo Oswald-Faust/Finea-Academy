@@ -9,27 +9,36 @@ class NewsApiService {
   // Récupérer la dernière actualité publiée
   static Future<Map<String, dynamic>?> getLatestNews() async {
     try {
+      final url = '$baseUrl/news/latest';
+      print('🔗 NewsApiService: Tentative de connexion à $url');
+      
       final response = await http.get(
-        Uri.parse('$baseUrl/news/latest'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
         },
       );
 
+      print('📡 NewsApiService: Status Code: ${response.statusCode}');
+      print('📡 NewsApiService: Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
+          print('✅ NewsApiService: Actualité récupérée avec succès');
           return data['data'];
+        } else {
+          print('❌ NewsApiService: Success false dans la réponse');
         }
       } else if (response.statusCode == 404) {
-        // Aucune actualité trouvée
+        print('❌ NewsApiService: Aucune actualité trouvée (404)');
         return null;
       }
       
-      print('Erreur lors de la récupération de l\'actualité: ${response.statusCode}');
+      print('❌ NewsApiService: Erreur lors de la récupération de l\'actualité: ${response.statusCode}');
       return null;
     } catch (e) {
-      print('Erreur API actualités: $e');
+      print('❌ NewsApiService: Erreur API actualités: $e');
       return null;
     }
   }

@@ -12,18 +12,30 @@ class InvestorProfileSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Column(
         children: [
+          // Séparateur blanc
+          Center(
+            child: Container(
+              width: 200,
+              height: 3,
+              color: Colors.white.withOpacity(0.3),
+              margin: const EdgeInsets.only(bottom: 40),
+            ),
+          ),
+          
           // Titre centré
-          const Text(
-            'Quel investisseur es-tu ?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
+          const Center(
+            child: Text(
+              'Quel investisseur es-tu ?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
             ),
           ),
           
@@ -34,7 +46,7 @@ class InvestorProfileSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Illustration avec l'image kind-invester.png
-              Container(
+              SizedBox(
                 width: 140,
                 height: 140,
                 child: Image.asset(
@@ -53,7 +65,7 @@ class InvestorProfileSection extends StatelessWidget {
                   'Ton profil investisseur, c\'est ton GPS financier. On scanne ton rapport au risque, ton cashflow et ton horizon, pour générer une stratégie sur mesure. Plus de pilotage à l\'aveugle. Place à la donnée.',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 13,
                     height: 1.3,
                     fontFamily: 'Poppins',
                   ),
@@ -69,7 +81,7 @@ class InvestorProfileSection extends StatelessWidget {
             text: const TextSpan(
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 10,
+                fontSize: 13,
                 height: 1.3,
                 fontFamily: 'Poppins',
               ),

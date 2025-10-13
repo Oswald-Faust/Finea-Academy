@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/finea_app_bar.dart';
 import '../widgets/positioning_alert_card.dart';
 import '../widgets/lot_calculator_card.dart';
 import '../widgets/currency_converter_card.dart';
@@ -18,17 +19,7 @@ class OutilsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f23),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Outils de Trading',
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: FineaAppBar(
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),

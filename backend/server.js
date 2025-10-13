@@ -49,12 +49,22 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3002',
+      'http://localhost:5001', // Backend local
       'http://localhost:5173',
       'http://localhost:62577',
       'http://localhost:63266',
       'http://192.168.1.230:3000', // IP locale pour Flutter
       'http://192.168.1.230:3001',
       'http://192.168.1.230:3002',
+      'http://192.168.1.230:5001', // Backend IP locale
+      'http://137.255.113.76:3000', // IP précédente
+      'http://137.255.113.76:3001',
+      'http://137.255.113.76:3002',
+      'http://137.255.113.76:5001',
+      'http://137.255.97.228:3000', // IP actuelle
+      'http://137.255.97.228:3001',
+      'http://137.255.97.228:3002',
+      'http://137.255.97.228:5001',
       'https://finea-admin.vercel.app',
       'https://finea-academie.vercel.app',
       'https://finea-academie.web.app',
@@ -105,7 +115,13 @@ app.get('/api/scheduler/status', (req, res) => {
   });
 });
 
-// Servir les fichiers statiques uploads
+// Servir les fichiers statiques uploads avec CORS permissif
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 app.use('/uploads', express.static('uploads'));
 
 // Routes
@@ -177,10 +193,11 @@ const PORT = process.env.PORT || 5001;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Serveur démarré sur le port ${PORT}`);
       console.log(`🌐 Environnement: ${process.env.NODE_ENV || 'development'}`);
       console.log(`📡 API disponible sur: http://localhost:${PORT}/api`);
+      console.log(`📡 API accessible aussi sur: http://137.255.97.228:${PORT}/api`);
       
       // Démarrer le planificateur de concours hebdomadaires
       schedulerService.start();

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import '../models/contest_model.dart';
 import '../services/contest_service.dart';
+import '../services/contest_stats_service.dart';
+import '../widgets/finea_app_bar.dart';
 import '../widgets/contest_countdown_section.dart';
 import '../widgets/mt5_account_card.dart';
 import '../widgets/youtube_video_player.dart';
 import '../widgets/myfxbook_widget.dart';
+import '../widgets/recent_winners_widget.dart';
+import '../widgets/contest_winner_card.dart';
+import '../widgets/last_winner_slider_widget.dart';
 import '../config/youtube_config.dart';
 import 'profile_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,11 +25,13 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
   Contest? _currentContest;
   bool _isLoading = true;
   bool _isParticipating = false;
+  ContestStats? _contestStats;
 
   @override
   void initState() {
     super.initState();
     _loadContestData();
+    _loadContestStats();
   }
 
   Future<void> _loadContestData() async {
@@ -52,6 +59,19 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         });
         _showErrorSnackBar('Erreur lors du chargement du concours');
       }
+    }
+  }
+
+  Future<void> _loadContestStats() async {
+    try {
+      final stats = await ContestStatsService().getContestStats();
+      if (mounted) {
+        setState(() {
+          _contestStats = stats;
+        });
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des statistiques: $e');
     }
   }
 
@@ -86,39 +106,59 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f23),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Concours Hebdomadaire',
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
+      body: Stack(
+        children: [
+          // Image de fond en plein écran
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Image.asset(
+                'assets/images/23.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                alignment: Alignment.centerLeft,
+              ),
+            ),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(),
-                ),
-              );
-            },
+          // Couche de transparence grise par-dessus l'image
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.4),
+            ),
+          ),
+          // Contenu principal
+          Column(
+            children: [
+              FineaAppBar(
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.person, color: Colors.white),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.blue,
+                        ),
+                      )
+                    : _currentContest == null
+                        ? _buildNoContestView()
+                        : _buildContestView(),
+              ),
+            ],
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Colors.blue,
-              ),
-            )
-          : _currentContest == null
-              ? _buildNoContestView()
-              : _buildContestView(),
     );
   }
 
@@ -145,7 +185,7 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             },
           ),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
           
           // Compte à rebours jusqu'au prochain dimanche
           _buildNextSundayCountdown(),
@@ -155,30 +195,6 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           // Bouton principal "Prendre mes places !"
           _buildMainActionButton(),
           
-          const SizedBox(height: 8),
-          
-          // Texte explicatif
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: const Text(
-              '💡 Achetez vos tickets sur notre site, puis revenez ici pour participer au concours !',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                height: 1.4,
-              ),
-            ),
-          ),
           
           const SizedBox(height: 24),
           
@@ -193,6 +209,34 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
               );
             },
           ),
+          
+          const SizedBox(height: 16),
+          
+          // Section statistiques des gagnants
+          _buildWinnersStatsSection(),
+          
+          const SizedBox(height: 24),
+          
+          // Section gagnant du dernier tirage
+          _buildLastWinnerSection(),
+          
+          const SizedBox(height: 20),
+          
+          // Section gagnants récents
+          if (_contestStats?.recentWinners.isNotEmpty == true) ...[
+            const Text(
+              'Découvrir tout les gagnants',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            const SizedBox(height: 16),
+            RecentWinnersWidget(),
+            const SizedBox(height: 24),
+          ],
           
           const SizedBox(height: 24),
           
@@ -230,44 +274,17 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
             },
           ),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
           
-          // Compte à rebours jusqu'au tirage
+          // Compte à rebours jusqu'au tirage avec icônes intégrées
           if (!contest.drawCompleted)
-            ContestCountdownSection(
-              targetDate: contest.drawDate,
-              title: 'Prochain tirage dans :',
-            ),
+            _buildContestCountdown(contest.drawDate),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           
           // Bouton principal "Prendre mes places !"
           _buildMainActionButton(),
           
-          const SizedBox(height: 8),
-          
-          // Texte explicatif
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: const Text(
-              '💡 Achetez vos tickets sur notre site, puis revenez ici pour participer au concours !',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                height: 1.4,
-              ),
-            ),
-          ),
           
           const SizedBox(height: 24),
           
@@ -282,6 +299,50 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
               );
             },
           ),
+          
+          const SizedBox(height: 16),
+          
+          // Section statistiques des gagnants
+          _buildWinnersStatsSection(),
+          
+          const SizedBox(height: 24),
+          
+          // Section gagnant du dernier tirage
+          _buildLastWinnerSection(),
+          
+          const SizedBox(height: 20),
+          
+          // Section gagnants récents
+          if (_contestStats?.recentWinners.isNotEmpty == true) ...[
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Découvrir tout les gagnants',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  RecentWinnersWidget(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           
           const SizedBox(height: 24),
           
@@ -350,9 +411,10 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
 
 
   Widget _buildMainActionButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.7, // 70% de la largeur de l'écran
+        child: ElevatedButton(
         onPressed: _isParticipating ? null : () async {
           // Rediriger vers le site Shopify pour prendre les places
           final url = 'https://ifgdfg-es.myshopify.com/';
@@ -372,7 +434,7 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: _isParticipating ? Colors.grey : Colors.transparent,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
@@ -402,24 +464,15 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
                   ),
                 ],
               )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_cart,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Acheter mes tickets !',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
+            : const Text(
+                'Prendre mes places !',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
               ),
+        ),
       ),
     );
   }
@@ -447,36 +500,22 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
               }
             }
           },
-          child: Container(
-            width: 120,
-            height: 120,
-            child: const Center(
-              child: Image(
-                image: AssetImage('assets/images/instagram.png'),
-                width: 100,
-                height: 100,
-              ),
-            ),
+          child: const Image(
+            image: AssetImage('assets/images/instagram.png'),
+            width: 100,
+            height: 100,
           ),
         ),
-        
-        const SizedBox(width: 24),
         
         // TikTok
         GestureDetector(
           onTap: () {
             _showSocialMediaInfo('TikTok', 'Découvrez nos vidéos courtes sur TikTok !');
           },
-          child: Container(
-            width: 120,
-            height: 120,
-            child: const Center(
-              child: Image(
-                image: AssetImage('assets/images/tiktok.png'),
-                width: 100,
-                height: 100,
-              ),
-            ),
+          child: const Image(
+            image: AssetImage('assets/images/tiktok.png'),
+            width: 100,
+            height: 100,
           ),
         ),
       ],
@@ -489,9 +528,10 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         Text(
           'Prochain tirage dans :',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
             fontFamily: 'Poppins',
           ),
         ),
@@ -502,6 +542,92 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         const SizedBox(height: 8),
         _buildSocialMediaIcons(),
       ],
+    );
+  }
+
+  Widget _buildContestCountdown(DateTime drawDate) {
+    return Column(
+      children: [
+        Text(
+          'Prochain tirage dans :',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildContestCountdownTimer(drawDate),
+        const SizedBox(height: 6),
+        _buildContestDate(drawDate),
+        const SizedBox(height: 8),
+        _buildSocialMediaIcons(),
+      ],
+    );
+  }
+
+  Widget _buildContestCountdownTimer(DateTime drawDate) {
+    return StreamBuilder<Duration>(
+      stream: Stream.periodic(const Duration(seconds: 1), (_) {
+        final now = DateTime.now();
+        return drawDate.difference(now);
+      }),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator(color: Colors.blue);
+        }
+
+        final duration = snapshot.data!;
+        if (duration.isNegative) {
+          return const Text(
+            'Tirage terminé',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+            ),
+          );
+        }
+
+        final days = duration.inDays;
+        final hours = duration.inHours % 24;
+        final minutes = duration.inMinutes % 60;
+        final seconds = duration.inSeconds % 60;
+
+        return Text(
+          '${days}j ${hours}h ${minutes}m ${seconds}s',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContestDate(DateTime drawDate) {
+    final dayNames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    final monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    
+    final dayName = dayNames[drawDate.weekday - 1];
+    final day = drawDate.day;
+    final month = monthNames[drawDate.month - 1];
+    final year = drawDate.year;
+    final hour = drawDate.hour;
+    final minute = drawDate.minute.toString().padLeft(2, '0');
+
+    return Text(
+      '$dayName $day $month $year à ${hour}h$minute',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Poppins',
+      ),
     );
   }
 
@@ -639,6 +765,86 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildWinnersStatsSection() {
+    final stats = _contestStats;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildStatCard(
+          stats?.totalWinners.toString() ?? '0', 
+          'gagnants'
+        ),
+        _buildStatCard(
+          '${stats?.totalGains.toString() ?? '0'}€', 
+          'gains total'
+        ),
+        _buildStatCard(
+          '${stats?.totalPlacesSold.toString() ?? '0'}€', 
+          'places vendu'
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 14,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLastWinnerSection() {
+    return Column(
+      children: [
+        // Titre de la section
+        const Center(
+          child: Text(
+            "Le gagnant du dernier tirage !",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Widget slider pour les gagnants
+        LastWinnerSliderWidget(),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    return '$day/$month/$year';
   }
 
 

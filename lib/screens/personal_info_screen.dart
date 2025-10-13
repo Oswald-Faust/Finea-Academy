@@ -20,7 +20,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isSaving = false;
 
   @override

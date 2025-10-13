@@ -4,7 +4,7 @@ import '../models/contest_model.dart';
 import '../services/auth_service.dart';
 
 class ContestVideoSection extends StatefulWidget {
-  const ContestVideoSection({Key? key}) : super(key: key);
+  const ContestVideoSection({super.key});
 
   @override
   State<ContestVideoSection> createState() => _ContestVideoSectionState();

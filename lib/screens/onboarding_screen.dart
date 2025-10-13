@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/onboarding_model.dart';
 import '../widgets/onboarding_widgets.dart';
-import '../main.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
-import 'main_navigation_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

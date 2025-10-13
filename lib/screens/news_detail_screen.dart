@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../services/news_api_service.dart';
-import '../utils/image_utils.dart';
 
 class NewsDetailScreen extends StatefulWidget {
   final String newsId;
@@ -223,7 +222,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 // Image de couverture
                 if (news!.coverImage != null && news!.coverImage!.isNotEmpty)
                   Image.network(
-                    ImageUtils.getImageUrl(news!.imageUrl),
+                    news!.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
@@ -577,18 +576,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     );
   }
 
-  String _extractTextFromContent(Map<String, dynamic> content) {
-    if (content.containsKey('blocks')) {
-      final blocks = content['blocks'] as List? ?? [];
-      final text = blocks.map((block) {
-        if (block['type'] == 'paragraph' && block['data'] != null) {
-          return block['data']['text'] ?? '';
-        }
-        return '';
-      }).join('\n\n');
-      return text;
-    }
-    return 'Contenu non disponible';
+  String _extractTextFromContent(String content) {
+    // Le contenu est maintenant directement une String, on peut la retourner telle quelle
+    return content;
   }
 
   void _shareNews() {

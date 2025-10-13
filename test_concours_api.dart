@@ -102,7 +102,7 @@ Future<String?> _makeRequest(String url, {String method = 'GET', String? body}) 
     final response = await request.close();
     final responseBody = await response.transform(utf8.decoder).join();
     
-    await client.close();
+    client.close();
     
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return responseBody;

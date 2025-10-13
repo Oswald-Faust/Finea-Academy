@@ -216,34 +216,55 @@ class AppInitializer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthService>(
       builder: (context, authService, child) {
-    return FutureBuilder<bool>(
-      future: _checkOnboardingStatus(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Color(0xFF000D64),
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-          );
-        }
+        print('🔍 AppInitializer: authService.isLoggedIn = ${authService.isLoggedIn}');
+        print('🔍 AppInitializer: authService.isLoading = ${authService.isLoading}');
+        print('🔍 AppInitializer: authService.currentUser = ${authService.currentUser?.email}');
         
-        final hasCompletedOnboarding = snapshot.data ?? false;
-        
+        return FutureBuilder<bool>(
+          future: _checkOnboardingStatus(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                backgroundColor: Color(0xFF000D64),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Chargement...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            
+            final hasCompletedOnboarding = snapshot.data ?? false;
+            print('🔍 AppInitializer: hasCompletedOnboarding = $hasCompletedOnboarding');
+            
             // Si l'utilisateur est connecté, aller directement à l'app principale
             if (authService.isLoggedIn) {
+              print('🎉 Utilisateur connecté automatiquement, redirection vers l\'accueil');
               return const MainNavigationScreen();
             }
             
             // Si l'onboarding n'est pas terminé, afficher l'onboarding
-        if (!hasCompletedOnboarding) {
-          return const OnboardingScreen();
-        }
-        
+            if (!hasCompletedOnboarding) {
+              print('📚 Onboarding non terminé, affichage de l\'écran d\'introduction');
+              return const OnboardingScreen();
+            }
+            
             // Si l'onboarding est terminé mais l'utilisateur n'est pas connecté,
             // afficher l'écran de connexion
+            print('🔐 Onboarding terminé, affichage de l\'écran de connexion');
             return const LoginScreen();
           },
         );
