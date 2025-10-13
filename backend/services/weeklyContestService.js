@@ -61,7 +61,7 @@ class WeeklyContestService {
       status: 'active'
     });
 
-    console.log(`${contestsToDraw.length} concours(s) à tirer`);
+    // console.log(`${contestsToDraw.length} concours(s) à tirer`);
 
     for (const contest of contestsToDraw) {
       try {

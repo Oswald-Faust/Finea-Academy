@@ -4,10 +4,8 @@ import '../services/contest_service.dart';
 import '../services/contest_stats_service.dart';
 import '../widgets/finea_app_bar.dart';
 import '../widgets/contest_countdown_section.dart';
-import '../widgets/mt5_account_card.dart';
 import '../widgets/youtube_video_player.dart';
 import '../widgets/myfxbook_widget.dart';
-import '../widgets/recent_winners_widget.dart';
 import '../widgets/contest_winner_card.dart';
 import '../widgets/last_winner_slider_widget.dart';
 import '../config/youtube_config.dart';
@@ -198,45 +196,13 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           
           const SizedBox(height: 24),
           
-          // Section MT5 - Découvrir tous les gagnants
-          MT5AccountCard(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Accès au compte MT5'),
-                  backgroundColor: Colors.purple,
-                ),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Section statistiques des gagnants
-          _buildWinnersStatsSection(),
-          
-          const SizedBox(height: 24),
-          
           // Section gagnant du dernier tirage
           _buildLastWinnerSection(),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           
-          // Section gagnants récents
-          if (_contestStats?.recentWinners.isNotEmpty == true) ...[
-            const Text(
-              'Découvrir tout les gagnants',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            const SizedBox(height: 16),
-            RecentWinnersWidget(),
-            const SizedBox(height: 24),
-          ],
+          // Section statistiques des gagnants
+          _buildWinnersStatsSection(),
           
           const SizedBox(height: 24),
           
@@ -288,61 +254,13 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
           
           const SizedBox(height: 24),
           
-          // Section MT5 - Découvrir tous les gagnants
-          MT5AccountCard(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Accès au compte MT5'),
-                  backgroundColor: Colors.purple,
-                ),
-              );
-            },
-          ),
+          // Section gagnant du dernier tirage
+          _buildLastWinnerSection(),
           
           const SizedBox(height: 16),
           
           // Section statistiques des gagnants
           _buildWinnersStatsSection(),
-          
-          const SizedBox(height: 24),
-          
-          // Section gagnant du dernier tirage
-          _buildLastWinnerSection(),
-          
-          const SizedBox(height: 20),
-          
-          // Section gagnants récents
-          if (_contestStats?.recentWinners.isNotEmpty == true) ...[
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Découvrir tout les gagnants',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  RecentWinnersWidget(),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
           
           const SizedBox(height: 24),
           
@@ -821,18 +739,18 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         // Titre de la section
         const Center(
           child: Text(
-            "Le gagnant du dernier tirage !",
-            textAlign: TextAlign.center,
+            "Nos gagnants :",
+            textAlign: TextAlign.left,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               fontFamily: 'Poppins',
             ),
           ),
         ),
         
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         
         // Widget slider pour les gagnants
         LastWinnerSliderWidget(),

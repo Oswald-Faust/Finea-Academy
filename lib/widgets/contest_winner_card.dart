@@ -28,7 +28,7 @@ class ContestWinnerCard extends StatelessWidget {
           border: Border.all(color: Colors.blue.withOpacity(0.3), width: 1),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +43,7 @@ class ContestWinnerCard extends StatelessWidget {
                         'Tirage du : $drawDate',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
@@ -52,7 +52,7 @@ class ContestWinnerCard extends StatelessWidget {
                         'Gagnant : $winner',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
@@ -61,7 +61,7 @@ class ContestWinnerCard extends StatelessWidget {
                         'Gains : $gains',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
@@ -70,7 +70,7 @@ class ContestWinnerCard extends StatelessWidget {
                         'Adresse ETH : ',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins',
                         ),
@@ -84,8 +84,8 @@ class ContestWinnerCard extends StatelessWidget {
                   angle: 0.2, // Inclinaison vers la droite
                   child: Image.asset(
                     'assets/images/trophies.png',
-                    width: 140,
-                    height: 140,
+                    width: 100,
+                    height: 100,
                     fit: BoxFit.contain,
                   ),
                 ),

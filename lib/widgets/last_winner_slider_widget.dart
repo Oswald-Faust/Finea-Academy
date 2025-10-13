@@ -134,7 +134,7 @@ class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
     if (_stats == null || _stats!.recentWinners.isEmpty) {
       print('🎯 Aucun gagnant trouvé, affichage de la carte par défaut');
       return SizedBox(
-        height: 180,
+        height: 140,
         child: ContestWinnerCard(
           drawDate: "01/01/2025",
           winner: "@username",
@@ -153,7 +153,7 @@ class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
     print('🎯 LastWinnerSliderWidget: ${allWinners.length} gagnants trouvés');
 
     return SizedBox(
-      height: 180,
+      height: 140,
       child: PageView.builder(
         controller: _pageController,
         itemCount: allWinners.length,

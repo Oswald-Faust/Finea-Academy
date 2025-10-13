@@ -387,6 +387,12 @@ export const contestAPI = {
   drawWinner: (id) => api.post(`/contests/${id}/draw`),
   publishResults: (id) => api.patch(`/contests/${id}/publish`),
   getParticipants: (id, params = {}) => api.get(`/contests/${id}/participants`, { params }),
+  
+  // Méthodes génériques pour les statistiques et gagnants
+  get: (url) => api.get(url),
+  post: (url, data) => api.post(url, data),
+  put: (url, data) => api.put(url, data),
+  delete: (url) => api.delete(url),
 };
 
 // Service de santé de l'API

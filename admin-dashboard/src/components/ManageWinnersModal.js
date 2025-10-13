@@ -10,6 +10,7 @@ import {
   CalendarIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { contestAPI } from '../services/api';
 
 const ManageWinnersModal = ({ isOpen, onClose, contest, onWinnersUpdated }) => {
   const [winners, setWinners] = useState([]);
@@ -30,6 +31,8 @@ const ManageWinnersModal = ({ isOpen, onClose, contest, onWinnersUpdated }) => {
 
   useEffect(() => {
     if (isOpen && contest) {
+      console.log('🎯 ManageWinnersModal - Contest reçu:', contest);
+      console.log('🎯 ManageWinnersModal - Contest ID:', contest._id);
       loadWinnersData();
     }
   }, [isOpen, contest]);
@@ -59,12 +62,9 @@ const ManageWinnersModal = ({ isOpen, onClose, contest, onWinnersUpdated }) => {
 
   const loadGlobalStats = async () => {
     try {
-      const response = await fetch('/api/contests/stats/global');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setStats(data.data);
-        }
+      const response = await contestAPI.get('/contests/stats/global');
+      if (response.data.success) {
+        setStats(response.data.data);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
@@ -110,39 +110,32 @@ const ManageWinnersModal = ({ isOpen, onClose, contest, onWinnersUpdated }) => {
     try {
       setLoading(true);
 
+      // Vérifier que le concours a un ID valide
+      if (!contest || !contest._id) {
+        throw new Error('Aucun concours sélectionné ou ID manquant');
+      }
+
       // Sauvegarder les gagnants
-      const winnersResponse = await fetch(`/api/contests/${contest._id}/winners/manual`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          winners: winners.map(winner => ({
-            firstName: winner.firstName,
-            lastName: winner.lastName,
-            email: winner.email,
-            prize: winner.prize,
-            amount: winner.amount,
-            position: winner.position,
-            drawDate: winner.drawDate
-          }))
-        })
+      const winnersResponse = await contestAPI.post(`/contests/${contest._id}/winners/manual`, {
+        winners: winners.map(winner => ({
+          firstName: winner.firstName,
+          lastName: winner.lastName,
+          email: winner.email,
+          prize: winner.prize,
+          amount: winner.amount,
+          position: winner.position,
+          drawDate: winner.drawDate
+        }))
       });
 
-      if (!winnersResponse.ok) {
+      if (!winnersResponse.data.success) {
         throw new Error('Erreur lors de la sauvegarde des gagnants');
       }
 
       // Sauvegarder les statistiques globales
-      const statsResponse = await fetch('/api/contests/stats/global', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(stats)
-      });
+      const statsResponse = await contestAPI.put('/contests/stats/global', stats);
 
-      if (!statsResponse.ok) {
+      if (!statsResponse.data.success) {
         throw new Error('Erreur lors de la sauvegarde des statistiques');
       }
 

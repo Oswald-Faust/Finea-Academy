@@ -28,6 +28,7 @@ const Layout = ({ children }) => {
     { name: 'Utilisateurs', href: '/users', icon: UsersIcon },
     { name: 'Concours', href: '/contests', icon: TrophyIcon },
     { name: 'Concours Hebdomadaire', href: '/weekly-contest', icon: CalendarIcon },
+    { name: 'Gagnants', href: '/winners', icon: TrophyIcon },
     { name: 'Newsletter', href: '/newsletter', icon: EnvelopeIcon },
     { name: 'Actualités', href: '/news', icon: NewspaperIcon },
     { name: 'Favoris', href: '/admin-favorites', icon: HeartIcon },

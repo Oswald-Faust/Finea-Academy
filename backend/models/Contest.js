@@ -100,7 +100,7 @@ const contestSchema = new mongoose.Schema({
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: false // Permettre les gagnants manuels sans utilisateur
     },
     position: {
       type: Number,
@@ -109,6 +109,10 @@ const contestSchema = new mongoose.Schema({
     prize: {
       type: String,
       required: true
+    },
+    amount: {
+      type: Number,
+      default: 0
     },
     selectedAt: {
       type: Date,
@@ -121,6 +125,21 @@ const contestSchema = new mongoose.Schema({
     notes: {
       type: String,
       maxlength: 500
+    },
+    manualWinner: {
+      firstName: {
+        type: String,
+        trim: true
+      },
+      lastName: {
+        type: String,
+        trim: true
+      },
+      email: {
+        type: String,
+        trim: true,
+        lowercase: true
+      }
     }
   }],
   prizes: [{

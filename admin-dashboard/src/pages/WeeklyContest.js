@@ -9,10 +9,12 @@ import {
   EyeIcon,
   CheckCircleIcon,
   XCircleIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  GiftIcon
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import ManageWinnersModal from '../components/ManageWinnersModal';
 
 const WeeklyContest = () => {
   const [currentContest, setCurrentContest] = useState(null);
@@ -25,6 +27,7 @@ const WeeklyContest = () => {
   const [selectedWinner, setSelectedWinner] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingContest, setEditingContest] = useState(null);
+  const [showManageWinnersModal, setShowManageWinnersModal] = useState(false);
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
@@ -144,6 +147,19 @@ const WeeklyContest = () => {
       maxParticipants: 0,
       prizes: []
     });
+  };
+
+  const handleManageWinners = () => {
+    if (!currentContest || !currentContest._id) {
+      alert('Aucun concours sélectionné ou concours invalide');
+      return;
+    }
+    console.log('🎯 Opening ManageWinnersModal with contest:', currentContest);
+    setShowManageWinnersModal(true);
+  };
+
+  const handleWinnersUpdated = () => {
+    fetchData();
   };
 
   const handleEditFormChange = (field, value) => {
@@ -405,14 +421,14 @@ const WeeklyContest = () => {
 
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">Participants</h4>
-                  <Link
-                    to="/all-participants"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm flex items-center space-x-1 transition-colors"
+                  <h4 className="font-semibold text-gray-900">Gestion des gagnants</h4>
+                  <button
+                    onClick={handleManageWinners}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-sm flex items-center space-x-1 transition-colors"
                   >
-                    <UserGroupIcon className="h-4 w-4" />
-                    <span>Tous les participants</span>
-                  </Link>
+                    <GiftIcon className="h-4 w-4" />
+                    <span>Gérer les gagnants</span>
+                  </button>
                 </div>
                 <div className="max-h-64 overflow-y-auto space-y-2">
                   {currentContest.participants && currentContest.participants.length > 0 ? (
@@ -706,6 +722,14 @@ const WeeklyContest = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de gestion des gagnants */}
+      <ManageWinnersModal
+        isOpen={showManageWinnersModal}
+        onClose={() => setShowManageWinnersModal(false)}
+        contest={currentContest}
+        onWinnersUpdated={handleWinnersUpdated}
+      />
     </div>
   );
 };

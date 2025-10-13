@@ -10,6 +10,7 @@ import Notifications from './pages/Notifications';
 import PushNotifications from './pages/PushNotifications';
 import Contests from './pages/Contests';
 import WeeklyContest from './pages/WeeklyContest';
+import Winners from './pages/Winners';
 import AllParticipants from './pages/AllParticipants';
 import AdminFavorites from './pages/AdminFavorites';
 import News from './pages/News';
@@ -49,6 +50,7 @@ function App() {
             <Route path="/push-notifications" element={<PushNotifications />} />
             <Route path="/contests" element={<Contests />} />
             <Route path="/weekly-contest" element={<WeeklyContest />} />
+            <Route path="/winners" element={<Winners />} />
             <Route path="/all-participants" element={<AllParticipants />} />
             <Route path="/admin-favorites" element={<AdminFavorites />} />
             <Route path="/stats" element={<Stats />} />
