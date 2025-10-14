@@ -174,6 +174,66 @@ const addManualWinners = async (req, res) => {
   }
 };
 
+// @desc    Supprimer un gagnant d'un concours
+// @route   DELETE /api/contests/:contestId/winners/:winnerId
+// @access  Public (Admin dashboard)
+const deleteWinner = async (req, res) => {
+  try {
+    const { contestId, winnerId } = req.params;
+
+    const contest = await Contest.findById(contestId);
+    if (!contest) {
+      return res.status(404).json({
+        success: false,
+        error: 'Concours non trouvé'
+      });
+    }
+
+    // Trouver le gagnant à supprimer
+    const winnerIndex = contest.winners.findIndex(w => w._id.toString() === winnerId);
+    if (winnerIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Gagnant non trouvé'
+      });
+    }
+
+    const winnerToDelete = contest.winners[winnerIndex];
+
+    // Supprimer le gagnant du concours
+    contest.winners.splice(winnerIndex, 1);
+    await contest.save();
+
+    // Mettre à jour les statistiques globales
+    const currentStats = await ContestStats.getCurrentStats();
+    if (currentStats) {
+      const newStats = {
+        totalWinners: Math.max(0, currentStats.totalWinners - 1),
+        totalGains: Math.max(0, currentStats.totalGains - (winnerToDelete.amount || 0)),
+        totalPlacesSold: currentStats.totalPlacesSold // Pas de changement pour les places vendues
+      };
+
+      await ContestStats.updateGlobalStats(newStats);
+    }
+
+    res.json({
+      success: true,
+      message: 'Gagnant supprimé avec succès',
+      data: {
+        contestId,
+        winnerId,
+        deletedWinner: winnerToDelete
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du gagnant:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la suppression du gagnant'
+    });
+  }
+};
+
 // @desc    Récupérer tous les gagnants avec leurs informations
 // @route   GET /api/contests/winners/all
 // @access  Public
@@ -188,6 +248,7 @@ const getAllWinners = async (req, res) => {
     contests.forEach(contest => {
       contest.winners.forEach(winner => {
         allWinners.push({
+          winnerId: winner._id,
           contestTitle: contest.title,
           contestId: contest._id,
           drawDate: contest.drawDate,
@@ -272,6 +333,7 @@ module.exports = {
   getGlobalStats,
   updateGlobalStats,
   addManualWinners,
+  deleteWinner,
   getAllWinners,
   getDisplayStats
 };

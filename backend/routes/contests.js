@@ -27,6 +27,7 @@ const {
   getGlobalStats,
   updateGlobalStats,
   addManualWinners,
+  deleteWinner,
   getAllWinners,
   getDisplayStats
 } = require('../controllers/contestStatsController');
@@ -73,6 +74,7 @@ router.delete('/:id/participants/:userId', removeParticipant);
 router.post('/:id/winners', selectWinner);
 router.post('/:id/winners/select', selectMultipleWinners);
 router.post('/:id/winners/manual', addManualWinners);
+router.delete('/:id/winners/:winnerId', deleteWinner);
 router.delete('/:id/winners/:userId', removeWinner);
 
 module.exports = router; 

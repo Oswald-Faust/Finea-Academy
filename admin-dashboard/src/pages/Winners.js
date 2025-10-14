@@ -8,7 +8,8 @@ import {
   GiftIcon,
   UsersIcon,
   ChartBarIcon,
-  EyeIcon
+  EyeIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { contestAPI } from '../services/api';
 import { toast } from 'react-hot-toast';
@@ -73,6 +74,32 @@ const Winners = () => {
 
   const handleWinnersUpdated = () => {
     loadData(); // Recharger les données après mise à jour
+  };
+
+  const handleDeleteWinner = async (winner) => {
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer le gagnant "${winner.winner?.firstName} ${winner.winner?.lastName}" du concours "${winner.contestTitle}" ?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const response = await contestAPI.delete(`/contests/${winner.contestId}/winners/${winner.winnerId}`);
+      
+      if (response.data.success) {
+        toast.success('Gagnant supprimé avec succès');
+        loadData(); // Recharger les données
+      } else {
+        throw new Error(response.data.error || 'Erreur lors de la suppression');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression du gagnant:', error);
+      toast.error('Erreur lors de la suppression du gagnant');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -291,6 +318,9 @@ const Winners = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Type
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -336,6 +366,15 @@ const Winners = () => {
                             }`}>
                               {winner.isManual ? "Manuel" : "Automatique"}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleDeleteWinner(winner)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                              title="Supprimer ce gagnant"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -390,6 +429,9 @@ const Winners = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Type
                             </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -426,6 +468,15 @@ const Winners = () => {
                                 }`}>
                                   {winner.isManual ? "Manuel" : "Automatique"}
                                 </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button
+                                  onClick={() => handleDeleteWinner(winner)}
+                                  className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                                  title="Supprimer ce gagnant"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
                               </td>
                             </tr>
                           ))}

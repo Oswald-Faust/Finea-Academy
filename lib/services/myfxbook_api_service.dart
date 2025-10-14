@@ -19,11 +19,17 @@ class MyfxbookApiService {
       return false;
     }
     
-    // Éviter les tentatives trop fréquentes (attendre 5 minutes entre les tentatives)
+    // Si on a déjà une session valide, ne pas ré-authentifier
+    if (_sessionId != null) {
+      print('Session Myfxbook déjà active');
+      return true;
+    }
+    
+    // Éviter les tentatives trop fréquentes (attendre 10 minutes entre les tentatives)
     if (_lastAuthAttempt != null) {
       final timeSinceLastAttempt = DateTime.now().difference(_lastAuthAttempt!);
-      if (timeSinceLastAttempt.inMinutes < 5) {
-        print('Tentative d\'authentification trop récente, attendez ${5 - timeSinceLastAttempt.inMinutes} minutes');
+      if (timeSinceLastAttempt.inMinutes < 10) {
+        print('Tentative d\'authentification trop récente, attendez ${10 - timeSinceLastAttempt.inMinutes} minutes');
         return false;
       }
     }
@@ -150,7 +156,14 @@ class MyfxbookApiService {
   static void resetSession() {
     _sessionId = null;
     _isAuthenticating = false;
+    _lastAuthAttempt = null; // Reset aussi le timestamp
     print('Session Myfxbook réinitialisée');
+  }
+  
+  /// Forcer une nouvelle authentification (ignorer le rate limiting)
+  static Future<bool> forceAuthenticate() async {
+    resetSession();
+    return await authenticate();
   }
   
   /// Déconnexion
