@@ -35,10 +35,11 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
+    required: false, // Rendu optionnel pour éviter de casser les connexions existantes
     trim: true,
     match: [
-      /^[\+]?[1-9][\d]{0,15}$/,
-      'Veuillez entrer un numéro de téléphone valide',
+      /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/,
+      'Veuillez entrer un numéro de téléphone français valide',
     ],
   },
   address: {
@@ -159,6 +160,19 @@ const userSchema = new mongoose.Schema({
   favoritesCount: {
     type: Number,
     default: 0
+  },
+  // Permissions pour les alertes
+  permissions: {
+    alerts: {
+      canViewClosedAlerts: {
+        type: Boolean,
+        default: false
+      },
+      canViewPositioningAlerts: {
+        type: Boolean,
+        default: false
+      }
+    }
   }
 }, {
   timestamps: true,
@@ -246,14 +260,14 @@ userSchema.methods.generateEmailVerificationToken = function() {
 
 // Méthode supprimée - les comptes ne doivent jamais être verrouillés
 
-// Méthode pour ajouter un token FCM
-userSchema.methods.addFCMToken = function(token, platform, deviceId) {
+// Méthode pour ajouter un token push (OneSignal player ID ou autre)
+userSchema.methods.addPushToken = function(playerId, platform, deviceId) {
   // Supprimer l'ancien token pour ce device s'il existe
   this.fcmTokens = this.fcmTokens.filter(t => t.deviceId !== deviceId);
   
-  // Ajouter le nouveau token
+  // Ajouter le nouveau token (on réutilise fcmTokens pour la compatibilité)
   this.fcmTokens.push({
-    token,
+    token: playerId,
     platform,
     deviceId,
     lastUsed: new Date(),
@@ -263,15 +277,28 @@ userSchema.methods.addFCMToken = function(token, platform, deviceId) {
   return this.save();
 };
 
-// Méthode pour supprimer un token FCM
-userSchema.methods.removeFCMToken = function(deviceId) {
+// Méthode pour supprimer un token push
+userSchema.methods.removePushToken = function(deviceId) {
   this.fcmTokens = this.fcmTokens.filter(t => t.deviceId !== deviceId);
   return this.save();
 };
 
-// Méthode pour récupérer les tokens FCM actifs
-userSchema.methods.getActiveFCMTokens = function() {
+// Méthode pour récupérer les player IDs actifs (OneSignal)
+userSchema.methods.getActivePushTokens = function() {
   return this.fcmTokens.filter(t => t.isActive).map(t => t.token);
+};
+
+// Méthodes FCM pour la compatibilité (dépréciées mais fonctionnelles)
+userSchema.methods.addFCMToken = function(token, platform, deviceId) {
+  return this.addPushToken(token, platform, deviceId);
+};
+
+userSchema.methods.removeFCMToken = function(deviceId) {
+  return this.removePushToken(deviceId);
+};
+
+userSchema.methods.getActiveFCMTokens = function() {
+  return this.getActivePushTokens();
 };
 
 // Méthode pour convertir en objet JSON sûr (sans données sensibles)

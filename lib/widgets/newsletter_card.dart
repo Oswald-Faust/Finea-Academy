@@ -5,6 +5,7 @@ class NewsletterCard extends StatelessWidget {
   final String title;
   final String date;
   final String imagePath;
+  final bool isBookmarked;
   final VoidCallback? onTap;
   final VoidCallback? onBookmark;
 
@@ -13,6 +14,7 @@ class NewsletterCard extends StatelessWidget {
     required this.title,
     required this.date,
     required this.imagePath,
+    this.isBookmarked = false,
     this.onTap,
     this.onBookmark,
   });
@@ -93,7 +95,7 @@ class NewsletterCard extends StatelessWidget {
                 ),
               ),
               
-              // Footer avec date et bookmark
+              // Footer avec date et favori
               Positioned(
                 bottom: 16,
                 left: 16,
@@ -118,9 +120,9 @@ class NewsletterCard extends StatelessWidget {
                           color: Colors.black.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(
-                          Icons.bookmark_border,
-                          color: Colors.white,
+                        child: Icon(
+                          isBookmarked ? Icons.favorite : Icons.favorite_border,
+                          color: isBookmarked ? Colors.red : Colors.white,
                           size: 20,
                         ),
                       ),

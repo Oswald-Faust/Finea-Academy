@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -30,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -56,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        phone: null, // Vous pouvez ajouter un champ téléphone si nécessaire
+        phone: _phoneController.text.trim(),
       );
       
       setState(() => _isLoading = false);
@@ -249,6 +251,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                           if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                             return 'Veuillez entrer un email valide';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Numéro de téléphone
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'Numéro de téléphone',
+                          hintText: 'Ex: 0612345678 ou +33612345678',
+                          labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                          prefixIcon: Icon(Icons.phone, color: Colors.white.withOpacity(0.8)),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Le numéro de téléphone est requis';
+                          }
+                          // Validation du numéro de téléphone français
+                          final phoneRegex = RegExp(r'^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$');
+                          if (!phoneRegex.hasMatch(value)) {
+                            return 'Veuillez entrer un numéro de téléphone français valide';
                           }
                           return null;
                         },

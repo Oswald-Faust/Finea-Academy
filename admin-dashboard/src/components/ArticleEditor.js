@@ -23,9 +23,21 @@ const ArticleEditor = ({ value, onChange, title, setTitle, coverImage, setCoverI
     if (!editorRef.current) return;
     ejInstance.current = new EditorJS({
       holder: editorRef.current,
-      data: value,
+      data: (value && value.blocks && value.blocks.length > 0) ? value : {
+        blocks: [
+          {
+            type: 'paragraph',
+            data: {
+              text: ''
+            }
+          }
+        ]
+      },
       autofocus: true,
-      placeholder: 'Commencez à écrire votre article...',
+      placeholder: 'Tapez votre texte ici...',
+      minHeight: 200,
+      readOnly: false,
+      hideToolbar: false,
       tools: {
         header: {
           class: Header,
@@ -71,7 +83,7 @@ const ArticleEditor = ({ value, onChange, title, setTitle, coverImage, setCoverI
         paragraph: {
           class: Paragraph,
           config: {
-            placeholder: 'Tapez votre texte ici...',
+            placeholder: '', // Pas de placeholder pour éviter la duplication
           }
         },
         linkTool: {
@@ -114,8 +126,15 @@ const ArticleEditor = ({ value, onChange, title, setTitle, coverImage, setCoverI
         },
       },
       onChange: async () => {
-        const outputData = await ejInstance.current.save();
-        onChange && onChange(outputData);
+        try {
+          const outputData = await ejInstance.current.save();
+          console.log('📝 EditorJS onChange:', outputData);
+          console.log('📝 Blocks count:', outputData.blocks ? outputData.blocks.length : 'no blocks');
+          console.log('📝 Blocks content:', outputData.blocks);
+          onChange && onChange(outputData);
+        } catch (error) {
+          console.error('❌ Erreur EditorJS onChange:', error);
+        }
       },
     });
     return () => {
@@ -125,7 +144,7 @@ const ArticleEditor = ({ value, onChange, title, setTitle, coverImage, setCoverI
           .catch(() => {});
       }
     };
-  }, []);
+  }, [value, onChange]);
 
   // Pour l'image de présentation (upload local base64)
   const handleCoverImage = (e) => {

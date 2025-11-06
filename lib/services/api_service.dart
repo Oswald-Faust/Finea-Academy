@@ -480,9 +480,17 @@ class ApiService {
       ));
 
       // Ajouter le token d'authentification s'il existe
-      final authToken = await _getStoredAuthToken();
-      if (authToken != null) {
-        dio.options.headers['Authorization'] = 'Bearer $authToken';
+      String? authToken;
+      if (_tokenProvider != null) {
+        authToken = await _tokenProvider!.getStoredToken();
+        if (authToken != null) {
+          dio.options.headers['Authorization'] = 'Bearer $authToken';
+          print('🔑 Token d\'auth trouvé pour enregistrement Player ID');
+        } else {
+          print('⚠️  Pas de token d\'auth disponible');
+        }
+      } else {
+        print('⚠️  TokenProvider non configuré');
       }
 
       final response = await dio.post('/push-notifications/register', data: {
@@ -512,9 +520,17 @@ class ApiService {
       ));
 
       // Ajouter le token d'authentification s'il existe
-      final authToken = await _getStoredAuthToken();
-      if (authToken != null) {
-        dio.options.headers['Authorization'] = 'Bearer $authToken';
+      String? authToken;
+      if (_tokenProvider != null) {
+        authToken = await _tokenProvider!.getStoredToken();
+        if (authToken != null) {
+          dio.options.headers['Authorization'] = 'Bearer $authToken';
+          print('🔑 Token d\'auth trouvé pour enregistrement Player ID');
+        } else {
+          print('⚠️  Pas de token d\'auth disponible');
+        }
+      } else {
+        print('⚠️  TokenProvider non configuré');
       }
 
       final response = await dio.delete('/push-notifications/unregister', data: {
@@ -532,19 +548,6 @@ class ApiService {
   }
 
   /// Récupère le token d'authentification stocké (à implémenter selon votre système d'auth)
-  static Future<String?> _getStoredAuthToken() async {
-    // Ici, vous devriez récupérer le token JWT depuis le stockage sécurisé
-    // Par exemple avec flutter_secure_storage
-    try {
-      // TODO: Implémenter la récupération du token depuis le stockage sécurisé
-      // final storage = FlutterSecureStorage();
-      // return await storage.read(key: 'auth_token');
-      return null; // Temporaire
-    } catch (e) {
-      print('Erreur lors de la récupération du token d\'auth: $e');
-      return null;
-    }
-  }
 
   // Récupérer les statistiques des gagnants pour l'affichage
   Future<ApiResponse<Map<String, dynamic>>> getContestDisplayStats() async {
@@ -580,6 +583,190 @@ class ApiService {
         success: false,
         error: 'Erreur inattendue: $e',
       );
+    }
+  }
+
+  // ==================== NEWS API METHODS ====================
+
+  /// Récupérer la dernière actualité publiée
+  Future<ApiResponse<Map<String, dynamic>>> getLatestNews() async {
+    try {
+      final response = await _dio.get('/news/latest');
+      
+      if (response.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          data: response.data['data'],
+          message: 'Actualité récupérée avec succès',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          error: 'Erreur lors de la récupération de l\'actualité',
+        );
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Erreur de connexion';
+      if (e.response?.data != null) {
+        errorMessage = e.response!.data['error'] ?? 'Erreur lors de la récupération de l\'actualité';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      return ApiResponse(
+        success: false,
+        error: errorMessage,
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        error: 'Erreur inattendue: $e',
+      );
+    }
+  }
+
+  /// Récupérer l'actualité de la semaine actuelle
+  Future<ApiResponse<Map<String, dynamic>>> getCurrentWeekNews() async {
+    try {
+      final response = await _dio.get('/news/current-week');
+      
+      if (response.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          data: response.data['data'],
+          message: 'Actualité de la semaine récupérée avec succès',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          error: 'Erreur lors de la récupération de l\'actualité de la semaine',
+        );
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Erreur de connexion';
+      if (e.response?.data != null) {
+        errorMessage = e.response!.data['error'] ?? 'Erreur lors de la récupération de l\'actualité de la semaine';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      return ApiResponse(
+        success: false,
+        error: errorMessage,
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        error: 'Erreur inattendue: $e',
+      );
+    }
+  }
+
+  /// Récupérer toutes les actualités
+  Future<ApiResponse<List<Map<String, dynamic>>>> getAllNews({
+    int page = 1,
+    int limit = 10,
+    String? status,
+    String? search,
+    String sortBy = 'publishedAt',
+    String sortOrder = 'desc',
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'sortBy': sortBy,
+        'sortOrder': sortOrder,
+      };
+      
+      if (status != null) queryParams['status'] = status;
+      if (search != null) queryParams['search'] = search;
+
+      final response = await _dio.get('/news', queryParameters: queryParams);
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> newsData = response.data['data']['news'] as List<dynamic>;
+        final news = newsData.map((json) => json as Map<String, dynamic>).toList();
+        
+        return ApiResponse(
+          success: true,
+          data: news,
+          message: 'Actualités récupérées avec succès',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          error: 'Erreur lors de la récupération des actualités',
+        );
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Erreur de connexion';
+      if (e.response?.data != null) {
+        errorMessage = e.response!.data['error'] ?? 'Erreur lors de la récupération des actualités';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      return ApiResponse(
+        success: false,
+        error: errorMessage,
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        error: 'Erreur inattendue: $e',
+      );
+    }
+  }
+
+  /// Récupérer une actualité par ID
+  Future<ApiResponse<Map<String, dynamic>>> getNewsById(String id) async {
+    try {
+      final response = await _dio.get('/news/$id');
+      
+      if (response.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          data: response.data['data'],
+          message: 'Actualité récupérée avec succès',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          error: 'Erreur lors de la récupération de l\'actualité',
+        );
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Erreur de connexion';
+      if (e.response?.data != null) {
+        errorMessage = e.response!.data['error'] ?? 'Erreur lors de la récupération de l\'actualité';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      return ApiResponse(
+        success: false,
+        error: errorMessage,
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        error: 'Erreur inattendue: $e',
+      );
+    }
+  }
+
+  /// Récupérer les permissions d'alertes de l'utilisateur connecté
+  Future<Map<String, bool>> getAlertsPermissions() async {
+    try {
+      final response = await _dio.get('/users/me/alerts-permissions');
+      final data = response.data['data'] as Map<String, dynamic>;
+      return {
+        'canViewClosedAlerts': data['canViewClosedAlerts'] ?? false,
+        'canViewPositioningAlerts': data['canViewPositioningAlerts'] ?? false,
+      };
+    } on DioException catch (e) {
+      throw _handleDioError(e);
     }
   }
 }

@@ -15,6 +15,7 @@ const notificationsRoutes = require('./routes/notifications');
 const pushNotificationsRoutes = require('./routes/pushNotifications');
 const contestsRoutes = require('./routes/contests');
 const favoritesRoutes = require('./routes/favorites');
+const forexFactoryRoutes = require('./routes/forexFactory');
 
 // Import des middlewares
 const errorHandler = require('./middleware/errorHandler');
@@ -136,6 +137,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/push-notifications', pushNotificationsRoutes);
 app.use('/api/contests', contestsRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/forex-factory', forexFactoryRoutes);
 
 // Middleware pour les routes non trouvées
 app.use(notFound);

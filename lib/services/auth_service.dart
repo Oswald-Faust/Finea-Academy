@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import 'api_service.dart';
+import 'push_notification_service.dart';
 
 class AuthService extends ChangeNotifier implements TokenProvider {
   static const String _tokenKey = 'auth_token';
@@ -47,20 +49,46 @@ class AuthService extends ChangeNotifier implements TokenProvider {
         final userJson = prefs.getString(_userKey);
         
         if (token != null && userJson != null) {
+          // Essayer de parser les données utilisateur stockées
           try {
-            // Vérifier que le token est toujours valide en récupérant l'utilisateur actuel
-            final response = await _apiService.getCurrentUser();
-            if (response.success && response.data != null) {
-              _currentUser = response.data!;
-              _isLoggedIn = true;
-              print('✅ Connexion automatique réussie pour ${_currentUser!.email}');
-            } else {
-              print('❌ Token invalide, nettoyage des données');
-              await _clearAuthData();
+            final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+            _currentUser = User.fromJson(userMap);
+            _isLoggedIn = true;
+            print('✅ Données utilisateur chargées depuis le cache: ${_currentUser!.email}');
+            
+            // Essayer de valider le token auprès du serveur (en mode "best effort")
+            try {
+              final response = await _apiService.getCurrentUser();
+              if (response.success && response.data != null) {
+                // Token valide, mettre à jour avec les données fraîches du serveur
+                _currentUser = response.data!;
+                await prefs.setString(_userKey, jsonEncode(_currentUser!.toJson()));
+                print('✅ Token validé et données utilisateur mises à jour');
+                
+                // Réenregistrer le Player ID OneSignal après reconnexion automatique
+                try {
+                  final pushService = PushNotificationService();
+                  await pushService.retryRegisterPlayerId();
+                } catch (e) {
+                  print('⚠️  Impossible de réenregistrer le Player ID: $e');
+                }
+              } else {
+                // Token invalide (401, 403, etc.)
+                print('❌ Token invalide (${response.error}), nettoyage des données');
+                await _clearAuthData();
+                _currentUser = null;
+                _isLoggedIn = false;
+              }
+            } catch (e) {
+              // Erreur réseau ou serveur non accessible
+              // On garde l'utilisateur connecté avec les données en cache
+              print('⚠️  Impossible de valider le token (erreur réseau ?), utilisation du cache: $e');
+              print('📱 L\'utilisateur reste connecté en mode hors ligne');
+              // Ne pas nettoyer les données, l'utilisateur reste connecté
             }
           } catch (e) {
-            // Token invalide, nettoyer les données
-            print('❌ Erreur de validation token: $e');
+            // Impossible de parser les données utilisateur
+            print('❌ Données utilisateur corrompues, nettoyage: $e');
             await _clearAuthData();
           }
         } else {
@@ -72,7 +100,8 @@ class AuthService extends ChangeNotifier implements TokenProvider {
       }
     } catch (e) {
       print('❌ Erreur lors de l\'initialisation de l\'authentification: $e');
-      await _clearAuthData();
+      // Ne pas nettoyer les données en cas d'erreur globale
+      // L'utilisateur reste connecté si les données sont valides
     }
     
     _setLoading(false);
@@ -105,6 +134,15 @@ class AuthService extends ChangeNotifier implements TokenProvider {
         _currentUser = response.user;
         _isLoggedIn = true;
         notifyListeners();
+        
+        // Réenregistrer le Player ID OneSignal après inscription
+        try {
+          final pushService = PushNotificationService();
+          await pushService.retryRegisterPlayerId();
+        } catch (e) {
+          print('⚠️  Impossible de réenregistrer le Player ID: $e');
+        }
+        
         return true;
       } else {
         _setError('Erreur lors de l\'inscription');
@@ -143,6 +181,15 @@ class AuthService extends ChangeNotifier implements TokenProvider {
         _currentUser = response.user;
         _isLoggedIn = true;
         notifyListeners();
+        
+        // Réenregistrer le Player ID OneSignal après connexion automatique
+        try {
+          final pushService = PushNotificationService();
+          await pushService.retryRegisterPlayerId();
+        } catch (e) {
+          print('⚠️  Impossible de réenregistrer le Player ID: $e');
+        }
+        
         return true;
       } else {
         _setError('Erreur lors de la connexion automatique');
@@ -180,6 +227,15 @@ class AuthService extends ChangeNotifier implements TokenProvider {
         _currentUser = response.user;
         _isLoggedIn = true;
         notifyListeners();
+        
+        // Réenregistrer le Player ID OneSignal après connexion
+        try {
+          final pushService = PushNotificationService();
+          await pushService.retryRegisterPlayerId();
+        } catch (e) {
+          print('⚠️  Impossible de réenregistrer le Player ID: $e');
+        }
+        
         return true;
       } else {
         _setError('Identifiants invalides');
@@ -375,7 +431,7 @@ class AuthService extends ChangeNotifier implements TokenProvider {
         
         // Mettre à jour les données stockées
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_userKey, _currentUser!.toJson().toString());
+        await prefs.setString(_userKey, jsonEncode(_currentUser!.toJson()));
         
         notifyListeners();
       }
@@ -394,7 +450,7 @@ class AuthService extends ChangeNotifier implements TokenProvider {
         // Session valide, mettre à jour les données
         _currentUser = response.data!;
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_userKey, _currentUser!.toJson().toString());
+        await prefs.setString(_userKey, jsonEncode(_currentUser!.toJson()));
         return true;
       } else {
         // Session invalide
@@ -419,8 +475,9 @@ class AuthService extends ChangeNotifier implements TokenProvider {
     final prefs = await SharedPreferences.getInstance();
     
     await _secureStorage.write(key: _tokenKey, value: token);
-    await prefs.setString(_userKey, user.toJson().toString());
+    await prefs.setString(_userKey, jsonEncode(user.toJson()));
     await prefs.setBool(_isLoggedInKey, true);
+    print('💾 Données d\'authentification sauvegardées pour ${user.email}');
   }
 
   // Nettoyer les données d'authentification
@@ -452,6 +509,7 @@ class AuthService extends ChangeNotifier implements TokenProvider {
   void setToken(String token) async {
     await _secureStorage.write(key: _tokenKey, value: token);
   }
+
 
   @override
   Future<void> clearToken() async {

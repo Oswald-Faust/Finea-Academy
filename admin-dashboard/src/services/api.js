@@ -28,10 +28,6 @@ console.log(`   Base URL: ${API_BASE_URL}`);
 console.log(`   Hostname: ${window.location.hostname}`);
 
 // Fonctions utilitaires
-const getToken = () => {
-  return localStorage.getItem('adminToken') || '';
-};
-
 const handleResponse = async (response) => {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Erreur réseau' }));
@@ -110,6 +106,9 @@ export const userAPI = {
       'Content-Type': 'multipart/form-data',
     },
   }),
+  // Permissions d'alertes
+  getAlertsPermissions: (id) => api.get(`/users/${id}/alerts-permissions`),
+  updateAlertsPermissions: (id, permissions) => api.put(`/users/${id}/alerts-permissions`, permissions),
 };
 
 // Services email/newsletter
@@ -162,9 +161,6 @@ export const articleAPI = {
 
     const response = await fetch(`${API_BASE_URL}/newsletters`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
       body: formData,
     });
 
@@ -229,9 +225,6 @@ export const articleAPI = {
 
     const response = await fetch(`${API_BASE_URL}/newsletters/${id}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
       body: formData,
     });
 
@@ -243,7 +236,6 @@ export const articleAPI = {
     const response = await fetch(`${API_BASE_URL}/newsletters/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${getToken()}`,
         'Content-Type': 'application/json',
       },
     });
@@ -256,7 +248,6 @@ export const articleAPI = {
     const response = await fetch(`${API_BASE_URL}/newsletters/${id}/publish`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${getToken()}`,
         'Content-Type': 'application/json',
       },
     });
@@ -271,9 +262,6 @@ export const articleAPI = {
 
     const response = await fetch(`${API_BASE_URL}/newsletters/upload-image`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
       body: formData,
     });
 

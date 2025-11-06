@@ -14,10 +14,11 @@ class PositioningAlertsScreen extends StatefulWidget {
 class _PositioningAlertsScreenState extends State<PositioningAlertsScreen>
     with TickerProviderStateMixin {
   List<PositioningAlert> _allAlerts = [];
-  bool _isLoading = true;
+  bool _isLoading = false; // Initialisé à false pour permettre le premier chargement
   String _errorMessage = '';
   late TabController _tabController;
   Timer? _refreshTimer;
+  bool _isInitialLoad = true; // Flag pour distinguer le chargement initial
 
   @override
   void initState() {
@@ -35,44 +36,73 @@ class _PositioningAlertsScreenState extends State<PositioningAlertsScreen>
   }
 
   Future<void> _loadAlerts() async {
-    // Éviter les appels multiples simultanés
-    if (_isLoading) {
-      print('Chargement déjà en cours, ignoré');
+    // Éviter les appels multiples simultanés (sauf pour le chargement initial)
+    if (_isLoading && !_isInitialLoad) {
+      print('⏸️ Chargement déjà en cours, ignoré');
       return;
     }
     
-    print('Début du chargement des alertes...');
+    print('🔄 Début du chargement des alertes...');
+    
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      final alerts = await GoogleSheetsService.getPositioningAlerts();
+      // Ajouter un timeout pour éviter les chargements infinis
+      final alerts = await GoogleSheetsService.getPositioningAlerts()
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              print('⏱️ Timeout lors du chargement des alertes');
+              throw TimeoutException('Le chargement a pris trop de temps', const Duration(seconds: 15));
+            },
+          );
       
       if (mounted) {
         setState(() {
           _allAlerts = alerts;
           _isLoading = false;
+          _isInitialLoad = false;
+          _errorMessage = '';
         });
-        print('Alertes chargées avec succès: ${alerts.length} éléments');
+        print('✅ Alertes chargées avec succès: ${alerts.length} éléments');
       }
-    } catch (e) {
-      print('Erreur lors du chargement des alertes: $e');
+    } on TimeoutException catch (e) {
+      print('❌ Timeout lors du chargement des alertes: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Erreur lors du chargement des alertes: $e';
+          _isInitialLoad = false;
+          _errorMessage = 'Le chargement a pris trop de temps. Vérifiez votre connexion internet.';
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur lors du chargement des alertes: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isInitialLoad = false;
+          _errorMessage = 'Erreur lors du chargement des alertes. Vérifiez votre connexion internet.';
         });
       }
     }
   }
 
   Future<void> _refreshAlerts() async {
-    if (!mounted || _isLoading) {
-      print('Actualisation ignorée - widget non monté ou chargement en cours');
+    if (!mounted) {
+      print('⏸️ Actualisation ignorée - widget non monté');
       return;
     }
+    
+    if (_isLoading && !_isInitialLoad) {
+      print('⏸️ Actualisation ignorée - chargement déjà en cours');
+      return;
+    }
+    
     await _loadAlerts();
   }
 
@@ -131,10 +161,24 @@ class _PositioningAlertsScreenState extends State<PositioningAlertsScreen>
           ],
         ),
       ),
-      body: _isLoading
+      body: _isLoading && _isInitialLoad
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF000D64),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color(0xFF000D64),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Chargement des alertes...',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
               ),
             )
           : _errorMessage.isNotEmpty
@@ -179,6 +223,17 @@ class _PositioningAlertsScreenState extends State<PositioningAlertsScreen>
                 color: Colors.white70,
                 fontSize: 14,
                 fontFamily: 'Poppins',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Les données peuvent être disponibles depuis le cache.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontStyle: FontStyle.italic,
               ),
             ),
             const SizedBox(height: 24),

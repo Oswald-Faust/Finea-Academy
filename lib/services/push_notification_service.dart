@@ -1,54 +1,94 @@
 import 'dart:convert';
 import 'dart:io';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// Handler de notifications en arrière-plan (doit être déclaré au niveau global)
-// @pragma('vm:entry-point')
-// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-//   await Firebase.initializeApp();
-//   print('🔥 Notification reçue en arrière-plan: ${message.messageId}');
-//   
-//   // Traiter la notification en arrière-plan si nécessaire
-//   await PushNotificationService._handleBackgroundMessage(message);
-// }
+import 'package:uuid/uuid.dart';
+import '../services/api_service.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
   factory PushNotificationService() => _instance;
   PushNotificationService._internal();
 
-  static const String _tokenKey = 'fcm_token';
+  static const String _tokenKey = 'onesignal_player_id';
   static const String _deviceIdKey = 'device_id';
   
-  // FirebaseMessaging? _firebaseMessaging;
   FlutterLocalNotificationsPlugin? _localNotifications;
-  String? _currentToken;
+  String? _currentPlayerId;
   bool _isInitialized = false;
 
-  // Callback pour les notifications reçues (simplifiés sans Firebase)
+  // Callbacks pour les notifications reçues
   Function(Map<String, dynamic>)? onMessageReceived;
   Function(Map<String, dynamic>)? onMessageOpenedApp;
-  Function(Map<String, dynamic>)? onBackgroundMessage;
 
-  /// Initialise le service de notifications push (version simplifiée sans Firebase)
+  /// Initialise le service OneSignal
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      // Initialiser les notifications locales seulement
+      // Initialiser les notifications locales
       await _initializeLocalNotifications();
 
-      // Demander les permissions
-      await _requestPermissions();
-
+      // Initialiser OneSignal (utilise les variables d'environnement ou une constante)
+      // L'App ID sera configuré dans le code ou via une variable d'environnement
+      // Pour l'instant, on va le récupérer depuis une configuration
+      // L'App ID sera passé lors de l'appel à initializeWithAppId()
       _isInitialized = true;
-      print('✅ Service de notifications locales initialisé (sans Firebase)');
+      print('✅ Service OneSignal initialisé (en attente de App ID)');
     } catch (e) {
-      print('❌ Erreur lors de l\'initialisation des notifications: $e');
+      print('❌ Erreur lors de l\'initialisation OneSignal: $e');
+    }
+  }
+
+  /// Initialise OneSignal avec l'App ID
+  Future<void> initializeWithAppId(String appId) async {
+    try {
+      print('🚀 Initialisation OneSignal avec App ID: ${appId.substring(0, 20)}...');
+      
+      // Vérifier si on est sur simulateur iOS (les notifications push ne fonctionnent pas sur simulateur)
+      if (Platform.isIOS) {
+        // Note: On ne peut pas détecter directement si c'est un simulateur,
+        // mais on peut afficher un avertissement
+        print('📱 iOS détecté - Les notifications push nécessitent un appareil réel');
+        print('⚠️  Si vous êtes sur simulateur, les notifications ne fonctionneront PAS');
+      }
+      
+      // Initialiser OneSignal
+      OneSignal.initialize(appId);
+      print('✅ OneSignal SDK initialisé');
+      
+      // Attendre un peu pour que OneSignal s'initialise complètement
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      // Demander les permissions
+      final permissionResult = await OneSignal.Notifications.requestPermission(true);
+      print('📱 Permission notifications: $permissionResult');
+      
+      if (permissionResult == false) {
+        print('⚠️  Les notifications ont été refusées par l\'utilisateur');
+      }
+      
+      // Configurer les handlers AVANT de demander le Player ID
+      _setupMessageHandlers();
+      print('✅ Handlers OneSignal configurés');
+      
+      // Afficher un résumé de la configuration
+      print('🔍 Configuration OneSignal:');
+      print('   - App ID: ${appId.substring(0, 20)}...');
+      print('   - Permissions: ${permissionResult ? "✅ Autorisées" : "❌ Refusées"}');
+      print('   - Handlers: ✅ Configurés');
+      
+      // Récupérer le Player ID (avec délai pour laisser OneSignal se synchroniser)
+      await Future.delayed(Duration(milliseconds: 500));
+      await _getAndRegisterPlayerId();
+      
+      print('✅ OneSignal complètement initialisé avec App ID: $appId');
+      _isInitialized = true;
+    } catch (e) {
+      print('❌ Erreur lors de l\'initialisation OneSignal: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
     }
   }
 
@@ -56,11 +96,9 @@ class PushNotificationService {
   Future<void> _initializeLocalNotifications() async {
     _localNotifications = FlutterLocalNotificationsPlugin();
 
-    // Configuration Android
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Configuration iOS
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -79,7 +117,6 @@ class PushNotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Créer le canal de notification Android
     await _createNotificationChannel();
   }
 
@@ -87,8 +124,8 @@ class PushNotificationService {
   Future<void> _createNotificationChannel() async {
     if (Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'finea_notifications', // ID du canal
-        'Finéa Académie', // Nom du canal
+        'finea_notifications',
+        'Finéa Académie',
         description: 'Notifications de Finéa Académie',
         importance: Importance.high,
         enableVibration: true,
@@ -102,112 +139,187 @@ class PushNotificationService {
     }
   }
 
-  /// Demande les permissions de notifications (version simplifiée)
-  Future<void> _requestPermissions() async {
-    // Pour les notifications locales, les permissions sont gérées automatiquement
-    print('📱 Permissions de notifications locales configurées');
+  /// Configure les handlers de messages OneSignal
+  void _setupMessageHandlers() {
+    print('🔧 Configuration des handlers OneSignal...');
+    
+    // Handler pour les notifications reçues (tappées)
+    OneSignal.Notifications.addClickListener((event) {
+      print('👆 Notification tapée !');
+      print('   Titre: ${event.notification.title}');
+      print('   Contenu: ${event.notification.body}');
+      print('   Données: ${event.notification.additionalData}');
+      
+      final data = event.notification.additionalData ?? {};
+      data['title'] = event.notification.title;
+      data['body'] = event.notification.body;
+      _handleNotificationTap(data);
+      onMessageOpenedApp?.call(data);
+    });
+    print('✅ Handler click configuré');
+
+    // Handler pour les notifications reçues en premier plan (app ouverte)
+    OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+      print('📱 ========================================');
+      print('📱 NOTIFICATION REÇUE AU PREMIER PLAN !');
+      print('📱 Titre: ${event.notification.title}');
+      print('📱 Contenu: ${event.notification.body}');
+      print('📱 Données: ${event.notification.additionalData}');
+      print('📱 ========================================');
+      
+      final data = event.notification.additionalData ?? {};
+      data['title'] = event.notification.title;
+      data['body'] = event.notification.body;
+      
+      // Appeler le callback
+      onMessageReceived?.call(data);
+      
+      // NE PAS appeler preventDefault() - laisser OneSignal afficher
+      // La notification sera affichée automatiquement par OneSignal
+      
+      // Pour garantir l'affichage sur iOS, on affiche aussi une notification locale
+      if (Platform.isIOS && _localNotifications != null) {
+        print('📲 Affichage notification locale iOS...');
+        _showLocalNotification(
+          title: event.notification.title ?? 'Notification',
+          body: event.notification.body ?? '',
+          data: data,
+        );
+      }
+      
+      // Pour Android aussi
+      if (Platform.isAndroid && _localNotifications != null) {
+        print('📲 Affichage notification locale Android...');
+        _showLocalNotification(
+          title: event.notification.title ?? 'Notification',
+          body: event.notification.body ?? '',
+          data: data,
+        );
+      }
+    });
+    print('✅ Handler foreground configuré');
   }
 
-  // /// Configure les handlers de messages (commenté - Firebase non utilisé)
-  // Future<void> _setupMessageHandlers() async {
-  //   // Handler pour les messages en arrière-plan
-  //   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  /// Obtient et enregistre le Player ID OneSignal
+  Future<void> _getAndRegisterPlayerId() async {
+    try {
+      print('🔍 Tentative d\'obtention du Player ID OneSignal...');
+      
+      // Attendre un peu pour que OneSignal soit complètement initialisé
+      await Future.delayed(Duration(seconds: 1));
+      
+      // Obtenir le Player ID
+      final subscriptionState = OneSignal.User.pushSubscription;
+      final playerId = await subscriptionState.id;
+      
+      print('🔍 Player ID brut de OneSignal: $playerId');
+      
+      if (playerId != null && playerId.isNotEmpty) {
+        _currentPlayerId = playerId;
+        await _saveTokenLocally(playerId);
+        await _registerPlayerIdWithServer(playerId);
+        print('✅ Player ID OneSignal obtenu et enregistré: ${playerId.substring(0, 20)}...');
+      } else {
+        print('⚠️  Player ID OneSignal est null ou vide');
+        // Réessayer après 2 secondes
+        Future.delayed(Duration(seconds: 2), () async {
+          final retryPlayerId = await subscriptionState.id;
+          if (retryPlayerId != null && retryPlayerId.isNotEmpty) {
+            _currentPlayerId = retryPlayerId;
+            await _saveTokenLocally(retryPlayerId);
+            await _registerPlayerIdWithServer(retryPlayerId);
+            print('✅ Player ID OneSignal obtenu (retry): ${retryPlayerId.substring(0, 20)}...');
+          }
+        });
+      }
 
-  //   // Handler pour les messages reçus quand l'app est au premier plan
-  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  //     print('📱 Notification reçue au premier plan: ${message.notification?.title}');
-  //     _handleForegroundMessage(message);
-  //     onMessageReceived?.call(message);
-  //   });
+      // Écouter les changements de Player ID
+      OneSignal.User.pushSubscription.addObserver((state) {
+        final newPlayerId = state.current.id;
+        print('🔄 Événement Player ID: ${newPlayerId != null ? newPlayerId.substring(0, 20) + "..." : "null"}');
+        if (newPlayerId != null && newPlayerId.isNotEmpty && newPlayerId != _currentPlayerId) {
+          _currentPlayerId = newPlayerId;
+          _saveTokenLocally(newPlayerId);
+          _registerPlayerIdWithServer(newPlayerId);
+          print('✅ Player ID OneSignal rafraîchi et enregistré: ${newPlayerId.substring(0, 20)}...');
+        }
+      });
+    } catch (e) {
+      print('❌ Erreur lors de l\'obtention du Player ID: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
+    }
+  }
 
-  //   // Handler pour quand l'utilisateur tape sur une notification
-  //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-  //     print('👆 Notification tapée: ${message.notification?.title}');
-  //     _handleNotificationTap(message);
-  //     onMessageOpenedApp?.call(message);
-  //   });
-
-  //   // Vérifier si l'app a été ouverte depuis une notification
-  //   RemoteMessage? initialMessage = await _firebaseMessaging!.getInitialMessage();
-  //   if (initialMessage != null) {
-  //     print('🚀 App ouverte depuis une notification: ${initialMessage.notification?.title}');
-  //     _handleNotificationTap(initialMessage);
-  //   }
-  // }
-
-  // /// Obtient et enregistre le token FCM (commenté - Firebase non utilisé)
-  // Future<void> _getAndRegisterToken() async {
-  //   try {
-  //     String? token = await _firebaseMessaging!.getToken();
-  //     if (token != null) {
-  //       _currentToken = token;
-  //       await _saveTokenLocally(token);
-  //       await _registerTokenWithServer(token);
-  //       print('🔑 Token FCM obtenu: ${token.substring(0, 20)}...');
-  //     }
-
-  //     // Écouter les changements de token
-  //     _firebaseMessaging!.onTokenRefresh.listen((String newToken) {
-  //       _currentToken = newToken;
-  //       _saveTokenLocally(newToken);
-  //       _registerTokenWithServer(newToken);
-  //       print('🔄 Token FCM rafraîchi');
-  //     });
-  //   } catch (e) {
-  //     print('❌ Erreur lors de l\'obtention du token: $e');
-  //   }
-  // }
-
-  /// Sauvegarde le token localement
-  Future<void> _saveTokenLocally(String token) async {
+  /// Sauvegarde le Player ID localement
+  Future<void> _saveTokenLocally(String playerId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    await prefs.setString(_tokenKey, playerId);
   }
 
-  // /// Enregistre le token sur le serveur (commenté - Firebase non utilisé)
-  // Future<void> _registerTokenWithServer(String token) async {
-  //   try {
-  //     final prefs = await SharedPreferences.getInstance();
-  //     String? deviceId = prefs.getString(_deviceIdKey);
-  //     
-  //     // Générer un device ID unique si nécessaire
-  //     if (deviceId == null) {
-  //       deviceId = DateTime.now().millisecondsSinceEpoch.toString();
-  //       await prefs.setString(_deviceIdKey, deviceId);
-  //     }
+  /// Enregistre le Player ID sur le serveur
+  Future<void> _registerPlayerIdWithServer(String playerId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? deviceId = prefs.getString(_deviceIdKey);
+      
+      // Générer un device ID unique si nécessaire
+      if (deviceId == null) {
+        // Générer un UUID unique pour cet appareil
+        const uuid = Uuid();
+        deviceId = uuid.v4();
+        await prefs.setString(_deviceIdKey, deviceId);
+      }
 
-  //     String platform = Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'web';
+      String platform = Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'web';
 
-  //     final response = await ApiService.registerFCMToken(
-  //       token: token,
-  //       platform: platform,
-  //       deviceId: deviceId,
-  //     );
+      print('📤 Envoi du Player ID au serveur: $playerId (platform: $platform, device: $deviceId)');
+      
+      final response = await ApiService.registerFCMToken(
+        token: playerId,
+        platform: platform,
+        deviceId: deviceId,
+      );
 
-  //     if (response['success'] == true) {
-  //       print('✅ Token FCM enregistré sur le serveur');
-  //     } else {
-  //       print('❌ Erreur lors de l\'enregistrement du token: ${response['error']}');
-  //     }
-  //   } catch (e) {
-  //     print('❌ Erreur lors de l\'enregistrement du token sur le serveur: $e');
-  //   }
-  // }
+      if (response['success'] == true) {
+        print('✅ Player ID OneSignal enregistré sur le serveur avec succès');
+      } else {
+        print('⚠️  Erreur lors de l\'enregistrement: ${response['error']}');
+        // Si l'erreur est due à une non-authentification, on stocke le Player ID pour réessayer plus tard
+        if (response['error']?.toString().toLowerCase().contains('auth') ?? false) {
+          print('⚠️  Utilisateur non connecté - Player ID sera enregistré après connexion');
+          // Le Player ID sera réenregistré quand l'utilisateur se connectera
+        }
+      }
+    } catch (e) {
+      print('❌ Erreur lors de l\'enregistrement du Player ID sur le serveur: $e');
+      // En cas d'erreur réseau, on garde le Player ID pour réessayer
+      print('⚠️  Player ID conservé localement, sera réenregistré après connexion');
+    }
+  }
 
-  // /// Gère les messages reçus au premier plan (commenté - Firebase non utilisé)
-  // void _handleForegroundMessage(RemoteMessage message) {
-  //   // Afficher une notification locale sur Android
-  //   if (Platform.isAndroid && message.notification != null) {
-  //     _showLocalNotification(message);
-  //   }
-  // }
+  /// Réessayer d'enregistrer le Player ID (à appeler après connexion)
+  Future<void> retryRegisterPlayerId() async {
+    if (_currentPlayerId != null && _currentPlayerId!.isNotEmpty) {
+      print('🔄 Réessai d\'enregistrement du Player ID après connexion...');
+      await _registerPlayerIdWithServer(_currentPlayerId!);
+    } else {
+      // Si pas de Player ID, essayer d'en obtenir un
+      await _getAndRegisterPlayerId();
+    }
+  }
 
-  /// Affiche une notification locale (version simplifiée)
+  /// Affiche une notification locale
   Future<void> _showLocalNotification({
     required String title,
     required String body,
     Map<String, dynamic>? data,
   }) async {
+    if (_localNotifications == null) {
+      print('⚠️  Local notifications plugin non initialisé');
+      return;
+    }
+    
+    print('📲 Affichage notification locale: $title - $body');
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'finea_notifications',
@@ -216,7 +328,7 @@ class PushNotificationService {
       importance: Importance.max,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
-      color: Color(0xFF000D64), // Couleur Finéa
+      color: Color(0xFF000D64),
     );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
@@ -245,20 +357,15 @@ class PushNotificationService {
     if (response.payload != null) {
       try {
         Map<String, dynamic> data = jsonDecode(response.payload!);
-        _handleNotificationData(data);
+        _handleNotificationTap(data);
       } catch (e) {
         print('❌ Erreur lors du parsing du payload: $e');
       }
     }
   }
 
-  // /// Gère le tap sur une notification push (commenté - Firebase non utilisé)
-  // void _handleNotificationTap(RemoteMessage message) {
-  //   _handleNotificationData(message.data);
-  // }
-
-  /// Gère les données de notification pour la navigation
-  void _handleNotificationData(Map<String, dynamic> data) {
+  /// Gère le tap sur une notification
+  void _handleNotificationTap(Map<String, dynamic> data) {
     print('📲 Données de notification: $data');
     
     // Ici vous pouvez implémenter la logique de navigation
@@ -267,86 +374,61 @@ class PushNotificationService {
     
     switch (type) {
       case 'course':
-        // Naviguer vers la page des cours
         print('Navigation vers les cours');
         break;
       case 'contest':
-        // Naviguer vers les concours
         print('Navigation vers les concours');
         break;
       case 'article':
-        // Naviguer vers l'article
         print('Navigation vers l\'article');
         break;
       default:
-        // Navigation par défaut
         print('Navigation par défaut');
         break;
     }
   }
 
-  // /// Handler statique pour les messages en arrière-plan (commenté - Firebase non utilisé)
-  // static Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-  //   // Traitement des notifications en arrière-plan
-  //   print('📱 Traitement notification arrière-plan: ${message.notification?.title}');
-  //   
-  //   // Ici vous pouvez ajouter de la logique spécifique pour l'arrière-plan
-  //   // comme sauvegarder des données localement, etc.
-  // }
-
-  /// Obtient le token FCM actuel
-  String? get currentToken => _currentToken;
+  /// Obtient le Player ID actuel
+  String? get currentPlayerId => _currentPlayerId;
 
   /// Vérifie si le service est initialisé
   bool get isInitialized => _isInitialized;
 
-  // /// Supprime le token du serveur lors de la déconnexion (commenté - Firebase non utilisé)
-  // Future<void> unregisterToken() async {
-  //   try {
-  //     final prefs = await SharedPreferences.getInstance();
-  //     String? deviceId = prefs.getString(_deviceIdKey);
-  //     
-  //     if (deviceId != null) {
-  //       final response = await ApiService.unregisterFCMToken(deviceId: deviceId);
-  //       
-  //       if (response['success'] == true) {
-  //         print('✅ Token FCM supprimé du serveur');
-  //       }
-  //     }
-  //     
-  //     // Supprimer localement
-  //     await prefs.remove(_tokenKey);
-  //     _currentToken = null;
-  //   } catch (e) {
-  //     print('❌ Erreur lors de la suppression du token: $e');
-  //   }
-  // }
-
-  /// Méthode pour tester les notifications (version simplifiée)
-  Future<void> sendTestNotification() async {
-    await _showLocalNotification(
-      title: '🧪 Test Notification',
-      body: 'Ceci est une notification de test !',
-      data: {'type': 'test', 'timestamp': DateTime.now().millisecondsSinceEpoch.toString()},
-    );
+  /// Supprime le Player ID du serveur lors de la déconnexion
+  Future<void> unregisterPlayerId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? deviceId = prefs.getString(_deviceIdKey);
+      
+      if (deviceId != null) {
+        final response = await ApiService.unregisterFCMToken(deviceId: deviceId);
+        
+        if (response['success'] == true) {
+          print('✅ Player ID OneSignal supprimé du serveur');
+        }
+      }
+      
+      // Supprimer localement
+      await prefs.remove(_tokenKey);
+      _currentPlayerId = null;
+    } catch (e) {
+      print('❌ Erreur lors de la suppression du Player ID: $e');
+    }
   }
 
-  /// Configure les callbacks personnalisés (version simplifiée)
+  /// Configure les callbacks personnalisés
   void setCallbacks({
     Function(Map<String, dynamic>)? onMessageReceived,
     Function(Map<String, dynamic>)? onMessageOpenedApp,
-    Function(Map<String, dynamic>)? onBackgroundMessage,
   }) {
     this.onMessageReceived = onMessageReceived;
     this.onMessageOpenedApp = onMessageOpenedApp;
-    this.onBackgroundMessage = onBackgroundMessage;
   }
 
   /// Nettoie les ressources
   void dispose() {
-    // _firebaseMessaging = null;
     _localNotifications = null;
-    _currentToken = null;
+    _currentPlayerId = null;
     _isInitialized = false;
   }
 }

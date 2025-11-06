@@ -4,30 +4,19 @@ import {
   DocumentTextIcon,
   EyeIcon,
   CalendarIcon,
-  UsersIcon,
   CheckCircleIcon,
   PlusIcon,
-  PhotoIcon,
-  LinkIcon,
-  CodeBracketIcon,
-  ChartBarIcon,
-  ClockIcon,
-  PaintBrushIcon,
   CogIcon,
   PencilIcon,
   TrashIcon,
-  ArrowDownTrayIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
-  StarIcon,
   BookmarkIcon,
   EnvelopeIcon,
-  UserGroupIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
 import { emailAPI, userAPI, articleAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import ArticleEditor from '../components/ArticleEditor';
+import RichTextEditor from '../components/TinyMCEEditor';
 import ArticlePreview from '../components/ArticlePreview';
 import ArticleViewer from '../components/ArticleViewer';
 
@@ -35,7 +24,6 @@ const Newsletter = () => {
   const [activeTab, setActiveTab] = useState('campaigns');
   const [newsletterData, setNewsletterData] = useState({
     title: '',
-    subject: '',
     content: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
         <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
@@ -71,13 +59,10 @@ const Newsletter = () => {
     template: 'default',
     scheduledFor: '',
     preheader: '',
-    senderName: 'Finéa Académie',
-    senderEmail: 'contact@finea-academie.com',
     status: 'draft',
   });
   
   const [articles, setArticles] = useState([]);
-  const [userStats, setUserStats] = useState({ totalUsers: 250, activeUsers: 180 });
   const [loading, setLoading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,10 +97,6 @@ const Newsletter = () => {
 
       setArticles(articlesResponse.data || []);
       setTotalPages(articlesResponse.pagination?.pages || 1);
-
-      // Récupérer les stats utilisateurs
-      const statsResponse = await userAPI.getUserStats();
-      setUserStats(statsResponse.data || { totalUsers: 0, activeUsers: 0 });
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Erreur lors du chargement des données');
@@ -133,7 +114,16 @@ const Newsletter = () => {
   };
 
   const handlePublishArticle = async () => {
-    if (!articleTitle || !articleContent) {
+    // Vérification du contenu HTML (TinyMCE retourne du HTML)
+    const hasContent = articleContent && articleContent.trim().length > 0;
+    
+    console.log('🔍 Validation du contenu (Publier):', {
+      articleTitle,
+      contentLength: articleContent?.length || 0,
+      hasContent
+    });
+    
+    if (!articleTitle || !hasContent) {
       toast.error('Veuillez remplir le titre et le contenu de l\'article');
       return;
     }
@@ -150,6 +140,8 @@ const Newsletter = () => {
         isGlobal: true,
         priority: 'normal'
       };
+
+      console.log('💾 Données envoyées au backend (publication):', articleData);
 
       // Si on a une image de présentation, l'ajouter
       if (coverImage && coverImage.startsWith('data:')) {
@@ -188,7 +180,16 @@ const Newsletter = () => {
   };
 
   const handleSaveDraft = async () => {
-    if (!articleTitle || !articleContent) {
+    // Vérification du contenu HTML (TinyMCE retourne du HTML)
+    const hasContent = articleContent && articleContent.trim().length > 0;
+    
+    console.log('🔍 Validation du contenu (Brouillon):', {
+      articleTitle,
+      contentLength: articleContent?.length || 0,
+      hasContent
+    });
+    
+    if (!articleTitle || !hasContent) {
       toast.error('Veuillez remplir le titre et le contenu de l\'article');
       return;
     }
@@ -205,6 +206,8 @@ const Newsletter = () => {
         isGlobal: true,
         priority: 'normal'
       };
+
+      console.log('💾 Données envoyées au backend:', articleData);
 
       if (coverImage && coverImage.startsWith('data:')) {
         articleData.coverImage = coverImage;
@@ -294,7 +297,6 @@ const Newsletter = () => {
   const tabs = [
     { id: 'campaigns', name: 'Articles', icon: CalendarIcon },
     { id: 'compose', name: 'Composer', icon: DocumentTextIcon },
-    { id: 'analytics', name: 'Analytics', icon: ChartBarIcon },
   ];
 
   const getStatusBadge = (status) => {
@@ -319,9 +321,9 @@ const Newsletter = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Header avec style WordPress */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="shadow-sm border-b">
         <div className="flex justify-between items-center py-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
@@ -349,7 +351,7 @@ const Newsletter = () => {
       </div>
 
       {/* Navigation tabs style WordPress */}
-      <div className="bg-white shadow-sm">
+      <div className="shadow-sm">
         <nav className="flex space-x-8 px-6" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
@@ -368,48 +370,9 @@ const Newsletter = () => {
         </nav>
       </div>
 
-      {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-          <div className="flex items-center">
-            <UserGroupIcon className="h-8 w-8 text-blue-200" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-blue-100">Utilisateurs Totaux</p>
-              <p className="text-2xl font-bold">{userStats.totalUsers}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-gradient-to-r from-green-500 to-green-600 text-white">
-          <div className="flex items-center">
-            <CheckCircleIcon className="h-8 w-8 text-green-200" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-green-100">Utilisateurs Actifs</p>
-              <p className="text-2xl font-bold">{userStats.activeUsers}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-          <div className="flex items-center">
-            <DocumentTextIcon className="h-8 w-8 text-purple-200" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-purple-100">Articles Publiés</p>
-              <p className="text-2xl font-bold">{articles.filter(a => a.status === 'published').length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-          <div className="flex items-center">
-            <EyeIcon className="h-8 w-8 text-orange-200" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-orange-100">Brouillons</p>
-              <p className="text-2xl font-bold">{articles.filter(a => a.status === 'draft').length}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Contenu des tabs */}
-      <div className="bg-white shadow-sm rounded-lg">
+      <div className="bg-white shadow-sm rounded-lg w-full">
         {/* Tab Articles */}
         {activeTab === 'campaigns' && (
           <div className="p-6">
@@ -533,33 +496,19 @@ const Newsletter = () => {
 
         {/* Tab Composer */}
         {activeTab === 'compose' && (
-          <div className="p-6">
-            <div className="max-w-4xl mx-auto">
+          <div className="p-6 w-full">
+            <div className="w-full">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">
                 {editingArticle ? `Modifier l'article: ${editingArticle.title}` : 'Créer un Article de Blog'}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Sujet de l'email *</label>
-                  <input type="text" name="subject" value={newsletterData.subject} onChange={handleInputChange} className="input-field" placeholder="Objet de votre email" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Expéditeur</label>
-                  <input type="text" name="senderName" value={newsletterData.senderName} onChange={handleInputChange} className="input-field" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email expéditeur</label>
-                  <input type="email" name="senderEmail" value={newsletterData.senderEmail} onChange={handleInputChange} className="input-field" />
-                </div>
-              </div>
-              <ArticleEditor
-                value={articleContent}
-                onChange={setArticleContent}
-                title={articleTitle}
-                setTitle={setArticleTitle}
-                coverImage={coverImage}
-                setCoverImage={setCoverImage}
-              />
+        <RichTextEditor
+          value={articleContent}
+          onChange={setArticleContent}
+          title={articleTitle}
+          setTitle={setArticleTitle}
+          coverImage={coverImage}
+          setCoverImage={setCoverImage}
+        />
               <div className="flex justify-between items-center pt-6 border-t mt-8">
                 <div className="flex space-x-3">
                   <button
@@ -637,58 +586,6 @@ const Newsletter = () => {
           </div>
         )}
 
-        {/* Tab Analytics */}
-        {activeTab === 'analytics' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Statistiques des Articles</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              <div className="card text-center">
-                <DocumentTextIcon className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">
-                  {articles.length}
-                </div>
-                <div className="text-sm text-gray-500">Total d'articles</div>
-              </div>
-              
-              <div className="card text-center">
-                <CheckCircleIcon className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">
-                  {articles.filter(a => a.status === 'published').length}
-                </div>
-                <div className="text-sm text-gray-500">Articles publiés</div>
-              </div>
-              
-              <div className="card text-center">
-                <BookmarkIcon className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">
-                  {articles.filter(a => a.status === 'draft').length}
-                </div>
-                <div className="text-sm text-gray-500">Brouillons</div>
-              </div>
-            </div>
-
-            <div className="card">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Articles récents</h4>
-              <div className="space-y-4">
-                {articles.slice(0, 5).map((article) => (
-                  <div key={article._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium text-gray-900">{article.title}</div>
-                      <div className="text-sm text-gray-500">
-                        {article.createdBy?.firstName} {article.createdBy?.lastName} • 
-                        {new Date(article.createdAt).toLocaleDateString('fr-FR')}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getStatusBadge(article.status)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Article Viewer Modal */}

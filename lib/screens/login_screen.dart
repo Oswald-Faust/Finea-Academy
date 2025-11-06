@@ -39,9 +39,12 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       
+      // Vérifier que le widget est toujours monté avant d'appeler setState
+      if (!mounted) return;
+      
       setState(() => _isLoading = false);
       
-      if (success && mounted) {
+      if (success) {
         // Afficher un message de succès
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -54,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
         );
-      } else if (mounted && authService.errorMessage != null) {
+      } else if (authService.errorMessage != null) {
         // Afficher le message d'erreur
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

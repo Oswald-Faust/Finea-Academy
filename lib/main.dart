@@ -11,6 +11,7 @@ import 'screens/main_navigation_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'services/push_notification_service.dart';
+import 'services/alerts_permissions_service.dart';
 import 'screens/login_screen.dart';
 // import 'firebase_options.dart';
 
@@ -65,6 +66,7 @@ class _MyAppState extends State<MyApp> {
   late final ApiService apiService;
   late final AuthService authService;
   late final PushNotificationService pushNotificationService;
+  AlertsPermissionsService? alertsPermissionsService;
   late final Future<void> _initializationFuture;
 
   @override
@@ -74,6 +76,7 @@ class _MyAppState extends State<MyApp> {
     apiService = ApiService();
     authService = AuthService(apiService);
     pushNotificationService = PushNotificationService();
+    alertsPermissionsService = AlertsPermissionsService();
     
     // Configurer la liaison entre les services
     ApiService.setTokenProvider(authService);
@@ -87,19 +90,31 @@ class _MyAppState extends State<MyApp> {
       // Initialiser l'authentification
       await authService.initialize();
       
-      // Initialiser les notifications push
-      await pushNotificationService.initialize();
+      // Initialiser les notifications push avec OneSignal
+      // App ID OneSignal depuis backend/.env
+      const String oneSignalAppId = 'd56e585c-9fc7-4a58-8277-4b1d7ed334f1';
       
-      // Configurer les callbacks des notifications (version simplifiée)
+      if (oneSignalAppId.isNotEmpty) {
+        await pushNotificationService.initializeWithAppId(oneSignalAppId);
+      } else {
+        // Si pas d'App ID configuré, on initialise quand même (sans OneSignal)
+        await pushNotificationService.initialize();
+        print('⚠️  OneSignal App ID non configuré - notifications push désactivées');
+      }
+      
+      // Charger les permissions d'alertes
+      if (alertsPermissionsService != null) {
+        await alertsPermissionsService!.loadPermissions();
+      }
+      
+      // Configurer les callbacks des notifications
       pushNotificationService.setCallbacks(
         onMessageReceived: (Map<String, dynamic> data) {
           print('📱 Notification reçue: ${data['title']}');
-          // Ici vous pouvez ajouter une logique personnalisée
           _showInAppNotification(data);
         },
         onMessageOpenedApp: (Map<String, dynamic> data) {
           print('👆 App ouverte depuis notification: ${data['title']}');
-          // Naviguer selon le type de notification
           _handleNotificationNavigation(data);
         },
       );
@@ -161,6 +176,8 @@ class _MyAppState extends State<MyApp> {
         Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider<AuthService>.value(value: authService),
         Provider<PushNotificationService>.value(value: pushNotificationService),
+        if (alertsPermissionsService != null)
+          ChangeNotifierProvider<AlertsPermissionsService>.value(value: alertsPermissionsService!),
       ],
       child: MaterialApp(
         title: 'Finéa App',
@@ -209,8 +226,54 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class AppInitializer extends StatelessWidget {
+class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  bool _wasLoggedIn = false;
+  AuthService? _authService;
+  AlertsPermissionsService? _alertsPermissionsService;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_authService == null) {
+      _authService = Provider.of<AuthService>(context, listen: false);
+      _alertsPermissionsService = Provider.of<AlertsPermissionsService>(context, listen: false);
+      _wasLoggedIn = _authService!.isLoggedIn;
+      _authService!.addListener(_onAuthStateChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authService?.removeListener(_onAuthStateChanged);
+    super.dispose();
+  }
+
+  void _onAuthStateChanged() {
+    if (_authService == null || _alertsPermissionsService == null) return;
+    
+    final isLoggedIn = _authService!.isLoggedIn;
+    
+    // Si l'utilisateur vient de se connecter, recharger les permissions
+    if (!_wasLoggedIn && isLoggedIn) {
+      print('🔄 Utilisateur connecté, rechargement des permissions d\'alertes...');
+      _alertsPermissionsService!.refreshPermissions();
+    }
+    
+    // Si l'utilisateur vient de se déconnecter, réinitialiser les permissions
+    if (_wasLoggedIn && !isLoggedIn) {
+      print('🔄 Utilisateur déconnecté, réinitialisation des permissions...');
+      _alertsPermissionsService!.resetPermissions();
+    }
+    
+    _wasLoggedIn = isLoggedIn;
+  }
 
   @override
   Widget build(BuildContext context) {

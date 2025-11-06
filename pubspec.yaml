@@ -13,8 +13,7 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   url_launcher: ^6.1.7
-  firebase_core: ^3.1.0
-  firebase_messaging: ^15.0.0
+  onesignal_flutter: ^5.2.4
   flutter_local_notifications: ^17.0.0
   
   # Animation packages pour l'onboarding moderne
@@ -30,6 +29,9 @@ dependencies:
   http: ^1.1.0
   dio: ^5.4.0
   
+  # UUID pour générer un device ID unique
+  uuid: ^4.5.1
+  
   # JSON et modèles
   json_annotation: ^4.8.1
   
@@ -44,6 +46,9 @@ dependencies:
   
   # WebView pour intégrer Myfxbook
   webview_flutter: ^4.4.2
+  
+  # SVG support
+  flutter_svg: ^2.0.9
 
 dev_dependencies:
   flutter_test:

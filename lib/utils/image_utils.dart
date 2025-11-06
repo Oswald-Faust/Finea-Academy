@@ -11,9 +11,9 @@ class ImageUtils {
     }
     
     if (imageUrl.startsWith('http')) {
-      return imageUrl; // URL complète déjà
+      return imageUrl; // URL complète déjà (Cloudflare ou autre)
     } else if (imageUrl.startsWith('/uploads/')) {
-      return '$_apiBaseUrl$imageUrl'; // URL relative vers l'API
+      return '$_apiBaseUrl$imageUrl'; // URL relative vers l'API (ancien système)
     } else {
       return imageUrl; // Asset local
     }

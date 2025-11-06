@@ -6,7 +6,7 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// @desc    Enregistrer un token FCM pour un utilisateur
+// @desc    Enregistrer un player ID OneSignal pour un utilisateur
 // @route   POST /api/push-notifications/register
 // @access  Private
 router.post('/register', protect, async (req, res) => {
@@ -14,36 +14,41 @@ router.post('/register', protect, async (req, res) => {
     const { token, platform, deviceId } = req.body;
     const userId = req.user._id;
 
+    // Pour OneSignal, le "token" est en fait le "playerId"
     if (!token || !platform || !deviceId) {
       return res.status(400).json({
         success: false,
-        error: 'Token, platform et deviceId requis'
+        error: 'Player ID, platform et deviceId requis'
       });
     }
 
+    console.log(`📱 Enregistrement Player ID pour utilisateur ${userId}: ${token.substring(0, 20)}... (${platform})`);
+    
     const result = await pushNotificationService.registerToken(userId, token, platform, deviceId);
     
     if (result.success) {
+      console.log(`✅ Player ID OneSignal enregistré pour ${req.user.email}`);
       res.status(200).json({
         success: true,
-        message: 'Token FCM enregistré avec succès'
+        message: 'Player ID OneSignal enregistré avec succès'
       });
     } else {
+      console.error(`❌ Erreur enregistrement Player ID pour ${req.user.email}: ${result.error}`);
       res.status(400).json({
         success: false,
         error: result.error
       });
     }
   } catch (error) {
-    console.error('Erreur lors de l\'enregistrement du token FCM:', error);
+    console.error('Erreur lors de l\'enregistrement du player ID:', error);
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de l\'enregistrement du token FCM'
+      error: 'Erreur lors de l\'enregistrement du player ID'
     });
   }
 });
 
-// @desc    Supprimer un token FCM
+// @desc    Supprimer un player ID OneSignal
 // @route   DELETE /api/push-notifications/unregister
 // @access  Private
 router.delete('/unregister', protect, async (req, res) => {
@@ -63,7 +68,7 @@ router.delete('/unregister', protect, async (req, res) => {
     if (result.success) {
       res.status(200).json({
         success: true,
-        message: 'Token FCM supprimé avec succès'
+        message: 'Player ID OneSignal supprimé avec succès'
       });
     } else {
       res.status(400).json({
@@ -72,10 +77,10 @@ router.delete('/unregister', protect, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Erreur lors de la suppression du token FCM:', error);
+    console.error('Erreur lors de la suppression du player ID:', error);
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la suppression du token FCM'
+      error: 'Erreur lors de la suppression du player ID'
     });
   }
 });

@@ -10,11 +10,13 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   BellIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import CreateUserModal from '../components/CreateUserModal';
 import SendNotificationModal from '../components/SendNotificationModal';
+import AlertsPermissionsModal from '../components/AlertsPermissionsModal';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -26,6 +28,7 @@ const Users = () => {
   const [searchParams] = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [isAlertsPermissionsModalOpen, setIsAlertsPermissionsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
@@ -74,6 +77,11 @@ const Users = () => {
   const handleSendNotification = (user) => {
     setSelectedUser(user);
     setIsNotificationModalOpen(true);
+  };
+
+  const handleManageAlertsPermissions = (user) => {
+    setSelectedUser(user);
+    setIsAlertsPermissionsModalOpen(true);
   };
 
   const handleNotificationSent = () => {
@@ -248,6 +256,13 @@ const Users = () => {
                             <BellIcon className="h-5 w-5" />
                           </button>
                           <button
+                            onClick={() => handleManageAlertsPermissions(user)}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="Gérer les permissions d'alertes"
+                          >
+                            <ShieldCheckIcon className="h-5 w-5" />
+                          </button>
+                          <button
                             onClick={() => handleStatusToggle(user._id, user.isActive)}
                             className={`${
                               user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
@@ -356,6 +371,16 @@ const Users = () => {
         }}
         user={selectedUser}
         onNotificationSent={handleNotificationSent}
+      />
+
+      {/* Modal de gestion des permissions d'alertes */}
+      <AlertsPermissionsModal
+        isOpen={isAlertsPermissionsModalOpen}
+        onClose={() => {
+          setIsAlertsPermissionsModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
       />
     </div>
   );

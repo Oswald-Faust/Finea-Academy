@@ -3,10 +3,8 @@ import '../models/contest_model.dart';
 import '../services/contest_service.dart';
 import '../services/contest_stats_service.dart';
 import '../widgets/finea_app_bar.dart';
-import '../widgets/contest_countdown_section.dart';
 import '../widgets/youtube_video_player.dart';
 import '../widgets/myfxbook_widget.dart';
-import '../widgets/contest_winner_card.dart';
 import '../widgets/last_winner_slider_widget.dart';
 import '../config/youtube_config.dart';
 import 'profile_screen.dart';
@@ -106,19 +104,19 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
       backgroundColor: const Color(0xFF0f0f23),
       body: Stack(
         children: [
-          // Image de fond en plein écran
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Image.asset(
-                'assets/images/23.png',
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                alignment: Alignment.centerLeft,
-              ),
-            ),
-          ),
+               // Image de fond en plein écran
+               Positioned.fill(
+                 child: Align(
+                   alignment: Alignment.centerLeft,
+                   child: Image.asset(
+                     'assets/images/roue fondu.png',
+                     fit: BoxFit.cover,
+                     width: double.infinity,
+                     height: double.infinity,
+                     alignment: Alignment.centerLeft,
+                   ),
+                 ),
+               ),
           // Couche de transparence grise par-dessus l'image
           Positioned.fill(
             child: Container(
@@ -427,8 +425,21 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
         
         // TikTok
         GestureDetector(
-          onTap: () {
-            _showSocialMediaInfo('TikTok', 'Découvrez nos vidéos courtes sur TikTok !');
+          onTap: () async {
+            // Ouvrir directement le profil TikTok Finea
+            final url = 'https://www.tiktok.com/@finea.academie?_t=ZN-90jNZ818pLa&_r=1';
+            try {
+              await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Impossible d\'ouvrir TikTok'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
           },
           child: const Image(
             image: AssetImage('assets/images/tiktok.png'),
@@ -651,40 +662,6 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
     return DateTime(nextSunday.year, nextSunday.month, nextSunday.day, 19, 0);
   }
 
-  void _showSocialMediaInfo(String platform, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              platform == 'Instagram' ? Icons.camera_alt : Icons.music_note,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: platform == 'Instagram' 
-            ? const Color(0xFFE4405F) 
-            : const Color(0xFF25F4EE),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {},
-        ),
-      ),
-    );
-  }
-
   Widget _buildWinnersStatsSection() {
     final stats = _contestStats;
     
@@ -757,13 +734,5 @@ class _ConcoursScreenState extends State<ConcoursScreen> {
       ],
     );
   }
-
-  String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year;
-    return '$day/$month/$year';
-  }
-
 
 } 

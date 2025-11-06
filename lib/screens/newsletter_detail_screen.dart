@@ -78,8 +78,8 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
             actions: [
               IconButton(
                 icon: Icon(
-                  _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  color: _isBookmarked ? Colors.blue : Colors.white,
+                  _isBookmarked ? Icons.favorite : Icons.favorite_border,
+                  color: _isBookmarked ? Colors.red : Colors.white,
                 ),
                 onPressed: _toggleBookmark,
               ),

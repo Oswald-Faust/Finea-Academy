@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
-import '../services/news_api_service.dart';
+import '../services/api_service.dart';
 import '../screens/news_detail_screen.dart';
 
 class ActusSection extends StatefulWidget {
@@ -20,6 +20,7 @@ class ActusSection extends StatefulWidget {
 }
 
 class _ActusSectionState extends State<ActusSection> {
+  final ApiService _apiService = ApiService();
   NewsArticle? latestNews;
   bool isLoading = true;
   String? error;
@@ -39,25 +40,25 @@ class _ActusSectionState extends State<ActusSection> {
         error = null;
       });
 
-      final newsData = await NewsApiService.getLatestNews();
+      final response = await _apiService.getLatestNews();
       
-      print('📰 ActusSection: Données reçues: ${newsData != null ? "Oui" : "Non"}');
+      print('📰 ActusSection: Réponse reçue: success=${response.success}');
       
-      if (newsData != null) {
+      if (response.success && response.data != null) {
         print('✅ ActusSection: Création de l\'objet NewsArticle');
         if (!mounted) return;
         setState(() {
-          latestNews = NewsArticle.fromJson(newsData);
+          latestNews = NewsArticle.fromJson(response.data!);
           isLoading = false;
         });
         print('✅ ActusSection: Actualité chargée avec succès');
       } else {
-        print('❌ ActusSection: Aucune actualité disponible');
+        print('❌ ActusSection: Aucune actualité disponible: ${response.error}');
         if (!mounted) return;
         setState(() {
           latestNews = null;
           isLoading = false;
-          error = 'Aucune actualité disponible';
+          error = response.error ?? 'Aucune actualité disponible';
         });
       }
     } catch (e) {

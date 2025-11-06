@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../config/api_config.dart';
 
 class NewsArticle {
   final String id;
@@ -158,24 +158,9 @@ class NewsArticle {
     return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=300&fit=crop';
   }
 
-  // Obtenir l'URL de base selon l'environnement
+  // Obtenir l'URL de base selon l'environnement (utilise ApiConfig)
   String _getBaseUrl() {
-    // Utiliser la même logique que dans Environment mais pour les uploads
-    const bool isProduction = bool.fromEnvironment('PRODUCTION', defaultValue: false);
-    const bool isStaging = bool.fromEnvironment('STAGING', defaultValue: false);
-    
-    if (isProduction) {
-      return 'https://finea-academy-1.onrender.com';
-    } else if (isStaging) {
-      return 'https://finea-academy-staging.onrender.com';
-    } else {
-      // En développement, utiliser l'IP locale pour mobile et localhost pour web
-      if (kIsWeb) {
-        return 'http://localhost:5001';
-      } else {
-        return 'http://192.168.1.230:5001';
-      }
-    }
+    return ApiConfig.baseUrl;
   }
 
   // Obtenir les catégories basées sur les tags

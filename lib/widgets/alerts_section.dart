@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'alert_card.dart';
+import 'unauthorized_access_widget.dart';
+import '../services/alerts_permissions_service.dart';
+import 'package:provider/provider.dart';
 
 class AlertsSection extends StatelessWidget {
   final List<Map<String, String>> alerts;
@@ -11,6 +14,24 @@ class AlertsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer<AlertsPermissionsService?>(
+      builder: (context, permissionsService, child) {
+        // Si le service n'est pas disponible, afficher les alertes par défaut
+        if (permissionsService == null) {
+          return _buildAlertsContent();
+        }
+
+        // Si l'utilisateur n'a pas la permission, ne rien afficher
+        if (!permissionsService.canViewClosedAlerts) {
+          return const SizedBox.shrink(); // Widget vide, rien ne s'affiche
+        }
+
+        return _buildAlertsContent();
+      },
+    );
+  }
+
+  Widget _buildAlertsContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

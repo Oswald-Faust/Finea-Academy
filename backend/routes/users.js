@@ -1,7 +1,4 @@
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const {
   getUsers,
   getUserById,
@@ -11,6 +8,9 @@ const {
   updateUserRole,
   getUserStats,
   uploadAvatar,
+  updateAlertsPermissions,
+  getAlertsPermissions,
+  getMyAlertsPermissions,
 } = require('../controllers/userController');
 
 const {
@@ -18,92 +18,76 @@ const {
   validateUpdatePreferences,
 } = require('../middleware/validation');
 
+const { protect: auth } = require('../middleware/auth');
+const { uploadAvatar: uploadAvatarMiddleware, cloudflareUploadHandler } = require('../middleware/cloudflareUploads');
+
 const router = express.Router();
 
-// Configuration du dossier uploads pour avatars (adapté pour Vercel)
-const avatarsDir = process.env.VERCEL ? '/tmp/uploads/avatars' : './uploads/avatars';
-
-// Créer le dossier seulement si on n'est pas sur Vercel
-if (!process.env.VERCEL && !fs.existsSync(avatarsDir)) {
-  fs.mkdirSync(avatarsDir, { recursive: true });
-}
-
-// Configuration de multer pour l'upload d'avatar
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, avatarsDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${req.params.id}-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seuls les fichiers image sont autorisés'), false);
-    }
-  },
-});
-
-// Routes publiques - aucune authentification requise
+// ============================================
+// ROUTES SPÉCIFIQUES (doivent être avant /:id)
+// ============================================
 
 // Routes pour les statistiques
 router.get('/stats', getUserStats);
-
-// Routes pour la gestion des utilisateurs
-router.get('/', getUsers);
-router.get('/:id', getUserById);
-router.put('/:id', validateUpdateProfile, updateUser);
-router.delete('/:id', deleteUser);
-
-// Routes de gestion
-router.put('/:id/activate', activateUser);
-router.put('/:id/role', updateUserRole);
-
-// Route pour l'upload d'avatar
-router.post('/:id/avatar', upload.single('avatar'), uploadAvatar);
-
-// Route pour supprimer définitivement un utilisateur
-router.delete('/:id/permanent', async (req, res) => {
+router.get('/detailed-stats', async (req, res) => {
   try {
     const User = require('../models/User');
-    const user = await User.findById(req.params.id);
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'Utilisateur non trouvé',
-      });
-    }
-    
-    // Supprimer définitivement l'utilisateur
-    await User.findByIdAndDelete(req.params.id);
+
+    // Statistiques de base
+    const totalUsers = await User.countDocuments();
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const inactiveUsers = await User.countDocuments({ isActive: false });
+    const verifiedUsers = await User.countDocuments({ isEmailVerified: true });
+
+    // Utilisateurs par rôle
+    const usersByRole = await User.aggregate([
+      { $group: { _id: '$role', count: { $sum: 1 } } }
+    ]);
+
+    // Nouveaux utilisateurs cette semaine
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const newUsersThisWeek = await User.countDocuments({
+      createdAt: { $gte: oneWeekAgo }
+    });
+
+    // Nouveaux utilisateurs ce mois
+    const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const newUsersThisMonth = await User.countDocuments({
+      createdAt: { $gte: oneMonthAgo }
+    });
     
     res.status(200).json({
       success: true,
-      message: 'Utilisateur supprimé définitivement avec succès',
+      data: {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        verifiedUsers,
+        newUsersThisWeek,
+        newUsersThisMonth,
+        usersByRole: usersByRole.reduce((acc, curr) => {
+          acc[curr._id] = curr.count;
+          return acc;
+        }, {}),
+        growth: {
+          weeklyGrowth: ((newUsersThisWeek / Math.max(totalUsers - newUsersThisWeek, 1)) * 100).toFixed(1),
+          monthlyGrowth: ((newUsersThisMonth / Math.max(totalUsers - newUsersThisMonth, 1)) * 100).toFixed(1)
+        }
+      }
     });
   } catch (error) {
-    console.error('Erreur lors de la suppression définitive de l\'utilisateur:', error);
+    console.error('Erreur lors de la récupération des statistiques:', error);
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la suppression de l\'utilisateur',
+      error: 'Erreur lors de la récupération des statistiques'
     });
   }
 });
 
-// Nouvelles routes utiles
+// Routes pour les permissions d'alertes de l'utilisateur connecté
+router.get('/me/alerts-permissions', auth, getMyAlertsPermissions);
 
-// @desc    Créer un utilisateur manuellement
-// @route   POST /api/users/create
-// @access  Public
+// Route pour créer un utilisateur manuellement
 router.post('/create', async (req, res) => {
   try {
     const { firstName, lastName, email, password, role = 'user' } = req.body;
@@ -139,7 +123,7 @@ router.post('/create', async (req, res) => {
       password: hashedPassword,
       role,
       isActive: true,
-      emailVerified: true
+      isEmailVerified: true
     });
 
     res.status(201).json({
@@ -162,17 +146,15 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// @desc    Enregistrement d'un utilisateur via l'application
-// @route   POST /api/users/register
-// @access  Public
+// Route pour l'inscription
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, phone } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !phone) {
       return res.status(400).json({
         success: false,
-        error: 'Tous les champs sont obligatoires'
+        error: 'Tous les champs sont obligatoires (prénom, nom, email, mot de passe, téléphone)'
       });
     }
 
@@ -182,6 +164,15 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Format d\'email invalide'
+      });
+    }
+
+    // Validation du numéro de téléphone français
+    const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Veuillez entrer un numéro de téléphone français valide (ex: 0612345678 ou +33612345678)'
       });
     }
 
@@ -215,9 +206,10 @@ router.post('/register', async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
+      phone,
       role: 'user',
       isActive: true,
-      emailVerified: false
+      isEmailVerified: false
     });
 
     res.status(201).json({
@@ -240,60 +232,52 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// @desc    Récupérer les statistiques détaillées
-// @route   GET /api/users/detailed-stats
-// @access  Public
-router.get('/detailed-stats', async (req, res) => {
+// ============================================
+// ROUTES AVEC PARAMÈTRE :id
+// ============================================
+
+// Routes pour la gestion des utilisateurs
+router.get('/', getUsers);
+router.get('/:id', getUserById);
+router.put('/:id', validateUpdateProfile, updateUser);
+router.delete('/:id', deleteUser);
+
+// Routes de gestion
+router.put('/:id/activate', activateUser);
+router.put('/:id/role', updateUserRole);
+
+// Routes pour les permissions d'alertes d'un utilisateur spécifique
+router.get('/:id/alerts-permissions', getAlertsPermissions);
+router.put('/:id/alerts-permissions', updateAlertsPermissions);
+
+// Route pour l'upload d'avatar vers Cloudflare R2
+router.post('/:id/avatar', auth, cloudflareUploadHandler, uploadAvatarMiddleware.single('avatar'), uploadAvatar);
+
+// Route pour supprimer définitivement un utilisateur
+router.delete('/:id/permanent', async (req, res) => {
   try {
     const User = require('../models/User');
-
-    // Statistiques de base
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
-    const inactiveUsers = await User.countDocuments({ isActive: false });
-    const verifiedUsers = await User.countDocuments({ emailVerified: true });
-
-    // Utilisateurs par rôle
-    const usersByRole = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } }
-    ]);
-
-    // Nouveaux utilisateurs cette semaine
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const newUsersThisWeek = await User.countDocuments({
-      createdAt: { $gte: oneWeekAgo }
-    });
-
-    // Nouveaux utilisateurs ce mois
-    const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const newUsersThisMonth = await User.countDocuments({
-      createdAt: { $gte: oneMonthAgo }
-    });
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé',
+      });
+    }
+    
+    // Supprimer définitivement l'utilisateur
+    await User.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
-      data: {
-        totalUsers,
-        activeUsers,
-        inactiveUsers,
-        verifiedUsers,
-        newUsersThisWeek,
-        newUsersThisMonth,
-        usersByRole: usersByRole.reduce((acc, curr) => {
-          acc[curr._id] = curr.count;
-          return acc;
-        }, {}),
-        growth: {
-          weeklyGrowth: ((newUsersThisWeek / Math.max(totalUsers - newUsersThisWeek, 1)) * 100).toFixed(1),
-          monthlyGrowth: ((newUsersThisMonth / Math.max(totalUsers - newUsersThisMonth, 1)) * 100).toFixed(1)
-        }
-      }
+      message: 'Utilisateur supprimé définitivement avec succès',
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des statistiques:', error);
+    console.error('Erreur lors de la suppression définitive de l\'utilisateur:', error);
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la récupération des statistiques'
+      error: 'Erreur lors de la suppression de l\'utilisateur',
     });
   }
 });

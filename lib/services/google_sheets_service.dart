@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../models/positioning_alert_model.dart';
 
@@ -18,9 +19,12 @@ class GoogleSheetsService {
           _cachedAlerts.isNotEmpty && 
           _lastFetch != null && 
           DateTime.now().difference(_lastFetch!) < _cacheValidity) {
+        print('📦 Utilisation du cache (${_cachedAlerts.length} alertes)');
         return _cachedAlerts;
       }
 
+      print('🌐 Récupération des alertes depuis Google Sheets...');
+      
       // Récupérer les données du Google Sheet avec timeout
       final response = await http.get(
         Uri.parse(_sheetUrl),
@@ -31,22 +35,46 @@ class GoogleSheetsService {
 
       if (response.statusCode == 200) {
         final csvData = response.body;
+        
+        if (csvData.isEmpty) {
+          print('⚠️ Réponse CSV vide');
+          // Retourner le cache si disponible, sinon liste vide
+          return _cachedAlerts.isNotEmpty ? _cachedAlerts : [];
+        }
+        
         final alerts = _parseCsvData(csvData);
         
         // Mettre à jour le cache
         _cachedAlerts = alerts;
         _lastFetch = DateTime.now();
         
+        print('✅ ${alerts.length} alertes récupérées et mises en cache');
         return alerts;
       } else {
-        print('Erreur HTTP: ${response.statusCode}');
+        print('❌ Erreur HTTP: ${response.statusCode}');
         // Retourner le cache en cas d'erreur HTTP
+        if (_cachedAlerts.isNotEmpty) {
+          print('📦 Utilisation du cache en cas d\'erreur HTTP');
+          return _cachedAlerts;
+        }
+        throw Exception('Erreur HTTP ${response.statusCode}');
+      }
+    } on TimeoutException catch (e) {
+      print('⏱️ Timeout lors de la récupération des alertes: $e');
+      // Retourner le cache en cas de timeout
+      if (_cachedAlerts.isNotEmpty) {
+        print('📦 Utilisation du cache en cas de timeout');
         return _cachedAlerts;
       }
+      throw Exception('Le chargement a pris trop de temps');
     } catch (e) {
-      print('Erreur GoogleSheetsService: $e');
+      print('❌ Erreur GoogleSheetsService: $e');
       // Retourner le cache en cas d'erreur, ou liste vide si pas de cache
-      return _cachedAlerts.isNotEmpty ? _cachedAlerts : [];
+      if (_cachedAlerts.isNotEmpty) {
+        print('📦 Utilisation du cache en cas d\'erreur');
+        return _cachedAlerts;
+      }
+      rethrow; // Relancer l'erreur pour que l'écran puisse l'afficher
     }
   }
 

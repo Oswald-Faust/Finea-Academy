@@ -30,18 +30,11 @@ const validateRegister = [
     .withMessage('Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'),
   
   body('phone')
-    .optional({ nullable: true })
-    .custom((value) => {
-      if (value === null || value === undefined || value === '') {
-        return true; // Permettre les valeurs vides
-      }
-      // Validation optionnelle du téléphone français
-      const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
-      if (!phoneRegex.test(value)) {
-        throw new Error('Veuillez entrer un numéro de téléphone français valide');
-      }
-      return true;
-    }),
+    .trim()
+    .notEmpty()
+    .withMessage('Le numéro de téléphone est requis')
+    .matches(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/)
+    .withMessage('Veuillez entrer un numéro de téléphone français valide (ex: 0612345678 ou +33612345678)'),
 ];
 
 // Validation pour la connexion

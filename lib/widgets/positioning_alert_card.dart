@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import '../services/alerts_permissions_service.dart';
+import 'access_denied_dialog.dart';
 
 class PositioningAlertCard extends StatelessWidget {
   final VoidCallback? onTap;
@@ -10,6 +14,15 @@ class PositioningAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer<AlertsPermissionsService?>(
+      builder: (context, permissionsService, child) {
+        // Toujours afficher la carte
+        return _buildAlertCard(context, permissionsService);
+      },
+    );
+  }
+
+  Widget _buildAlertCard(BuildContext context, AlertsPermissionsService? permissionsService) {
     return Container(
       width: double.infinity,
       height: 140,
@@ -179,7 +192,7 @@ class PositioningAlertCard extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: onTap,
+                  onTap: () => _handleTap(context, permissionsService),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(),
                 ),
@@ -189,6 +202,52 @@ class PositioningAlertCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _handleTap(BuildContext context, AlertsPermissionsService? permissionsService) {
+    // Si le service n'est pas disponible, utiliser le callback par défaut
+    if (permissionsService == null) {
+      if (kDebugMode) {
+        print('⚠️ AlertsPermissionsService est null, autorisation accordée par défaut');
+      }
+      onTap?.call();
+      return;
+    }
+
+    // Logs de débogage
+    if (kDebugMode) {
+      if (permissionsService.hasLoaded) {
+        print('🔍 Permissions chargées:');
+        print('   - canViewPositioningAlerts: ${permissionsService.canViewPositioningAlerts}');
+        print('   - Permissions complètes: ${permissionsService.permissions}');
+      } else {
+        print('⚠️ Permissions pas encore chargées, rechargement...');
+      }
+    }
+    
+    if (!permissionsService.hasLoaded) {
+      permissionsService.refreshPermissions();
+    }
+
+    // Vérifier les permissions
+    if (!permissionsService.canViewPositioningAlerts) {
+      if (kDebugMode) {
+        print('❌ Accès refusé - canViewPositioningAlerts = false');
+      }
+      // Afficher le popup d'accès refusé
+      AccessDeniedDialog.show(
+        context,
+        "Vous n'avez pas l'autorisation d'accéder aux alertes de positionnement",
+        title: "Accès aux Alertes",
+      );
+      return;
+    }
+
+    if (kDebugMode) {
+      print('✅ Accès autorisé - Navigation vers les alertes');
+    }
+    // Si autorisé, utiliser le callback normal
+    onTap?.call();
   }
 }
 

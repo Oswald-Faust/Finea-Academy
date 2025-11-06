@@ -1,52 +1,16 @@
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { Newsletter } = require('../models/Newsletter');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
-const { protect: auth } = require('../middleware/auth');
 const { validateNewsletter } = require('../middleware/validation');
+const { uploadArticleImage, cloudflareUploadHandler } = require('../middleware/cloudflareUploads');
 
 const router = express.Router();
 
-// Configuration du dossier uploads
-const uploadsDir = './uploads/articles';
-
-// Créer le dossier s'il n'existe pas
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configuration multer pour l'upload d'images
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seuls les fichiers image sont autorisés'), false);
-    }
-  },
-});
-
 // @desc    Créer un nouvel article
 // @route   POST /api/newsletters
-// @access  Public (temporairement pour les tests)
-router.post('/', upload.single('coverImage'), async (req, res) => {
+// @access  Public (pour le dashboard admin)
+router.post('/', cloudflareUploadHandler, uploadArticleImage.single('coverImage'), async (req, res) => {
   try {
     const {
       title,
@@ -73,14 +37,42 @@ router.post('/', upload.single('coverImage'), async (req, res) => {
     // Traitement de l'image de présentation
     let coverImageUrl = null;
     if (req.file) {
+      // Avec Cloudflare R2, Multer-S3 génère une URL avec l'endpoint
+      // Mais nous devons utiliser l'URL publique personnalisée
+      if (req.file.key) {
+        const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+        coverImageUrl = `${publicUrl}/${req.file.key}`;
+      } else if (req.file.location) {
+        // Si location existe, l'utiliser directement
+        coverImageUrl = req.file.location;
+      } else if (req.file.filename) {
+        // Fallback pour stockage local
       coverImageUrl = `/uploads/articles/${req.file.filename}`;
+      }
+      
+      console.log('📸 Image uploadée:', {
+        key: req.file.key,
+        location: req.file.location,
+        filename: req.file.filename,
+        finalUrl: coverImageUrl
+      });
+    }
+
+    // Traiter le contenu (peut être HTML ou JSON EditorJS)
+    let processedContent;
+    try {
+      // Essayer de parser comme JSON (EditorJS)
+      processedContent = JSON.parse(content);
+    } catch (e) {
+      // Si ce n'est pas du JSON, c'est du HTML (TinyMCE)
+      processedContent = content;
     }
 
     // Créer l'article
     const article = new Newsletter({
       title,
       coverImage: coverImageUrl,
-      content: JSON.parse(content),
+      content: processedContent,
       type,
       status,
       tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []),
@@ -238,7 +230,7 @@ router.get('/:id', async (req, res) => {
 // @desc    Mettre à jour un article
 // @route   PUT /api/newsletters/:id
 // @access  Public (temporairement pour les tests)
-router.put('/:id', upload.single('coverImage'), async (req, res) => {
+router.put('/:id', cloudflareUploadHandler, uploadArticleImage.single('coverImage'), async (req, res) => {
   try {
     const {
       title,
@@ -263,12 +255,35 @@ router.put('/:id', upload.single('coverImage'), async (req, res) => {
 
     // Traitement de l'image de présentation
     if (req.file) {
+      // Avec Cloudflare R2, Multer-S3 génère une URL avec l'endpoint
+      // Mais nous devons utiliser l'URL publique personnalisée
+      if (req.file.key) {
+        const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+        article.coverImage = `${publicUrl}/${req.file.key}`;
+      } else if (req.file.location) {
+        article.coverImage = req.file.location;
+      } else if (req.file.filename) {
       article.coverImage = `/uploads/articles/${req.file.filename}`;
+      }
+      
+      console.log('📸 Image mise à jour:', {
+        key: req.file.key,
+        location: req.file.location,
+        filename: req.file.filename,
+        finalUrl: article.coverImage
+      });
     }
 
     // Mise à jour des champs
     if (title) article.title = title;
-    if (content) article.content = JSON.parse(content);
+    if (content) {
+      // Traiter le contenu (peut être HTML ou JSON EditorJS)
+      try {
+        article.content = JSON.parse(content);
+      } catch (e) {
+        article.content = content;
+      }
+    }
     if (status) article.status = status;
     if (tags) article.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
     if (scheduledFor) article.scheduledFor = new Date(scheduledFor);
@@ -365,10 +380,10 @@ router.patch('/:id/publish', async (req, res) => {
   }
 });
 
-// @desc    Upload d'image pour l'éditeur
+// @desc    Upload d'image pour l'éditeur vers Cloudflare R2
 // @route   POST /api/newsletters/upload-image
-// @access  Public (temporairement pour les tests)
-router.post('/upload-image', upload.single('image'), async (req, res) => {
+// @access  Private (Admin)
+router.post('/upload-image', cloudflareUploadHandler, uploadArticleImage.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -377,7 +392,24 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
       });
     }
 
-    const imageUrl = `/uploads/articles/${req.file.filename}`;
+    // Construire l'URL de l'image uploadée
+    let imageUrl;
+    if (req.file.key) {
+      // Utiliser l'URL publique personnalisée
+      const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+      imageUrl = `${publicUrl}/${req.file.key}`;
+    } else if (req.file.location) {
+      imageUrl = req.file.location;
+    } else if (req.file.filename) {
+      imageUrl = `/uploads/articles/${req.file.filename}`;
+    }
+    
+    console.log('📸 Image éditeur uploadée:', {
+      key: req.file.key,
+      location: req.file.location,
+      filename: req.file.filename,
+      finalUrl: imageUrl
+    });
 
     res.json({
       success: 1,

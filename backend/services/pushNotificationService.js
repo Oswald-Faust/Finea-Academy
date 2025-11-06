@@ -1,52 +1,29 @@
-const admin = require('firebase-admin');
+const axios = require('axios');
 const User = require('../models/User');
 
 class PushNotificationService {
   constructor() {
     this.isInitialized = false;
-    this.initializeFirebase();
+    this.initializeOneSignal();
   }
 
-  initializeFirebase() {
+  initializeOneSignal() {
     try {
-      // Vérifier si Firebase Admin est déjà initialisé
-      if (admin.apps.length === 0) {
-        // Initialiser Firebase Admin avec les variables d'environnement
-        if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-          // Pour production avec fichier de clé de service
-          admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            projectId: process.env.FIREBASE_PROJECT_ID
-          });
-        } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-          // Pour production avec clé de service inline
-          try {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-            admin.initializeApp({
-              credential: admin.credential.cert(serviceAccount),
-              projectId: process.env.FIREBASE_PROJECT_ID
-            });
-          } catch (parseError) {
-            console.error('❌ Erreur de parsing de FIREBASE_SERVICE_ACCOUNT_KEY:', parseError.message);
-            console.warn('⚠️  Firebase non configuré - Les notifications push ne fonctionneront pas');
-            return;
-          }
-        } else if (process.env.FIREBASE_PROJECT_ID) {
-          // Pour développement avec projet ID uniquement
-          admin.initializeApp({
-            projectId: process.env.FIREBASE_PROJECT_ID
-          });
-        } else {
-          console.warn('⚠️  Firebase non configuré - Les notifications push ne fonctionneront pas');
-          return;
-        }
+      // Vérifier la configuration OneSignal
+      if (!process.env.ONESIGNAL_APP_ID || !process.env.ONESIGNAL_REST_API_KEY) {
+        console.warn('⚠️  OneSignal non configuré - Les notifications push ne fonctionneront pas');
+        console.warn('⚠️  Variables requises: ONESIGNAL_APP_ID, ONESIGNAL_REST_API_KEY');
+        return;
       }
 
-      this.messaging = admin.messaging();
+      this.appId = process.env.ONESIGNAL_APP_ID;
+      this.apiKey = process.env.ONESIGNAL_REST_API_KEY;
+      this.apiUrl = 'https://onesignal.com/api/v1/notifications';
+      
       this.isInitialized = true;
-      console.log('✅ Service de notifications push initialisé');
+      console.log('✅ Service OneSignal initialisé');
     } catch (error) {
-      console.error('❌ Erreur lors de l\'initialisation de Firebase:', error);
+      console.error('❌ Erreur lors de l\'initialisation de OneSignal:', error);
       this.isInitialized = false;
     }
   }
@@ -54,7 +31,7 @@ class PushNotificationService {
   // Envoyer une notification à un utilisateur spécifique
   async sendToUser(userId, notification, data = {}) {
     if (!this.isInitialized) {
-      console.warn('Firebase non initialisé - notification non envoyée');
+      console.warn('OneSignal non initialisé - notification non envoyée');
       return { success: false, error: 'Service non initialisé' };
     }
 
@@ -69,12 +46,26 @@ class PushNotificationService {
         return { success: false, error: 'Notifications push désactivées pour cet utilisateur' };
       }
 
-      const tokens = user.getActiveFCMTokens();
-      if (tokens.length === 0) {
-        return { success: false, error: 'Aucun token FCM actif pour cet utilisateur' };
+      const playerIds = user.getActivePushTokens();
+      if (playerIds.length === 0) {
+        return { success: false, error: 'Aucun token push actif pour cet utilisateur' };
       }
 
-      return await this.sendToTokens(tokens, notification, data);
+      // Filtrer les player IDs valides (UUID format OneSignal)
+      const validPlayerIds = this.filterValidPlayerIds(playerIds);
+      const invalidPlayerIds = playerIds.filter(id => !validPlayerIds.includes(id));
+
+      // Nettoyer les tokens invalides automatiquement
+      if (invalidPlayerIds.length > 0) {
+        console.log(`⚠️  ${invalidPlayerIds.length} tokens invalides détectés pour ${user.email}`);
+        await this.handleInvalidPlayerIds(invalidPlayerIds);
+      }
+
+      if (validPlayerIds.length === 0) {
+        return { success: false, error: 'Aucun token push valide pour cet utilisateur (tous les tokens sont invalides)' };
+      }
+
+      return await this.sendToPlayerIds(validPlayerIds, notification, data);
     } catch (error) {
       console.error('Erreur lors de l\'envoi à l\'utilisateur:', error);
       return { success: false, error: error.message };
@@ -84,7 +75,7 @@ class PushNotificationService {
   // Envoyer une notification à plusieurs utilisateurs
   async sendToUsers(userIds, notification, data = {}) {
     if (!this.isInitialized) {
-      console.warn('Firebase non initialisé - notifications non envoyées');
+      console.warn('OneSignal non initialisé - notifications non envoyées');
       return { success: false, error: 'Service non initialisé' };
     }
 
@@ -95,17 +86,27 @@ class PushNotificationService {
         isActive: true
       });
 
-      const allTokens = [];
+      const allPlayerIds = [];
       for (const user of users) {
-        const tokens = user.getActiveFCMTokens();
-        allTokens.push(...tokens);
+        const playerIds = user.getActivePushTokens();
+        allPlayerIds.push(...playerIds);
       }
 
-      if (allTokens.length === 0) {
-        return { success: false, error: 'Aucun token FCM actif trouvé' };
+      // Filtrer les player IDs valides (UUID format OneSignal)
+      const validPlayerIds = this.filterValidPlayerIds(allPlayerIds);
+      const invalidPlayerIds = allPlayerIds.filter(id => !validPlayerIds.includes(id));
+
+      // Nettoyer les tokens invalides automatiquement
+      if (invalidPlayerIds.length > 0) {
+        console.log(`⚠️  ${invalidPlayerIds.length} tokens invalides détectés et ignorés`);
+        await this.handleInvalidPlayerIds(invalidPlayerIds);
       }
 
-      return await this.sendToTokens(allTokens, notification, data);
+      if (validPlayerIds.length === 0) {
+        return { success: false, error: 'Aucun token push valide trouvé' };
+      }
+
+      return await this.sendToPlayerIds(validPlayerIds, notification, data);
     } catch (error) {
       console.error('Erreur lors de l\'envoi aux utilisateurs:', error);
       return { success: false, error: error.message };
@@ -115,37 +116,63 @@ class PushNotificationService {
   // Envoyer une notification globale à tous les utilisateurs actifs
   async sendToAllUsers(notification, data = {}) {
     if (!this.isInitialized) {
-      console.warn('Firebase non initialisé - notification globale non envoyée');
+      console.warn('OneSignal non initialisé - notification globale non envoyée');
       return { success: false, error: 'Service non initialisé' };
     }
 
     try {
-      const users = await User.find({
-        isActive: true,
-        'preferences.notifications.push': true
+      // Utiliser le segment "All" de OneSignal pour envoyer à tous
+      const payload = {
+        app_id: this.appId,
+        included_segments: ['All'],
+        headings: { en: notification.title, fr: notification.title },
+        contents: { en: notification.message, fr: notification.message },
+        data: {
+          type: notification.type || 'general',
+          priority: notification.priority || 'normal',
+          ...data
+        }
+      };
+
+      if (notification.image) {
+        payload.big_picture = notification.image;
+      }
+
+      // Configuration Android - OneSignal utilisera le canal par défaut
+      // android_channel_id est optionnel - si omis, OneSignal utilise le canal par défaut
+      payload.android_accent_color = '000D64FF';
+      payload.android_sound = 'default';
+      payload.priority = 10; // Priorité normale
+
+      // Configuration iOS
+      payload.sound = 'default';
+
+      const response = await axios.post(this.apiUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${this.apiKey}`
+        }
       });
 
-      const allTokens = [];
-      for (const user of users) {
-        const tokens = user.getActiveFCMTokens();
-        allTokens.push(...tokens);
-      }
-
-      if (allTokens.length === 0) {
-        return { success: false, error: 'Aucun utilisateur avec notifications push activées' };
-      }
-
-      return await this.sendToTokens(allTokens, notification, data);
+      console.log(`📱 Notification globale envoyée via OneSignal: ${response.data.id}`);
+      
+      return {
+        success: true,
+        successCount: 1,
+        failureCount: 0,
+        totalSent: 1,
+        onesignalId: response.data.id
+      };
     } catch (error) {
-      console.error('Erreur lors de l\'envoi global:', error);
-      return { success: false, error: error.message };
+      console.error('Erreur lors de l\'envoi global OneSignal:', error.response?.data || error.message);
+      return { success: false, error: error.response?.data?.errors?.[0] || error.message };
     }
   }
 
   // Envoyer une notification par rôles
   async sendToRoles(roles, notification, data = {}) {
     if (!this.isInitialized) {
-      console.warn('Firebase non initialisé - notifications par rôle non envoyées');
+      console.warn('OneSignal non initialisé - notifications par rôle non envoyées');
       return { success: false, error: 'Service non initialisé' };
     }
 
@@ -156,159 +183,150 @@ class PushNotificationService {
         'preferences.notifications.push': true
       });
 
-      const allTokens = [];
+      const allPlayerIds = [];
       for (const user of users) {
-        const tokens = user.getActiveFCMTokens();
-        allTokens.push(...tokens);
+        const playerIds = user.getActivePushTokens();
+        allPlayerIds.push(...playerIds);
       }
 
-      if (allTokens.length === 0) {
-        return { success: false, error: 'Aucun utilisateur trouvé pour ces rôles' };
+      // Filtrer les player IDs valides (UUID format OneSignal)
+      const validPlayerIds = this.filterValidPlayerIds(allPlayerIds);
+      const invalidPlayerIds = allPlayerIds.filter(id => !validPlayerIds.includes(id));
+
+      // Nettoyer les tokens invalides automatiquement
+      if (invalidPlayerIds.length > 0) {
+        console.log(`⚠️  ${invalidPlayerIds.length} tokens invalides détectés et ignorés`);
+        await this.handleInvalidPlayerIds(invalidPlayerIds);
       }
 
-      return await this.sendToTokens(allTokens, notification, data);
+      if (validPlayerIds.length === 0) {
+        return { success: false, error: 'Aucun token push valide trouvé pour ces rôles' };
+      }
+
+      return await this.sendToPlayerIds(validPlayerIds, notification, data);
     } catch (error) {
       console.error('Erreur lors de l\'envoi par rôles:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Envoyer une notification à des tokens spécifiques
-  async sendToTokens(tokens, notification, data = {}) {
+  // Envoyer une notification à des player IDs spécifiques (OneSignal)
+  async sendToPlayerIds(playerIds, notification, data = {}) {
     if (!this.isInitialized) {
-      console.warn('Firebase non initialisé - notification non envoyée');
+      console.warn('OneSignal non initialisé - notification non envoyée');
       return { success: false, error: 'Service non initialisé' };
     }
 
     try {
-      // Préparer le message
-      const message = {
-        notification: {
-          title: notification.title,
-          body: notification.message,
-          ...(notification.image && { imageUrl: notification.image })
-        },
-        data: {
-          type: notification.type || 'general',
-          priority: notification.priority || 'normal',
-          ...data
-        },
-        android: {
-          notification: {
-            icon: 'ic_notification',
-            color: '#000D64', // Couleur de la notification
-            channelId: 'finea_notifications',
-            priority: this.getAndroidPriority(notification.priority),
-            defaultSound: true,
-            defaultVibrate: true,
-            defaultLightSettings: true
-          },
-          data: {
-            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-            ...data
-          }
-        },
-        apns: {
-          payload: {
-            aps: {
-              alert: {
-                title: notification.title,
-                body: notification.message
-              },
-              badge: 1,
-              sound: 'default',
-              category: 'GENERAL'
-            }
-          },
-          fcm_options: {
-            image: notification.image
-          }
-        },
-        tokens: tokens.slice(0, 500) // FCM limite à 500 tokens par batch
-      };
-
-      // Envoyer la notification
-      const response = await this.messaging.sendEachForMulticast(message);
-
-      // Traiter les réponses
-      const results = {
-        success: true,
-        successCount: response.successCount,
-        failureCount: response.failureCount,
-        totalSent: tokens.length,
-        responses: response.responses
-      };
-
-      // Nettoyer les tokens invalides
-      if (response.failureCount > 0) {
-        await this.handleFailedTokens(tokens, response.responses);
+      // OneSignal limite à 2000 player IDs par requête
+      const chunks = [];
+      for (let i = 0; i < playerIds.length; i += 2000) {
+        chunks.push(playerIds.slice(i, i + 2000));
       }
 
-      console.log(`📱 Notification envoyée: ${response.successCount}/${tokens.length} succès`);
+      let totalSuccess = 0;
+      let totalFailure = 0;
+      const errors = [];
+
+      for (const chunk of chunks) {
+        const payload = {
+          app_id: this.appId,
+          include_player_ids: chunk,
+          headings: { en: notification.title, fr: notification.title },
+          contents: { en: notification.message, fr: notification.message },
+          data: {
+            type: notification.type || 'general',
+            priority: notification.priority || 'normal',
+            ...data
+          }
+        };
+
+        if (notification.image) {
+          payload.big_picture = notification.image;
+        }
+
+        // Configuration Android - OneSignal utilisera le canal par défaut
+        // android_channel_id est optionnel - si omis, OneSignal utilise le canal par défaut
+        payload.android_accent_color = '000D64FF';
+        payload.android_sound = 'default';
+        payload.priority = 10; // Priorité normale
+
+        // Configuration iOS
+        payload.sound = 'default';
+
+        try {
+          const response = await axios.post(this.apiUrl, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${this.apiKey}`
+            }
+          });
+
+          totalSuccess += chunk.length;
+          console.log(`📱 Notification envoyée via OneSignal (chunk): ${response.data.id}`);
+        } catch (error) {
+          totalFailure += chunk.length;
+          const errorMsg = error.response?.data?.errors?.[0] || error.message;
+          errors.push(errorMsg);
+          console.error('❌ Erreur OneSignal:', errorMsg);
+        }
+      }
+
+      // Nettoyer les player IDs invalides
+      if (totalFailure > 0 && errors.length > 0) {
+        await this.handleInvalidPlayerIds(playerIds.slice(0, totalFailure));
+      }
+
+      const results = {
+        success: totalSuccess > 0,
+        successCount: totalSuccess,
+        failureCount: totalFailure,
+        totalSent: playerIds.length,
+        errors: errors.length > 0 ? errors : undefined
+      };
+
+      console.log(`📱 Notifications OneSignal: ${totalSuccess}/${playerIds.length} succès`);
       return results;
 
     } catch (error) {
-      console.error('Erreur lors de l\'envoi de la notification:', error);
-      return { success: false, error: error.message };
+      console.error('Erreur lors de l\'envoi de la notification OneSignal:', error);
+      return { success: false, error: error.response?.data?.errors?.[0] || error.message };
     }
   }
 
-  // Gérer les tokens FCM invalides
-  async handleFailedTokens(tokens, responses) {
+  // Gérer les player IDs OneSignal invalides
+  async handleInvalidPlayerIds(playerIds) {
     try {
-      const invalidTokens = [];
+      // Supprimer les player IDs invalides de la base de données
+      // Note: On utilise fcmTokens.token car c'est là que sont stockés les player IDs
+      await User.updateMany(
+        { 'fcmTokens.token': { $in: playerIds } },
+        { $pull: { fcmTokens: { token: { $in: playerIds } } } }
+      );
       
-      responses.forEach((response, index) => {
-        if (!response.success) {
-          const error = response.error;
-          // Token invalide ou non enregistré
-          if (error.code === 'messaging/invalid-registration-token' || 
-              error.code === 'messaging/registration-token-not-registered') {
-            invalidTokens.push(tokens[index]);
-          }
-        }
-      });
-
-      if (invalidTokens.length > 0) {
-        // Supprimer les tokens invalides de la base de données
-        await User.updateMany(
-          { 'fcmTokens.token': { $in: invalidTokens } },
-          { $pull: { fcmTokens: { token: { $in: invalidTokens } } } }
-        );
-        
-        console.log(`🧹 ${invalidTokens.length} tokens FCM invalides supprimés`);
-      }
+      console.log(`🧹 ${playerIds.length} player IDs OneSignal invalides supprimés`);
     } catch (error) {
-      console.error('Erreur lors du nettoyage des tokens:', error);
+      console.error('Erreur lors du nettoyage des player IDs:', error);
     }
   }
 
-  // Convertir la priorité en priorité Android
-  getAndroidPriority(priority) {
-    switch (priority) {
-      case 'urgent':
-        return 'max';
-      case 'high':
-        return 'high';
-      case 'medium':
-        return 'default';
-      case 'low':
-        return 'min';
-      default:
-        return 'default';
-    }
+  // Filtrer les player IDs valides (UUID format OneSignal)
+  filterValidPlayerIds(playerIds) {
+    // OneSignal Player IDs sont des UUIDs (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return playerIds.filter(id => uuidRegex.test(id));
   }
 
-  // Enregistrer un token FCM pour un utilisateur
-  async registerToken(userId, token, platform, deviceId) {
+  // Enregistrer un player ID OneSignal pour un utilisateur
+  async registerToken(userId, playerId, platform, deviceId) {
     try {
       const user = await User.findById(userId);
       if (!user) {
         return { success: false, error: 'Utilisateur non trouvé' };
       }
 
-      await user.addFCMToken(token, platform, deviceId);
-      console.log(`📱 Token FCM enregistré pour ${user.email} (${platform})`);
+      await user.addPushToken(playerId, platform, deviceId);
+      console.log(`📱 Player ID OneSignal enregistré pour ${user.email} (${platform})`);
       
       return { success: true, message: 'Token enregistré avec succès' };
     } catch (error) {
@@ -317,7 +335,7 @@ class PushNotificationService {
     }
   }
 
-  // Supprimer un token FCM
+  // Supprimer un player ID OneSignal
   async unregisterToken(userId, deviceId) {
     try {
       const user = await User.findById(userId);
@@ -325,8 +343,8 @@ class PushNotificationService {
         return { success: false, error: 'Utilisateur non trouvé' };
       }
 
-      await user.removeFCMToken(deviceId);
-      console.log(`📱 Token FCM supprimé pour ${user.email}`);
+      await user.removePushToken(deviceId);
+      console.log(`📱 Player ID OneSignal supprimé pour ${user.email}`);
       
       return { success: true, message: 'Token supprimé avec succès' };
     } catch (error) {
@@ -344,61 +362,6 @@ class PushNotificationService {
       priority: 'normal',
       image: null
     };
-  }
-
-  // Test d'envoi de notification (pour les tests sans utilisateurs)
-  async testNotificationSend(notification, data = {}) {
-    if (!this.isInitialized) {
-      return { success: false, error: 'Service Firebase non initialisé' };
-    }
-
-    try {
-      console.log('🧪 Test d\'envoi de notification...');
-      
-      // Créer un token de test fictif
-      const testToken = 'test_token_' + Date.now();
-      
-      // Préparer le message de test
-      const message = {
-        notification: {
-          title: notification.title || 'Test Notification',
-          body: notification.message || 'Message de test'
-        },
-        data: {
-          type: 'test',
-          timestamp: Date.now().toString(),
-          ...data
-        },
-        android: {
-          notification: {
-            icon: 'ic_notification',
-            color: '#000D64',
-            channelId: 'finea_notifications',
-            priority: 'high',
-            defaultSound: true,
-            defaultVibrate: true
-          }
-        },
-        token: testToken
-      };
-
-      console.log('📤 Message de test préparé:', JSON.stringify(message, null, 2));
-      
-      // Note: On ne peut pas vraiment envoyer avec un token fictif
-      // Mais on peut valider que la configuration Firebase fonctionne
-      console.log('✅ Configuration Firebase validée pour les tests');
-      
-      return { 
-        success: true, 
-        message: 'Test de configuration réussi',
-        notification: message,
-        note: 'Token fictif utilisé - pas d\'envoi réel'
-      };
-      
-    } catch (error) {
-      console.error('❌ Erreur lors du test:', error);
-      return { success: false, error: error.message };
-    }
   }
 }
 

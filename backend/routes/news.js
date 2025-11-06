@@ -20,7 +20,7 @@ const {
 
 // Import des middlewares
 const { protect: auth } = require('../middleware/auth');
-const { uploadArticleImage } = require('../middleware/uploads');
+const { uploadArticleImage, cloudflareUploadHandler } = require('../middleware/cloudflareUploads');
 
 // Validation pour la création/mise à jour d'actualités
 const newsValidation = [
@@ -177,11 +177,11 @@ router.delete('/:id', idValidation, deleteNews);
 // @access  Public
 router.patch('/:id/publish', idValidation, publishNews);
 
-// Route pour l'upload d'images (réutilise le middleware existant)
+// Route pour l'upload d'images vers Cloudflare R2
 // @route   POST /api/news/upload-image
 // @desc    Uploader une image pour une actualité
 // @access  Private (Admin)
-router.post('/upload-image', auth, uploadArticleImage.single('image'), (req, res) => {
+router.post('/upload-image', auth, cloudflareUploadHandler, uploadArticleImage.single('image'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -190,14 +190,17 @@ router.post('/upload-image', auth, uploadArticleImage.single('image'), (req, res
       });
     }
 
+    // Avec Cloudflare R2, req.file.location contient l'URL publique
     res.json({
       success: true,
       data: {
-        url: `/uploads/${req.file.filename}`,
-        filename: req.file.filename,
+        url: req.file.location, // URL publique Cloudflare
+        key: req.file.key, // Clé du fichier dans R2
+        filename: req.file.key.split('/').pop(), // Nom du fichier
         originalName: req.file.originalname,
         size: req.file.size,
-        mimetype: req.file.mimetype
+        mimetype: req.file.mimetype,
+        bucket: req.file.bucket
       }
     });
   } catch (error) {

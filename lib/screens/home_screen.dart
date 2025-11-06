@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../widgets/finea_app_bar.dart';
 import '../widgets/alerts_section.dart';
 import '../widgets/contest_winner_card.dart';
@@ -30,58 +28,15 @@ class _HomeScreenState extends State<HomeScreen> {
   NewsletterArticle? _latestArticle;
   bool _isLoadingArticle = true;
 
-  // Initialise FCM, request permissions et récupère le token
-  Future<void> initFCM() async {
+  // Initialise OneSignal et récupère le Player ID
+  Future<void> initPushNotifications() async {
     try {
-      final fcm = FirebaseMessaging.instance;
-      
-      // Demander les permissions (fonctionne sur web et mobile)
-      await fcm.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-      
-      final token = await fcm.getToken();
-      debugPrint('FCM token: '
-          '[32m$token[0m'); // affichage vert dans la console
-
-      FirebaseMessaging.onMessage.listen((message) async {
-        final notif = message.notification;
-        if (notif != null) {
-          debugPrint('Notification reçue: ${notif.title} - ${notif.body}');
-          
-          // Affiche une notification locale seulement sur mobile
-          if (!kIsWeb) {
-            try {
-              const android = AndroidNotificationDetails(
-                'default',
-                'Messages',
-                importance: Importance.max,
-                priority: Priority.high,
-              );
-              await FlutterLocalNotificationsPlugin().show(
-                notif.hashCode,
-                notif.title,
-                notif.body,
-                const NotificationDetails(android: android),
-              );
-            } catch (e) {
-              debugPrint('Erreur lors de l\'affichage de la notification: $e');
-            }
-          } else {
-            // Sur le web, on peut afficher un snackbar ou autre alternative
-            debugPrint('Notification web: ${notif.title} - ${notif.body}');
-          }
-        }
-      });
+      // Le Player ID sera récupéré automatiquement par le service
+      // qui a déjà été initialisé dans main.dart
+      debugPrint('📱 Notifications push initialisées (OneSignal)');
     } catch (e) {
-      debugPrint('Erreur lors de l\'initialisation FCM: $e');
-      // Continuer sans FCM si l'initialisation échoue
+      debugPrint('Erreur lors de l\'initialisation des notifications: $e');
+      // Continuer sans notifications si l'initialisation échoue
     }
   }
 
@@ -99,8 +54,22 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       if (response.data != null && response.data!.isNotEmpty) {
+        final article = response.data!.first;
+        
+        // Vérifier si l'article est dans les favoris
+        try {
+          final favoriteResponse = await _apiService.checkIfFavorite(article.id);
+          if (favoriteResponse.success && favoriteResponse.data != null) {
+            article.isBookmarked = favoriteResponse.data!['isFavorite'] ?? false;
+            debugPrint('💖 Article ${article.id} - En favori: ${article.isBookmarked}');
+          }
+        } catch (e) {
+          debugPrint('Erreur lors de la vérification des favoris: $e');
+          article.isBookmarked = false;
+        }
+        
         setState(() {
-          _latestArticle = response.data!.first;
+          _latestArticle = article;
           _isLoadingArticle = false;
         });
       } else {
@@ -116,10 +85,62 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _toggleBookmark() async {
+    if (_latestArticle == null) return;
+    
+    try {
+      if (_latestArticle!.isBookmarked) {
+        // Retirer des favoris
+        await _apiService.removeFromFavorites(_latestArticle!.id);
+        setState(() {
+          _latestArticle!.isBookmarked = false;
+        });
+        debugPrint('💔 Article retiré des favoris - isBookmarked: ${_latestArticle!.isBookmarked}');
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Article retiré des favoris'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      } else {
+        // Ajouter aux favoris
+        await _apiService.addToFavorites(_latestArticle!.id, type: 'article');
+        setState(() {
+          _latestArticle!.isBookmarked = true;
+        });
+        debugPrint('❤️ Article ajouté aux favoris - isBookmarked: ${_latestArticle!.isBookmarked}');
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Article ajouté aux favoris'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    initFCM();
+    initPushNotifications();
     _loadLatestArticle();
   }
 
@@ -180,6 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: _latestArticle!.title,
                 date: "Finéa app ${_formatDate(_latestArticle!.date)}",
                 imagePath: _getImagePath(_latestArticle!.imageUrl),
+                isBookmarked: _latestArticle!.isBookmarked,
                 onTap: () {
                   // Navigation vers l'article complet
                   Navigator.of(context).push(
@@ -188,15 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-                onBookmark: () {
-                  // Ajouter aux favoris
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Article ajouté aux favoris'),
-                      backgroundColor: Colors.blue,
-                    ),
-                  );
-                },
+                onBookmark: _toggleBookmark,
               )
             else
               Container(
@@ -319,11 +333,4 @@ class _HomeScreenState extends State<HomeScreen> {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  String _getTruncatedDescription(String title) {
-    const maxLength = 100;
-    if (title.length <= maxLength) {
-      return title;
-    }
-    return '${title.substring(0, maxLength)}...';
-  }
 } 

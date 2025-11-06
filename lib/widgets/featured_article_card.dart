@@ -105,7 +105,7 @@ class FeaturedArticleCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Footer avec date et bookmark
+              // Footer avec date et favori
               Positioned(
                 bottom: 16,
                 left: 16,
@@ -123,7 +123,7 @@ class FeaturedArticleCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.bookmark_border, color: Colors.white),
+                      icon: const Icon(Icons.favorite_border, color: Colors.white),
                       onPressed: onBookmark,
                     ),
                   ],

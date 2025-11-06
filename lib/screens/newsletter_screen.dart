@@ -3,6 +3,7 @@ import 'package:animate_do/animate_do.dart';
 import '../models/newsletter_model.dart';
 import '../services/api_service.dart';
 import '../utils/image_utils.dart';
+import '../widgets/actus_section.dart';
 import 'newsletter_detail_screen.dart';
 import 'profile_screen.dart';
 
@@ -139,9 +140,12 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
             ],
           ),
           
-          // Section d'études en haut
-          SliverToBoxAdapter(
-            child: _buildStudiesSection(),
+          // Section d'actualités en haut
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: ActusSection(),
+            ),
           ),
           
           // État de chargement
@@ -263,88 +267,6 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
     );
   }
 
-  Widget _buildStudiesSection() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.school,
-                  color: Colors.blue,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Études Finéa',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Étude plus poussée (à la une)',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Cette section sera bientôt disponible avec des analyses approfondies et des études détaillées.',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'Bientôt disponible',
-              style: TextStyle(
-                color: Colors.blue,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildArticleCard(NewsletterArticle article) {
     return Material(
       color: Colors.transparent,
@@ -400,12 +322,12 @@ class _NewsletterScreenState extends State<NewsletterScreen> {
                 
                 const SizedBox(width: 12),
                 
-                // Icône de bookmark
+                // Icône de favori (cœur)
                 IconButton(
                   onPressed: () => _toggleBookmark(article),
                   icon: Icon(
-                    article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                    color: article.isBookmarked ? Colors.blue : Colors.white,
+                    article.isBookmarked ? Icons.favorite : Icons.favorite_border,
+                    color: article.isBookmarked ? Colors.red : Colors.white,
                     size: 24,
                   ),
                 ),

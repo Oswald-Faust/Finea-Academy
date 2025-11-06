@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
-import '../services/news_api_service.dart';
+import '../services/api_service.dart';
 
 class NewsDetailScreen extends StatefulWidget {
   final String newsId;
@@ -15,6 +15,7 @@ class NewsDetailScreen extends StatefulWidget {
 }
 
 class _NewsDetailScreenState extends State<NewsDetailScreen> {
+  final ApiService _apiService = ApiService();
   NewsArticle? news;
   bool isLoading = true;
   String? error;
@@ -32,18 +33,18 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         error = null;
       });
 
-      final newsData = await NewsApiService.getNewsById(widget.newsId);
+      final response = await _apiService.getNewsById(widget.newsId);
       
-      if (newsData != null) {
+      if (response.success && response.data != null) {
         setState(() {
-          news = NewsArticle.fromJson(newsData);
+          news = NewsArticle.fromJson(response.data!);
           isLoading = false;
         });
       } else {
         setState(() {
           news = null;
           isLoading = false;
-          error = 'Actualité non trouvée';
+          error = response.error ?? 'Actualité non trouvée';
         });
       }
     } catch (e) {
@@ -188,7 +189,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       slivers: [
         // App Bar avec image de couverture
         SliverAppBar(
-          expandedHeight: 250,
+          expandedHeight: 350,
           pinned: true,
           backgroundColor: Colors.transparent,
           leading: Container(
@@ -253,42 +254,6 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     ),
                   ),
                 
-                // Overlay sombre
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                // Titre de l'actualité
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: Text(
-                    news!.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
-                          color: Colors.black54,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -301,14 +266,22 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Titre de l'actualité
+                Text(
+                  news!.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                    height: 1.3,
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
                 // Métadonnées
                 _buildMetadata(),
-                
-                const SizedBox(height: 24),
-                
-                // Résumé
-                if (news!.summary != null && news!.summary!.isNotEmpty)
-                  _buildSummary(),
                 
                 const SizedBox(height: 24),
                 
@@ -320,11 +293,6 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 // Tags
                 if (news!.tags.isNotEmpty)
                   _buildTags(),
-                
-                const SizedBox(height: 32),
-                
-                // Informations supplémentaires
-                _buildAdditionalInfo(),
                 
                 const SizedBox(height: 40),
               ],
@@ -409,46 +377,6 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     );
   }
 
-  Widget _buildSummary() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.summarize, color: Colors.blue, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Résumé',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            news!.summary!,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              height: 1.6,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildContent() {
     return Column(
@@ -527,54 +455,6 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     );
   }
 
-  Widget _buildAdditionalInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          _buildInfoRow('Statut', news!.status.toUpperCase()),
-          const SizedBox(height: 12),
-          _buildInfoRow('Vues', '${news!.views}'),
-          const SizedBox(height: 12),
-          _buildInfoRow('Temps de lecture', '${news!.estimatedReadTime} min'),
-          const SizedBox(height: 12),
-          _buildInfoRow('Semaine', news!.weekOfYear),
-          const SizedBox(height: 12),
-          _buildInfoRow('Priorité', '${news!.priority}/10'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Poppins',
-          ),
-        ),
-      ],
-    );
-  }
 
   String _extractTextFromContent(String content) {
     // Le contenu est maintenant directement une String, on peut la retourner telle quelle

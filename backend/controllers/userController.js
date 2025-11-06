@@ -290,7 +290,7 @@ const getUserStats = async (req, res, next) => {
   }
 };
 
-// @desc    Uploader un avatar utilisateur
+// @desc    Uploader un avatar utilisateur vers Cloudflare R2
 // @route   POST /api/users/:id/avatar
 // @access  Private/Admin ou propriétaire
 const uploadAvatar = async (req, res, next) => {
@@ -302,9 +302,12 @@ const uploadAvatar = async (req, res, next) => {
       });
     }
     
+    // Avec Cloudflare R2, req.file.location contient l'URL publique
+    const avatarUrl = req.file.location;
+    
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { avatar: req.file.path },
+      { avatar: avatarUrl },
       { new: true }
     ).select('-password -passwordResetToken -emailVerificationToken');
     
@@ -319,9 +322,128 @@ const uploadAvatar = async (req, res, next) => {
       success: true,
       data: user,
       message: 'Avatar mis à jour avec succès',
+      avatarUrl: avatarUrl,
     });
   } catch (error) {
     console.error('Erreur lors du téléchargement de l\'avatar:', error);
+    next(error);
+  }
+};
+
+// @desc    Mettre à jour les permissions d'alertes d'un utilisateur
+// @route   PUT /api/users/:id/alerts-permissions
+// @access  Private/Admin
+const updateAlertsPermissions = async (req, res, next) => {
+  try {
+    const { canViewClosedAlerts, canViewPositioningAlerts } = req.body;
+    
+r    // S'assurer que les valeurs sont bien des booléens
+    const canViewClosed = Boolean(canViewClosedAlerts);
+    const canViewPositioning = Boolean(canViewPositioningAlerts);
+    
+    // Utiliser $set pour s'assurer que la structure complète est créée
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          'permissions.alerts.canViewClosedAlerts': canViewClosed,
+          'permissions.alerts.canViewPositioningAlerts': canViewPositioning,
+        }
+      },
+      { 
+        new: true,
+        upsert: false,
+        runValidators: true
+      }
+    ).select('-password -passwordResetToken -emailVerificationToken');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé',
+      });
+    }
+    
+    console.log(`✅ Permissions mises à jour pour l'utilisateur ${user._id}:`, {
+      canViewClosedAlerts: user.permissions?.alerts?.canViewClosedAlerts,
+      canViewPositioningAlerts: user.permissions?.alerts?.canViewPositioningAlerts
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: user,
+      message: 'Permissions d\'alertes mises à jour avec succès',
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des permissions:', error);
+    next(error);
+  }
+};
+
+// @desc    Obtenir les permissions d'alertes d'un utilisateur
+// @route   GET /api/users/:id/alerts-permissions
+// @access  Private/Admin
+const getAlertsPermissions = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('permissions.alerts firstName lastName email');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé',
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        userId: user._id,
+        name: user.fullName,
+        email: user.email,
+        permissions: user.permissions?.alerts || {
+          canViewClosedAlerts: false,
+          canViewPositioningAlerts: false
+        }
+      },
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des permissions:', error);
+    next(error);
+  }
+};
+
+// @desc    Vérifier les permissions d'alertes de l'utilisateur connecté
+// @route   GET /api/users/me/alerts-permissions
+// @access  Private
+const getMyAlertsPermissions = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select('permissions.alerts firstName lastName email');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé',
+      });
+    }
+    
+    const permissions = {
+      canViewClosedAlerts: user.permissions?.alerts?.canViewClosedAlerts || false,
+      canViewPositioningAlerts: user.permissions?.alerts?.canViewPositioningAlerts || false,
+    };
+    
+    console.log(`📋 Permissions récupérées pour ${user.email} (${user._id}):`, {
+      permissions: user.permissions?.alerts,
+      returned: permissions
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: permissions,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des permissions:', error);
     next(error);
   }
 };
@@ -335,4 +457,7 @@ module.exports = {
   updateUserRole,
   getUserStats,
   uploadAvatar,
+  updateAlertsPermissions,
+  getAlertsPermissions,
+  getMyAlertsPermissions,
 }; 

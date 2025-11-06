@@ -41,7 +41,7 @@ const register = async (req, res, next) => {
       });
     }
 
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, phone } = req.body;
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
@@ -58,6 +58,7 @@ const register = async (req, res, next) => {
       lastName,
       email,
       password,
+      phone,
     });
 
     // Générer un token de vérification d'email
@@ -127,7 +128,14 @@ const login = async (req, res, next) => {
 
     // Mettre à jour la dernière connexion
     user.lastLogin = new Date();
+    
+    // Sauvegarder seulement si l'utilisateur a tous les champs requis
+    try {
     await user.save();
+    } catch (saveError) {
+      // Si la sauvegarde échoue à cause de champs manquants, continuer quand même
+      console.warn('Erreur lors de la sauvegarde de lastLogin:', saveError.message);
+    }
 
     // Envoyer notification de connexion (en arrière-plan)
     if (user.preferences.notifications.email) {

@@ -3,6 +3,11 @@ import 'package:flutter/foundation.dart';
 
 /// Configuration centralisée des URLs API
 class ApiConfig {
+  // ⚠️ CONFIGURATION POUR LE DÉVELOPPEMENT
+  // Pour tester sur un appareil physique, remplacez cette IP par celle de votre Mac
+  // Trouvez votre IP avec : ifconfig | grep "inet " | grep -v 127.0.0.1
+  static const String _localDevMachineIP = '192.168.100.21'; // IP de votre Mac
+  
   // Configuration intelligente de l'URL selon la plateforme
   static String get baseUrl {
     if (kDebugMode) {
@@ -11,8 +16,12 @@ class ApiConfig {
         // 10.0.2.2 est l'adresse IP spéciale de l'émulateur Android pour accéder au PC hôte
         return 'http://10.0.2.2:5001';
       } else if (Platform.isIOS) {
-        // Pour l'émulateur iOS, localhost fonctionne
-        return 'http://localhost:5001';
+        // Pour iOS, on doit différencier simulateur et appareil physique
+        // Sur simulateur : localhost fonctionne
+        // Sur appareil physique : utiliser l'IP locale du Mac
+        // Note: Platform.isIOS est true pour les deux, donc on utilise l'IP locale
+        // qui fonctionne dans les deux cas (simulateur et appareil physique)
+        return 'http://$_localDevMachineIP:5001';
       } else {
         // Pour desktop (Windows, macOS, Linux)
         return 'http://localhost:5001';
