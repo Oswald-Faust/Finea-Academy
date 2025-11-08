@@ -10,18 +10,27 @@ exports.getCalendarEvents = async (req, res) => {
     
     const events = await forexFactoryService.getCalendarEvents(date);
     
-    res.status(200).json({
+    // Si aucun événement, ajouter un avertissement
+    const response = {
       success: true,
       count: events.length,
       data: events,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    if (events.length === 0) {
+      response.warning = 'Le calendrier économique est temporairement indisponible. Le service de scraping ForexFactory ne fonctionne pas actuellement.';
+      response.suggestion = 'Visitez directement https://www.forexfactory.com/calendar pour consulter le calendrier.';
+    }
+    
+    res.status(200).json(response);
   } catch (error) {
     console.error('Erreur dans getCalendarEvents:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des événements du calendrier',
-      error: error.message
+      error: error.message,
+      suggestion: 'Le service de calendrier économique nécessite Chrome/Puppeteer qui pourrait ne pas être correctement configuré.'
     });
   }
 };

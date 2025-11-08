@@ -45,8 +45,21 @@ class ForexFactoryPuppeteerService {
         }
       }
 
-      this.browser = await puppeteer.launch(launchOptions);
-      console.log('✅ Navigateur initialisé');
+      try {
+        this.browser = await puppeteer.launch(launchOptions);
+        console.log('✅ Navigateur initialisé');
+      } catch (error) {
+        console.error('❌ Erreur lors du lancement de Puppeteer:', error.message);
+        
+        // Si Chrome n'est pas trouvé, afficher un message d'aide
+        if (error.message.includes('Could not find') || error.message.includes('not found at')) {
+          console.error('💡 Solution: Assurez-vous que Chrome est installé:');
+          console.error('   - Localement: npx puppeteer browsers install chrome');
+          console.error('   - Sur Render: Vérifiez que render-build.sh s\'exécute correctement');
+        }
+        
+        throw error;
+      }
     }
     return this.browser;
   }
@@ -175,6 +188,13 @@ class ForexFactoryPuppeteerService {
         } catch (e) {
           // Ignorer les erreurs de fermeture
         }
+      }
+      
+      // Si Chrome n'est pas disponible, retourner un tableau vide au lieu de crasher
+      if (error.message.includes('Could not find') || error.message.includes('not found at')) {
+        console.warn('⚠️  Chrome non disponible, retour d\'un calendrier vide');
+        console.warn('💡 L\'app continuera de fonctionner sans le calendrier économique');
+        return [];
       }
       
       throw new Error(`Impossible de récupérer les données de ForexFactory: ${error.message}`);

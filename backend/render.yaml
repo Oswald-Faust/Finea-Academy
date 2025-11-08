@@ -4,11 +4,7 @@ services:
     env: node
     region: frankfurt # Ou oregon/singapore selon votre préférence
     plan: free # Changez en 'starter' ou 'standard' pour plus de ressources
-    buildCommand: |
-      # Installer les dépendances Node
-      npm install
-      # Installer Chrome pour Puppeteer
-      npx puppeteer browsers install chrome
+    buildCommand: bash render-build.sh
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
