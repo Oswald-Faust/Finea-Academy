@@ -6,6 +6,22 @@ const path = require('path');
 
 class CloudflareService {
   constructor() {
+    // Vérifier si Cloudflare est configuré
+    this.isConfigured = !!(
+      process.env.CLOUDFLARE_R2_ENDPOINT &&
+      process.env.CLOUDFLARE_R2_ACCESS_KEY_ID &&
+      process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY &&
+      process.env.CLOUDFLARE_R2_BUCKET_NAME
+    );
+
+    if (!this.isConfigured) {
+      console.warn('⚠️  Cloudflare R2 non configuré - Les uploads seront désactivés');
+      this.s3Client = null;
+      this.bucketName = null;
+      this.publicUrl = null;
+      return;
+    }
+
     // Configuration Cloudflare R2
     this.s3Client = new S3Client({
       region: 'auto', // Cloudflare R2 utilise 'auto' comme région
@@ -18,6 +34,8 @@ class CloudflareService {
 
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
     this.publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL; // URL publique de votre bucket
+    
+    console.log('✅ Service Cloudflare R2 initialisé');
   }
 
   /**
@@ -29,6 +47,10 @@ class CloudflareService {
    * @returns {Promise<Object>} - URL publique et métadonnées du fichier
    */
   async uploadFile(fileBuffer, fileName, contentType, folder = '') {
+    if (!this.isConfigured) {
+      throw new Error('Cloudflare R2 non configuré. Veuillez configurer les variables d\'environnement.');
+    }
+
     try {
       const key = folder ? `${folder}/${fileName}` : fileName;
       
@@ -116,6 +138,23 @@ class CloudflareService {
    * @returns {Object} - Configuration Multer
    */
   getMulterConfig(folder = '') {
+    // Si Cloudflare n'est pas configuré, retourner une configuration en mémoire
+    if (!this.isConfigured) {
+      return multer({
+        storage: multer.memoryStorage(),
+        limits: {
+          fileSize: 10 * 1024 * 1024, // 10MB
+        },
+        fileFilter: (req, file, cb) => {
+          if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+          } else {
+            cb(new Error('Seules les images sont autorisées'), false);
+          }
+        },
+      });
+    }
+
     return multer({
       storage: multerS3({
         s3: this.s3Client,

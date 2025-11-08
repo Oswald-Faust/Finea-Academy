@@ -11,11 +11,11 @@ const uploadImage = cloudflareService.getMulterConfig('images');
 
 // Middleware pour désactiver les uploads si Cloudflare n'est pas configuré
 const cloudflareUploadHandler = (req, res, next) => {
-  if (!process.env.CLOUDFLARE_R2_ENDPOINT || !process.env.CLOUDFLARE_R2_ACCESS_KEY_ID) {
+  if (!cloudflareService.isConfigured) {
     return res.status(501).json({
       success: false,
       message: 'Cloudflare R2 non configuré. Veuillez configurer les variables d\'environnement.',
-      suggestion: 'Ajoutez CLOUDFLARE_R2_ENDPOINT, CLOUDFLARE_R2_ACCESS_KEY_ID, etc. dans votre fichier .env'
+      suggestion: 'Ajoutez CLOUDFLARE_R2_ENDPOINT, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY et CLOUDFLARE_R2_BUCKET_NAME dans vos variables d\'environnement Render.'
     });
   }
   next();

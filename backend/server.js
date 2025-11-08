@@ -97,6 +97,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// Route racine - Redirige vers la documentation de l'API
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bienvenue sur l\'API Finéa Académie',
+    version: '1.0.0',
+    documentation: 'https://finea-academy-1.onrender.com/api/health',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth/*',
+      users: '/api/users/*',
+      courses: '/api/courses/*',
+      newsletters: '/api/newsletters/*',
+      news: '/api/news/*',
+      contests: '/api/contests/*',
+      notifications: '/api/notifications/*'
+    }
+  });
+});
+
+// Route pour le favicon (évite les erreurs 404 dans les logs)
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end(); // No Content
+});
+
 // Route de santé
 app.get('/api/health', (req, res) => {
   res.json({

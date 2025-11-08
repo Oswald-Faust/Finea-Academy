@@ -2,8 +2,13 @@ const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
-  // Log de l'erreur pour le débogage
-  console.log(err);
+  // Log de l'erreur pour le débogage (sauf 404 en production pour éviter le spam)
+  const is404 = err.statusCode === 404;
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  if (!is404 || !isProduction) {
+    console.log(err);
+  }
 
   // Erreur de validation Mongoose
   if (err.name === 'ValidationError') {
