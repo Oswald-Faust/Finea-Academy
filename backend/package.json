@@ -9,7 +9,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "debug": "node --trace-warnings server.js",
-    "check-env": "node -e \"console.log('Environment Check:'); console.log('NODE_ENV:', process.env.NODE_ENV); console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET'); console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET'); console.log('VERCEL:', process.env.VERCEL ? 'TRUE' : 'FALSE');\""
+    "check-env": "node -e \"console.log('Environment Check:'); console.log('NODE_ENV:', process.env.NODE_ENV); console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET'); console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET'); console.log('VERCEL:', process.env.VERCEL ? 'TRUE' : 'FALSE');\"",
+    "postinstall": "node -e \"try { require('puppeteer').executablePath(); } catch(e) { console.log('Installing Chromium...'); }\" && npx puppeteer browsers install chrome || true"
   },
   "keywords": [
     "finea",

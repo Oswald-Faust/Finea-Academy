@@ -17,7 +17,9 @@ class ForexFactoryPuppeteerService {
   async initBrowser() {
     if (!this.browser) {
       console.log('🌐 Initialisation du navigateur Puppeteer...');
-      this.browser = await puppeteer.launch({
+      
+      // Configuration pour Render et environnements de production
+      const launchOptions = {
         headless: 'new',
         args: [
           '--no-sandbox',
@@ -26,8 +28,24 @@ class ForexFactoryPuppeteerService {
           '--disable-accelerated-2d-canvas',
           '--disable-gpu',
           '--window-size=1920x1080',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
         ],
-      });
+      };
+
+      // En production, utiliser le chemin par défaut de Puppeteer
+      if (process.env.NODE_ENV === 'production') {
+        try {
+          // Puppeteer trouvera automatiquement Chrome installé
+          const puppeteerLib = require('puppeteer');
+          launchOptions.executablePath = puppeteerLib.executablePath();
+          console.log(`📍 Utilisation de Chrome : ${launchOptions.executablePath}`);
+        } catch (error) {
+          console.warn('⚠️  Impossible de trouver Chrome, utilisation du défaut');
+        }
+      }
+
+      this.browser = await puppeteer.launch(launchOptions);
       console.log('✅ Navigateur initialisé');
     }
     return this.browser;

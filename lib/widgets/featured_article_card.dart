@@ -6,6 +6,7 @@ class FeaturedArticleCard extends StatelessWidget {
   final String content;
   final String date;
   final String imagePath;
+  final bool isBookmarked;
   final VoidCallback? onReadMore;
   final VoidCallback? onBookmark;
 
@@ -15,6 +16,7 @@ class FeaturedArticleCard extends StatelessWidget {
     required this.content,
     required this.date,
     required this.imagePath,
+    this.isBookmarked = false,
     this.onReadMore,
     this.onBookmark,
   });
@@ -122,9 +124,20 @@ class FeaturedArticleCard extends StatelessWidget {
                         fontFamily: 'Poppins',
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.favorite_border, color: Colors.white),
-                      onPressed: onBookmark,
+                    GestureDetector(
+                      onTap: onBookmark,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          isBookmarked ? Icons.favorite : Icons.favorite_border,
+                          color: isBookmarked ? Colors.red : Colors.white,
+                          size: 20,
+                        ),
+                      ),
                     ),
                   ],
                 ),
