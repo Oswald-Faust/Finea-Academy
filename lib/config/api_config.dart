@@ -10,6 +10,11 @@ class ApiConfig {
   
   // Configuration intelligente de l'URL selon la plateforme
   static String get baseUrl {
+    // 🚀 TEMPORAIRE : Utiliser Render pour tous les environnements
+    // Pour revenir au développement local, décommentez le code ci-dessous
+    return 'https://finea-academy-1.onrender.com';
+    
+    /* 
     if (kDebugMode) {
       // En mode développement, on détecte si on est sur un émulateur Android
       if (Platform.isAndroid) {
@@ -30,6 +35,7 @@ class ApiConfig {
       // En production, utiliser l'URL de production
       return 'https://finea-academy-1.onrender.com';
     }
+    */
   }
 
   /// URL complète de l'API

@@ -4,7 +4,7 @@ void main() async {
   print('🧪 Test de connexion à l\'API Finéa...');
   
   final dio = Dio();
-  const String apiUrl = 'https://finea-academy-1.onrender.com/api ';
+  const String apiUrl = 'https://finea-academy-1.onrender.com/api'; // ⚠️ Pas d'espace à la fin !
   
   try {
     // Test 1: Endpoint de santé
