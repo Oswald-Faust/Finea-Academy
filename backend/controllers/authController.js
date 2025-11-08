@@ -65,14 +65,15 @@ const register = async (req, res, next) => {
     const verificationToken = user.generateEmailVerificationToken();
     await user.save();
 
-    // Envoyer l'email de bienvenue (en arrière-plan)
-    try {
-      await sendWelcomeEmail(user);
-      await sendVerificationEmail(user, verificationToken);
-    } catch (emailError) {
-      console.error('Erreur lors de l\'envoi des emails:', emailError);
-      // Ne pas faire échouer l'inscription pour une erreur d'email
-    }
+    // Envoyer l'email de bienvenue (en arrière-plan, sans bloquer la réponse)
+    // Lancer les envois d'emails en arrière-plan sans attendre
+    sendWelcomeEmail(user).catch((emailError) => {
+      console.error('Erreur lors de l\'envoi de l\'email de bienvenue:', emailError.message);
+    });
+    
+    sendVerificationEmail(user, verificationToken).catch((emailError) => {
+      console.error('Erreur lors de l\'envoi de l\'email de vérification:', emailError.message);
+    });
 
     sendTokenResponse(user, 201, res);
   } catch (error) {
@@ -137,18 +138,19 @@ const login = async (req, res, next) => {
       console.warn('Erreur lors de la sauvegarde de lastLogin:', saveError.message);
     }
 
-    // Envoyer notification de connexion (en arrière-plan)
+    // Envoyer notification de connexion (en arrière-plan, sans bloquer la réponse)
     if (user.preferences.notifications.email) {
-      try {
-        const loginInfo = {
-          date: new Date().toLocaleString('fr-FR'),
-          ip: req.ip || req.connection.remoteAddress,
-          userAgent: req.get('User-Agent') || 'Non disponible',
-        };
-        await sendLoginNotificationEmail(user, loginInfo);
-      } catch (emailError) {
-        console.error('Erreur lors de l\'envoi de la notification:', emailError);
-      }
+      // Lancer l'envoi en arrière-plan sans attendre
+      const loginInfo = {
+        date: new Date().toLocaleString('fr-FR'),
+        ip: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent') || 'Non disponible',
+      };
+      
+      // Ne pas attendre l'envoi d'email - lancer en arrière-plan
+      sendLoginNotificationEmail(user, loginInfo).catch((emailError) => {
+        console.error('Erreur lors de l\'envoi de la notification:', emailError.message);
+      });
     }
 
     sendTokenResponse(user, 200, res);
@@ -230,27 +232,16 @@ const forgotPassword = async (req, res, next) => {
     const resetToken = user.generatePasswordResetToken();
     await user.save();
 
-    // Envoyer l'email de réinitialisation
-    try {
-      await sendPasswordResetEmail(user, resetToken);
-      
-      res.status(200).json({
-        success: true,
-        message: 'Email de réinitialisation envoyé',
-      });
-    } catch (emailError) {
-      console.error('Erreur lors de l\'envoi de l\'email:', emailError);
-      
-      // Annuler le token en cas d'erreur d'email
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save();
-      
-      return res.status(500).json({
-        success: false,
-        error: 'Erreur lors de l\'envoi de l\'email',
-      });
-    }
+    // Envoyer l'email de réinitialisation (en arrière-plan)
+    sendPasswordResetEmail(user, resetToken).catch((emailError) => {
+      console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', emailError.message);
+    });
+    
+    // Répondre immédiatement sans attendre l'email
+    res.status(200).json({
+      success: true,
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
+    });
   } catch (error) {
     console.error('Erreur lors de la réinitialisation:', error);
     next(error);
@@ -402,22 +393,16 @@ const resendVerification = async (req, res, next) => {
     const verificationToken = user.generateEmailVerificationToken();
     await user.save();
 
-    // Envoyer l'email de vérification
-    try {
-      await sendVerificationEmail(user, verificationToken);
-      
-      res.status(200).json({
-        success: true,
-        message: 'Email de vérification renvoyé',
-      });
-    } catch (emailError) {
-      console.error('Erreur lors de l\'envoi de l\'email:', emailError);
-      
-      return res.status(500).json({
-        success: false,
-        error: 'Erreur lors de l\'envoi de l\'email',
-      });
-    }
+    // Envoyer l'email de vérification (en arrière-plan)
+    sendVerificationEmail(user, verificationToken).catch((emailError) => {
+      console.error('Erreur lors de l\'envoi de l\'email de vérification:', emailError.message);
+    });
+    
+    // Répondre immédiatement sans attendre l'email
+    res.status(200).json({
+      success: true,
+      message: 'Email de vérification renvoyé',
+    });
   } catch (error) {
     console.error('Erreur lors du renvoi de la vérification:', error);
     next(error);
