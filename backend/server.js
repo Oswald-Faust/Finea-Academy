@@ -71,6 +71,7 @@ const corsOptions = {
       'https://finea-academie.web.app',
       'https://finea-academie.firebaseapp.com',
       'https://finea-admin-dashboard.netlify.app',
+      'https://finea-academy.netlify.app',
       'https://horizon-plus-five.vercel.app'
     ];
     

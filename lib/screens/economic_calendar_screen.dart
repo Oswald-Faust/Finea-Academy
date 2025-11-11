@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/economic_event.dart';
-import '../models/news_article.dart';
 import '../services/economic_calendar_service.dart';
 
 class EconomicCalendarScreen extends StatefulWidget {
@@ -10,37 +9,26 @@ class EconomicCalendarScreen extends StatefulWidget {
   State<EconomicCalendarScreen> createState() => _EconomicCalendarScreenState();
 }
 
-class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with SingleTickerProviderStateMixin {
+class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
   final EconomicCalendarService _calendarService = EconomicCalendarService();
   
   List<EconomicEvent> _events = [];
   List<EconomicEvent> _filteredEvents = [];
-  List<NewsArticle> _newsArticles = [];
   EconomicCalendarSummary? _summary;
   bool _isLoading = true;
-  bool _isLoadingNews = true;
   String _errorMessage = '';
-  String _newsErrorMessage = '';
   
-  String _selectedImpact = 'all';
-  String _selectedCurrency = 'all';
-  late TabController _tabController;
+  // Filtres multiples
+  Set<String> _selectedImpacts = {};
+  Set<String> _selectedCurrencies = {};
   
-  final List<String> _availableCurrencies = ['all', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY'];
-  final List<String> _impactLevels = ['all', 'high', 'medium', 'low'];
+  final List<String> _availableCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY'];
+  final List<String> _impactLevels = ['high', 'medium', 'low'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadCalendarData();
-    _loadNewsData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadCalendarData() async {
@@ -67,32 +55,18 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with Si
     }
   }
 
-  Future<void> _loadNewsData() async {
-    setState(() {
-      _isLoadingNews = true;
-      _newsErrorMessage = '';
-    });
-
-    try {
-      final news = await _calendarService.getNews();
-      
-      setState(() {
-        _newsArticles = news;
-        _isLoadingNews = false;
-      });
-    } catch (e) {
-      setState(() {
-        _newsErrorMessage = e.toString();
-        _isLoadingNews = false;
-      });
-    }
-  }
 
   void _applyFilters() {
     setState(() {
       _filteredEvents = _events.where((event) {
-        bool matchesImpact = _selectedImpact == 'all' || event.impact == _selectedImpact;
-        bool matchesCurrency = _selectedCurrency == 'all' || event.currency == _selectedCurrency;
+        // Si aucun filtre d'impact n'est sélectionné, on affiche tous les impacts
+        bool matchesImpact = _selectedImpacts.isEmpty || 
+            _selectedImpacts.contains(event.impact.toLowerCase());
+        
+        // Si aucune devise n'est sélectionnée, on affiche toutes les devises
+        bool matchesCurrency = _selectedCurrencies.isEmpty || 
+            _selectedCurrencies.contains(event.currency);
+        
         return matchesImpact && matchesCurrency;
       }).toList();
     });
@@ -227,32 +201,34 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with Si
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedImpact,
-                          isExpanded: true,
-                          items: _impactLevels.map((impact) {
-                            return DropdownMenuItem(
-                              value: impact,
+                    InkWell(
+                      onTap: _showImpactFilterDialog,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
                               child: Text(
-                                impact == 'all' ? 'Tous' : impact == 'high' ? 'Fort' : impact == 'medium' ? 'Moyen' : 'Faible',
+                                _selectedImpacts.isEmpty
+                                    ? 'Tous'
+                                    : _selectedImpacts.length == 3
+                                        ? 'Tous'
+                                        : _selectedImpacts.map((i) => 
+                                            i == 'high' ? 'Fort' : i == 'medium' ? 'Moyen' : 'Faible'
+                                          ).join(', '),
                                 style: const TextStyle(fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedImpact = value!;
-                              _applyFilters();
-                            });
-                          },
+                            ),
+                            Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                          ],
                         ),
                       ),
                     ),
@@ -269,32 +245,32 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with Si
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedCurrency,
-                          isExpanded: true,
-                          items: _availableCurrencies.map((currency) {
-                            return DropdownMenuItem(
-                              value: currency,
+                    InkWell(
+                      onTap: _showCurrencyFilterDialog,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
                               child: Text(
-                                currency == 'all' ? 'Toutes' : currency,
+                                _selectedCurrencies.isEmpty
+                                    ? 'Toutes'
+                                    : _selectedCurrencies.length > 2
+                                        ? '${_selectedCurrencies.length} sélectionnées'
+                                        : _selectedCurrencies.join(', '),
                                 style: const TextStyle(fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCurrency = value!;
-                              _applyFilters();
-                            });
-                          },
+                            ),
+                            Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                          ],
                         ),
                       ),
                     ),
@@ -305,6 +281,152 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with Si
           ),
         ],
       ),
+    );
+  }
+
+  void _showImpactFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Sélectionner les impacts',
+                style: TextStyle(
+                  color: Color(0xFF000D64),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: _impactLevels.map((impact) {
+                  final isSelected = _selectedImpacts.contains(impact);
+                  final color = _getImpactColor(impact);
+                  final label = impact == 'high' ? 'Fort' : impact == 'medium' ? 'Moyen' : 'Faible';
+                  
+                  return CheckboxListTile(
+                    title: Row(
+                      children: [
+                        Icon(_getImpactIcon(impact), color: color, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    value: isSelected,
+                    activeColor: color,
+                    onChanged: (bool? value) {
+                      setDialogState(() {
+                        if (value == true) {
+                          _selectedImpacts.add(impact);
+                        } else {
+                          _selectedImpacts.remove(impact);
+                        }
+                      });
+                      setState(() {
+                        _applyFilters();
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedImpacts.clear();
+                      _applyFilters();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Effacer'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showCurrencyFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Sélectionner les devises',
+                style: TextStyle(
+                  color: Color(0xFF000D64),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _availableCurrencies.map((currency) {
+                    final isSelected = _selectedCurrencies.contains(currency);
+                    
+                    return CheckboxListTile(
+                      title: Text(
+                        currency,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF000D64),
+                        ),
+                      ),
+                      value: isSelected,
+                      activeColor: const Color(0xFF000D64),
+                      onChanged: (bool? value) {
+                        setDialogState(() {
+                          if (value == true) {
+                            _selectedCurrencies.add(currency);
+                          } else {
+                            _selectedCurrencies.remove(currency);
+                          }
+                        });
+                        setState(() {
+                          _applyFilters();
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedCurrencies.clear();
+                      _applyFilters();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Effacer'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -567,17 +689,6 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with Si
             onPressed: _loadCalendarData,
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Événements'),
-            Tab(text: 'News'),
-          ],
-        ),
       ),
       body: _isLoading
           ? const Center(
@@ -636,428 +747,49 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> with Si
                     ),
                   ),
                 )
-              : TabBarView(
-                  controller: _tabController,
+              : Column(
                   children: [
-                    // Onglet: Tous les événements
-                    Column(
-                      children: [
-                        _buildSummaryCard(),
-                        _buildFilters(),
-                        Expanded(
-                          child: _filteredEvents.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.event_busy,
-                                        size: 64,
-                                        color: Colors.grey[400],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Aucun événement trouvé',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
+                    _buildSummaryCard(),
+                    _buildFilters(),
+                    Expanded(
+                      child: _filteredEvents.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.event_busy,
+                                    size: 64,
+                                    color: Colors.grey[400],
                                   ),
-                                )
-                              : RefreshIndicator(
-                                  onRefresh: _loadCalendarData,
-                                  color: const Color(0xFF000D64),
-                                  child: ListView.builder(
-                                    padding: const EdgeInsets.only(
-                                      top: 8,
-                                      bottom: 24,
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Aucun événement trouvé',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[600],
                                     ),
-                                    itemCount: _filteredEvents.length,
-                                    itemBuilder: (context, index) {
-                                      return _buildEventCard(_filteredEvents[index]);
-                                    },
                                   ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadCalendarData,
+                              color: const Color(0xFF000D64),
+                              child: ListView.builder(
+                                padding: const EdgeInsets.only(
+                                  top: 8,
+                                  bottom: 24,
                                 ),
-                        ),
-                      ],
-                    ),
-                    // Onglet: News
-                    _isLoadingNews
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3498DB)),
+                                itemCount: _filteredEvents.length,
+                                itemBuilder: (context, index) {
+                                  return _buildEventCard(_filteredEvents[index]);
+                                },
+                              ),
                             ),
-                          )
-                        : _newsErrorMessage.isNotEmpty
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.error_outline,
-                                        size: 64,
-                                        color: Colors.red[300],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Erreur de chargement',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        _newsErrorMessage,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      ElevatedButton.icon(
-                                        onPressed: _loadNewsData,
-                                        icon: const Icon(Icons.refresh),
-                                        label: const Text('Réessayer'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF3498DB),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : _newsArticles.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.article_outlined,
-                                          size: 64,
-                                          color: Colors.grey[400],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'Aucune news disponible',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : RefreshIndicator(
-                                    onRefresh: _loadNewsData,
-                                    color: const Color(0xFF3498DB),
-                                    child: ListView.builder(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16,
-                                      ),
-                                      itemCount: _newsArticles.length,
-                                      itemBuilder: (context, index) {
-                                        return _buildNewsCard(_newsArticles[index]);
-                                      },
-                                    ),
-                                  ),
-                  ],
-                ),
-    );
-  }
-
-  Widget _buildNewsCard(NewsArticle article) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            // TODO: Ouvrir l'article dans un navigateur ou afficher les détails
-            _showNewsDetails(article);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // En-tête avec source et temps
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3498DB).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.article,
-                            size: 14,
-                            color: Color(0xFF3498DB),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            article.source,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF3498DB),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          article.timeAgo,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Titre
-                Text(
-                  article.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Extrait
-                Text(
-                  article.excerpt,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                    height: 1.5,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                // Footer avec commentaires
-                Row(
-                  children: [
-                    Icon(
-                      Icons.comment_outlined,
-                      size: 16,
-                      color: Colors.grey[500],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${article.comments} commentaires',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: Colors.grey[400],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showNewsDetails(NewsArticle article) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Source et temps
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3498DB).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.article,
-                        size: 16,
-                        color: Color(0xFF3498DB),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        article.source,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF3498DB),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  article.timeAgo,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Titre
-            Text(
-              article.title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C3E50),
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Extrait complet
-                    Text(
-                      article.excerpt,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[800],
-                        height: 1.6,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Commentaires
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.comment_outlined,
-                          size: 20,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${article.comments} commentaires',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Bouton pour ouvrir l'article complet
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Ouvrir l'URL dans un navigateur
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('Lire l\'article complet'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3498DB),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

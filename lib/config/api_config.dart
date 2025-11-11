@@ -6,15 +6,16 @@ class ApiConfig {
   // ⚠️ CONFIGURATION POUR LE DÉVELOPPEMENT
   // Pour tester sur un appareil physique, remplacez cette IP par celle de votre Mac
   // Trouvez votre IP avec : ifconfig | grep "inet " | grep -v 127.0.0.1
-  static const String _localDevMachineIP = '192.168.100.21'; // IP de votre Mac
+  static const String _localDevMachineIP = '192.168.100.245'; // IP de votre Mac
+// IP de votre Mac
   
   // Configuration intelligente de l'URL selon la plateforme
   static String get baseUrl {
-    // 🚀 TEMPORAIRE : Utiliser Render pour tous les environnements
-    // Pour revenir au développement local, décommentez le code ci-dessous
-    return 'https://finea-academy-1.onrender.com';
+    // 🚀 MODE DÉVELOPPEMENT ACTIVÉ
+    // Pour utiliser la production, commentez le code ci-dessous
+    // et décommentez la ligne return ci-après
+    // return 'https://finea-academy-1.onrender.com';
     
-    /* 
     if (kDebugMode) {
       // En mode développement, on détecte si on est sur un émulateur Android
       if (Platform.isAndroid) {
@@ -35,7 +36,6 @@ class ApiConfig {
       // En production, utiliser l'URL de production
       return 'https://finea-academy-1.onrender.com';
     }
-    */
   }
 
   /// URL complète de l'API
