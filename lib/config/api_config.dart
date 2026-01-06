@@ -11,31 +11,27 @@ class ApiConfig {
   
   // Configuration intelligente de l'URL selon la plateforme
   static String get baseUrl {
-    // 🚀 MODE DÉVELOPPEMENT ACTIVÉ
-    // Pour utiliser la production, commentez le code ci-dessous
-    // et décommentez la ligne return ci-après
-    // return 'https://finea-academy-1.onrender.com';
-    
+    // 🚀 URL DE PRODUCTION (VPS HOSTINGER)
+    const String productionUrl = 'https://finea-api.cloud';
+
+    // ⚠️ Si vous voulez tester la connexion au VPS même en mode debug,
+    // décommentez la ligne suivante :
+    return productionUrl;
+
+    /*
     if (kDebugMode) {
       // En mode développement, on détecte si on est sur un émulateur Android
       if (Platform.isAndroid) {
-        // 10.0.2.2 est l'adresse IP spéciale de l'émulateur Android pour accéder au PC hôte
         return 'http://10.0.2.2:5001';
       } else if (Platform.isIOS) {
-        // Pour iOS, on doit différencier simulateur et appareil physique
-        // Sur simulateur : localhost fonctionne
-        // Sur appareil physique : utiliser l'IP locale du Mac
-        // Note: Platform.isIOS est true pour les deux, donc on utilise l'IP locale
-        // qui fonctionne dans les deux cas (simulateur et appareil physique)
         return 'http://$_localDevMachineIP:5001';
       } else {
-        // Pour desktop (Windows, macOS, Linux)
         return 'http://localhost:5001';
       }
     } else {
-      // En production, utiliser l'URL de production
-      return 'https://finea-academy-1.onrender.com';
+      return productionUrl;
     }
+    */
   }
 
   /// URL complète de l'API

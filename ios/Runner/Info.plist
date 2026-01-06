@@ -45,5 +45,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Cette application peut avoir besoin d'accéder à votre localisation pour vous fournir des contenus adaptés à votre région.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Cette application peut avoir besoin d'accéder à votre localisation pour vous fournir des contenus adaptés à votre région.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

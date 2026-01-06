@@ -1,8 +1,8 @@
 name: finea_academie
 description: "A new Flutter project."
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: ^3.8.0
@@ -15,38 +15,38 @@ dependencies:
   url_launcher: ^6.1.7
   onesignal_flutter: ^5.2.4
   flutter_local_notifications: ^17.0.0
-  
+
   # Animation packages pour l'onboarding moderne
   animate_do: ^3.3.4
   smooth_page_indicator: ^1.1.0
   flutter_staggered_animations: ^1.1.1
   lottie: ^3.1.2
-  
+
   # Shared preferences pour sauvegarder l'état de l'onboarding
   shared_preferences: ^2.2.2
-  
+
   # API et HTTP
   http: ^1.1.0
   dio: ^5.4.0
-  
+
   # UUID pour générer un device ID unique
   uuid: ^4.5.1
-  
+
   # JSON et modèles
   json_annotation: ^4.8.1
-  
+
   # Gestion d'état et authentification
   provider: ^6.1.1
-  
+
   # Stockage sécurisé
   flutter_secure_storage: ^9.0.0
-  
+
   # Graphiques pour la calculatrice de lot et le convertisseur de devise
   fl_chart: ^0.68.0
-  
+
   # WebView pour intégrer Myfxbook
   webview_flutter: ^4.4.2
-  
+
   # SVG support
   flutter_svg: ^2.0.9
 
@@ -54,11 +54,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  
+
   # Code generation
   build_runner: ^2.4.7
   json_serializable: ^6.7.1
-  
+
   # Launcher icons generation
   flutter_launcher_icons: ^0.13.1
 
