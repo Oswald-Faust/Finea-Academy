@@ -769,6 +769,16 @@ class ApiService {
       throw _handleDioError(e);
     }
   }
+
+  /// Demander un rappel téléphonique
+  Future<ApiResponse<String>> requestCallback() async {
+    try {
+      final response = await _dio.post('/users/request-callback');
+      return ApiResponse<String>.fromJson(response.data, null);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
 }
 
 // Exception personnalisée pour les erreurs API

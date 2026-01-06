@@ -6,7 +6,7 @@ class ApiConfig {
   // ⚠️ CONFIGURATION POUR LE DÉVELOPPEMENT
   // Pour tester sur un appareil physique, remplacez cette IP par celle de votre Mac
   // Trouvez votre IP avec : ifconfig | grep "inet " | grep -v 127.0.0.1
-  static const String _localDevMachineIP = '192.168.100.245'; // IP de votre Mac
+  static const String _localDevMachineIP = '10.226.168.47'; // IP de votre Mac
 // IP de votre Mac
   
   // Configuration intelligente de l'URL selon la plateforme

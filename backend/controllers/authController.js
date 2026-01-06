@@ -7,6 +7,7 @@ const {
   sendVerificationEmail, 
   sendLoginNotificationEmail 
 } = require('../services/emailService');
+const { addUserRegistrationToSheet } = require('../services/googleSheetsService');
 
 // Fonction utilitaire pour envoyer une réponse avec token
 const sendTokenResponse = (user, statusCode, res) => {
@@ -73,6 +74,16 @@ const register = async (req, res, next) => {
     
     sendVerificationEmail(user, verificationToken).catch((emailError) => {
       console.error('Erreur lors de l\'envoi de l\'email de vérification:', emailError.message);
+    });
+
+    // Ajouter l'inscription au Google Sheet (en arrière-plan, sans bloquer la réponse)
+    addUserRegistrationToSheet({
+      firstName,
+      lastName,
+      email,
+      phone,
+    }).catch((sheetError) => {
+      console.error('Erreur lors de l\'ajout au Google Sheet:', sheetError.message);
     });
 
     sendTokenResponse(user, 201, res);

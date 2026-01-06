@@ -87,6 +87,50 @@ router.get('/detailed-stats', async (req, res) => {
 // Routes pour les permissions d'alertes de l'utilisateur connecté
 router.get('/me/alerts-permissions', auth, getMyAlertsPermissions);
 
+// Route pour demander un RDV téléphonique
+router.post('/request-callback', auth, async (req, res) => {
+  try {
+    const { requestPhoneCall } = require('../services/googleSheetsService');
+    const User = require('../models/User');
+    
+    // Récupérer l'utilisateur connecté
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé'
+      });
+    }
+
+    // Enregistrer la demande dans Google Sheet
+    const result = await requestPhoneCall({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone || '',
+    });
+
+    if (result) {
+      res.status(200).json({
+        success: true,
+        message: 'Votre demande de rappel téléphonique a été enregistrée. Nous vous contacterons prochainement !'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de l\'enregistrement de la demande. Veuillez réessayer.'
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors de la demande de rappel:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la demande de rappel'
+    });
+  }
+});
+
 // Route pour créer un utilisateur manuellement
 router.post('/create', async (req, res) => {
   try {

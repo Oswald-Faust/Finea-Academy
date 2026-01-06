@@ -24,6 +24,9 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
   
   final List<String> _availableCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY'];
   final List<String> _impactLevels = ['high', 'medium', 'low'];
+  
+  bool _showImpactMenu = false;
+  bool _showCurrencyMenu = false;
 
   @override
   void initState() {
@@ -191,6 +194,7 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
           ),
           const SizedBox(height: 10),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
@@ -202,7 +206,12 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
                     ),
                     const SizedBox(height: 4),
                     InkWell(
-                      onTap: _showImpactFilterDialog,
+                      onTap: () {
+                        setState(() {
+                          _showImpactMenu = !_showImpactMenu;
+                          _showCurrencyMenu = false;
+                        });
+                      },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -227,7 +236,10 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                            Icon(
+                              _showImpactMenu ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                              color: Colors.grey[600],
+                            ),
                           ],
                         ),
                       ),
@@ -246,7 +258,12 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
                     ),
                     const SizedBox(height: 4),
                     InkWell(
-                      onTap: _showCurrencyFilterDialog,
+                      onTap: () {
+                        setState(() {
+                          _showCurrencyMenu = !_showCurrencyMenu;
+                          _showImpactMenu = false;
+                        });
+                      },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -269,7 +286,10 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                            Icon(
+                              _showCurrencyMenu ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                              color: Colors.grey[600],
+                            ),
                           ],
                         ),
                       ),
@@ -284,149 +304,206 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
     );
   }
 
-  void _showImpactFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text(
-                'Sélectionner les impacts',
-                style: TextStyle(
-                  color: Color(0xFF000D64),
-                  fontWeight: FontWeight.bold,
+  Widget _buildImpactDropdown() {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ..._impactLevels.map((impact) {
+            final isSelected = _selectedImpacts.contains(impact);
+            final color = _getImpactColor(impact);
+            final label = impact == 'high' ? 'Fort' : impact == 'medium' ? 'Moyen' : 'Faible';
+            
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedImpacts.remove(impact);
+                  } else {
+                    _selectedImpacts.add(impact);
+                  }
+                  _applyFilters();
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: impact != 'low' ? BorderSide(color: Colors.grey[200]!) : BorderSide.none,
+                  ),
                 ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: _impactLevels.map((impact) {
-                  final isSelected = _selectedImpacts.contains(impact);
-                  final color = _getImpactColor(impact);
-                  final label = impact == 'high' ? 'Fort' : impact == 'medium' ? 'Moyen' : 'Faible';
-                  
-                  return CheckboxListTile(
-                    title: Row(
-                      children: [
-                        Icon(_getImpactIcon(impact), color: color, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                child: Row(
+                  children: [
+                    Icon(
+                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                      color: isSelected ? color : Colors.grey[400],
+                      size: 20,
                     ),
-                    value: isSelected,
-                    activeColor: color,
-                    onChanged: (bool? value) {
-                      setDialogState(() {
-                        if (value == true) {
-                          _selectedImpacts.add(impact);
-                        } else {
-                          _selectedImpacts.remove(impact);
-                        }
-                      });
-                      setState(() {
-                        _applyFilters();
-                      });
-                    },
-                  );
-                }).toList(),
+                    const SizedBox(width: 8),
+                    Icon(_getImpactIcon(impact), color: color, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedImpacts.clear();
-                      _applyFilters();
-                    });
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Effacer'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Fermer'),
-                ),
-              ],
             );
-          },
-        );
-      },
+          }).toList(),
+          if (_selectedImpacts.isNotEmpty)
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedImpacts.clear();
+                  _applyFilters();
+                });
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Effacer',
+                    style: TextStyle(
+                      color: Color(0xFFFF5252),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  void _showCurrencyFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text(
-                'Sélectionner les devises',
-                style: TextStyle(
-                  color: Color(0xFF000D64),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: _availableCurrencies.map((currency) {
-                    final isSelected = _selectedCurrencies.contains(currency);
-                    
-                    return CheckboxListTile(
-                      title: Text(
-                        currency,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF000D64),
+  Widget _buildCurrencyDropdown() {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      constraints: const BoxConstraints(maxHeight: 280),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                children: _availableCurrencies.map((currency) {
+                  final isSelected = _selectedCurrencies.contains(currency);
+                  
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedCurrencies.remove(currency);
+                        } else {
+                          _selectedCurrencies.add(currency);
+                        }
+                        _applyFilters();
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: currency != _availableCurrencies.last 
+                              ? BorderSide(color: Colors.grey[200]!) 
+                              : BorderSide.none,
                         ),
                       ),
-                      value: isSelected,
-                      activeColor: const Color(0xFF000D64),
-                      onChanged: (bool? value) {
-                        setDialogState(() {
-                          if (value == true) {
-                            _selectedCurrencies.add(currency);
-                          } else {
-                            _selectedCurrencies.remove(currency);
-                          }
-                        });
-                        setState(() {
-                          _applyFilters();
-                        });
-                      },
-                    );
-                  }).toList(),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                            color: isSelected ? const Color(0xFF000D64) : Colors.grey[400],
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            currency,
+                            style: TextStyle(
+                              color: const Color(0xFF000D64),
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          if (_selectedCurrencies.isNotEmpty)
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedCurrencies.clear();
+                  _applyFilters();
+                });
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Effacer',
+                    style: TextStyle(
+                      color: Color(0xFFFF5252),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedCurrencies.clear();
-                      _applyFilters();
-                    });
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Effacer'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Fermer'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+            ),
+        ],
+      ),
     );
   }
 
@@ -747,47 +824,80 @@ class _EconomicCalendarScreenState extends State<EconomicCalendarScreen> {
                     ),
                   ),
                 )
-              : Column(
+              : Stack(
                   children: [
-                    _buildSummaryCard(),
-                    _buildFilters(),
-                    Expanded(
-                      child: _filteredEvents.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.event_busy,
-                                    size: 64,
-                                    color: Colors.grey[400],
+                    Column(
+                      children: [
+                        _buildSummaryCard(),
+                        _buildFilters(),
+                        Expanded(
+                          child: _filteredEvents.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.event_busy,
+                                        size: 64,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Aucun événement trouvé',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Aucun événement trouvé',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[600],
+                                )
+                              : RefreshIndicator(
+                                  onRefresh: _loadCalendarData,
+                                  color: const Color(0xFF000D64),
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.only(
+                                      top: 8,
+                                      bottom: 24,
                                     ),
+                                    itemCount: _filteredEvents.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildEventCard(_filteredEvents[index]);
+                                    },
                                   ),
-                                ],
-                              ),
-                            )
-                          : RefreshIndicator(
-                              onRefresh: _loadCalendarData,
-                              color: const Color(0xFF000D64),
-                              child: ListView.builder(
-                                padding: const EdgeInsets.only(
-                                  top: 8,
-                                  bottom: 24,
                                 ),
-                                itemCount: _filteredEvents.length,
-                                itemBuilder: (context, index) {
-                                  return _buildEventCard(_filteredEvents[index]);
-                                },
-                              ),
-                            ),
+                        ),
+                      ],
                     ),
+                    // Menus déroulants qui s'affichent par-dessus
+                    if (_showImpactMenu || _showCurrencyMenu)
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showImpactMenu = false;
+                              _showCurrencyMenu = false;
+                            });
+                          },
+                          child: Container(
+                            color: Colors.transparent,
+                          ),
+                        ),
+                      ),
+                    if (_showImpactMenu)
+                      Positioned(
+                        top: _summary != null ? 180 : 110,
+                        left: 16,
+                        right: MediaQuery.of(context).size.width / 2 + 6,
+                        child: _buildImpactDropdown(),
+                      ),
+                    if (_showCurrencyMenu)
+                      Positioned(
+                        top: _summary != null ? 180 : 110,
+                        left: MediaQuery.of(context).size.width / 2 + 6,
+                        right: 16,
+                        child: _buildCurrencyDropdown(),
+                      ),
                   ],
                 ),
     );

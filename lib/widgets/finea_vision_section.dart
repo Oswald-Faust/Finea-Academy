@@ -86,6 +86,8 @@ class FineaVisionSection extends StatelessWidget {
               'assets/images/actus.png',
               fit: BoxFit.cover,
               width: double.infinity,
+              // color: const Color(0xFF0f0f23),
+              // colorBlendMode: BlendMode.darken,
             ),
           ),
           
@@ -98,6 +100,8 @@ class FineaVisionSection extends StatelessWidget {
               'assets/images/actus-fin.png',
               fit: BoxFit.cover,
               width: double.infinity,
+              // color: const Color(0xFF0f0f23),
+              // colorBlendMode: BlendMode.darken,
             ),
           ),
         ],

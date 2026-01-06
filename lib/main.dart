@@ -184,7 +184,7 @@ class _MyAppState extends State<MyApp> {
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
         theme: ThemeData(
-          scaffoldBackgroundColor: const Color(0xFF000D64),
+          scaffoldBackgroundColor: const Color(0xFF080824),
           fontFamily: 'Poppins',
           textTheme: const TextTheme(
             displayLarge: TextStyle(fontFamily: 'Poppins'),
@@ -209,7 +209,7 @@ class _MyAppState extends State<MyApp> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                backgroundColor: Color(0xFF000D64),
+                backgroundColor: Color(0xFF080824),
                 body: Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -288,7 +288,7 @@ class _AppInitializerState extends State<AppInitializer> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                backgroundColor: Color(0xFF000D64),
+                backgroundColor: Color(0xFF080824),
                 body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

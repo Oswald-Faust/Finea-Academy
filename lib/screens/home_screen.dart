@@ -160,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0f0f23),
+      backgroundColor: const Color(0xFF080824),
       appBar: FineaAppBar(
         actions: [
           IconButton(
