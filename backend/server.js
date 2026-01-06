@@ -104,7 +104,7 @@ app.get('/', (req, res) => {
     success: true,
     message: 'Bienvenue sur l\'API Finéa Académie',
     version: '1.0.0',
-    documentation: 'https://finea-academy-1.onrender.com/api/health',
+    documentation: 'https://finea-api.cloud/api/health',
     endpoints: {
       health: '/api/health',
       auth: '/api/auth/*',

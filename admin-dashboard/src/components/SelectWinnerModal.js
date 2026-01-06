@@ -17,9 +17,12 @@ const getApiBaseUrl = () => {
                        window.location.hostname === '127.0.0.1';
   
   if (isDevelopment) {
-    return 'http://localhost:5000/api';
+    // ⚠️ Pour tester le VPS en local, décommentez la ligne ci-dessous
+    // return 'https://finea-api.cloud/api';
+    return 'http://localhost:5001/api';
   } else {
-    return 'https://finea-academy-1.onrender.com/api';
+    // 🚀 URL DE PRODUCTION (VPS HOSTINGER)
+    return 'https://finea-api.cloud/api';
   }
 };
 
