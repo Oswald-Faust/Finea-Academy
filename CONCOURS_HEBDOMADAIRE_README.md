@@ -7,17 +7,20 @@ Le système de concours hebdomadaire permet d'organiser automatiquement des tira
 ## 🏗️ Architecture
 
 ### Backend (Node.js/Express)
+
 - **Modèle Contest** : Gestion des concours avec champs spécifiques pour les concours hebdomadaires
 - **Service WeeklyContestService** : Logique métier pour la gestion automatique
 - **Service SchedulerService** : Planificateur automatique pour les tirages
 - **API Routes** : Endpoints pour la gestion des concours
 
 ### Admin Dashboard (React)
+
 - **Page WeeklyContest** : Interface d'administration complète
 - **Gestion des concours** : Création, monitoring, tirage manuel
 - **Statistiques** : Suivi des participants et résultats
 
 ### Application Flutter
+
 - **Service ContestService** : Communication avec l'API
 - **Modèle Contest** : Structure des données
 - **Widget ContestVideoSection** : Interface utilisateur pour la participation
@@ -199,18 +202,19 @@ await WeeklyContestService.cleanupOldContests();
 
 ```bash
 # Vérifier le statut du planificateur
-curl https://finea-academy-1.onrender.com/api/scheduler/status
+curl https://finea-api.cloud/api/scheduler/status
 
 # Obtenir le concours actuel
-curl https://finea-academy-1.onrender.com/api/contests/weekly/current
+curl https://finea-api.cloud/api/contests/weekly/current
 
 # Vérifier la santé de l'API
-curl https://finea-academy-1.onrender.com/api/health
+curl https://finea-api.cloud/api/health
 ```
 
 ## 📞 Support
 
 Pour toute question ou problème :
+
 1. Vérifiez les logs du serveur
 2. Consultez la documentation API
 3. Testez les endpoints avec Postman

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://finea-academy-1.onrender.com/api ';
+const BASE_URL = 'https://finea-api.cloud/api';
 
 const testNewsletterAPI = async () => {
   console.log('🚀 Test de l\'API Newsletter Finéa Académie\n');

@@ -64,6 +64,7 @@ Le serveur sera accessible sur `http://localhost:5000`
 ### 3. Installation de MongoDB
 
 #### Option 1 : MongoDB local
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install mongodb
@@ -77,6 +78,7 @@ brew services start mongodb-community  # macOS
 ```
 
 #### Option 2 : MongoDB Atlas (Cloud)
+
 1. Créez un compte sur [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
 2. Créez un cluster gratuit
 3. Récupérez l'URL de connexion
@@ -86,18 +88,20 @@ brew services start mongodb-community  # macOS
 
 Pour tester l'envoi d'emails (mot de passe oublié, vérification) :
 
-1. **Gmail** : 
+1. **Gmail** :
+
    - Activez l'authentification à 2 facteurs
    - Générez un mot de passe d'application
    - Utilisez ce mot de passe dans `EMAIL_PASS`
 
-2. **Autre service** : 
+2. **Autre service** :
    - Modifiez `EMAIL_SERVICE` avec votre fournisseur
    - Configurez les paramètres SMTP appropriés
 
 ## 📱 Fonctionnalités intégrées
 
 ### ✅ Authentification complète
+
 - **Inscription** : Création de compte avec validation
 - **Connexion** : Authentification sécurisée avec JWT
 - **Mot de passe oublié** : Envoi d'email de réinitialisation
@@ -105,12 +109,14 @@ Pour tester l'envoi d'emails (mot de passe oublié, vérification) :
 - **Stockage sécurisé** : Tokens JWT stockés de manière sécurisée
 
 ### ✅ Services Flutter
+
 - **ApiService** : Communication avec le backend
 - **AuthService** : Gestion de l'état d'authentification
 - **ErrorHandler** : Gestion centralisée des erreurs
 - **Providers** : État global avec Provider
 
 ### ✅ Sécurité
+
 - **JWT Tokens** : Authentification sécurisée
 - **Rate Limiting** : Protection contre le spam
 - **Validation des données** : Validation côté client et serveur
@@ -119,18 +125,21 @@ Pour tester l'envoi d'emails (mot de passe oublié, vérification) :
 ## 🧪 Test de l'intégration
 
 ### 1. Démarrer le backend
+
 ```bash
 cd backend
 npm run dev
 ```
 
 ### 2. Tester l'API
+
 ```bash
 # Test de santé de l'API
-curl https://finea-academy-1.onrender.com/api /health
+curl https://finea-api.cloud/api/health
 ```
 
 ### 3. Démarrer l'application Flutter
+
 ```bash
 flutter run
 ```
@@ -138,12 +147,14 @@ flutter run
 ### 4. Tester les fonctionnalités
 
 1. **Inscription** :
+
    - Ouvrez l'application
    - Allez sur "S'inscrire"
    - Remplissez le formulaire
    - Vérifiez que l'utilisateur est créé dans MongoDB
 
 2. **Connexion** :
+
    - Utilisez les identifiants créés
    - Vérifiez la redirection vers l'écran principal
 
@@ -158,8 +169,8 @@ flutter run
 Pour changer l'URL du backend, modifiez dans `lib/services/api_service.dart` :
 
 ```dart
-static const String baseUrl = kDebugMode 
-    ? 'https://finea-academy-1.onrender.com/api '  // Développement
+static const String baseUrl = kDebugMode
+    ? 'https://finea-api.cloud/api'  // Développement
     : 'https://your-api-domain.com/api';  // Production
 ```
 
@@ -186,23 +197,27 @@ ErrorHandler.showSuccess(context, 'Opération réussie');
 ## 🐛 Résolution des problèmes
 
 ### Erreur de connexion à l'API
+
 - Vérifiez que le backend est démarré
 - Vérifiez l'URL dans `api_service.dart`
 - Vérifiez les paramètres CORS du backend
 
 ### Erreurs de génération JSON
+
 ```bash
 flutter packages pub run build_runner clean
 flutter packages pub run build_runner build --delete-conflicting-outputs
 ```
 
 ### Erreurs de dépendances
+
 ```bash
 flutter clean
 flutter pub get
 ```
 
 ### Erreurs MongoDB
+
 - Vérifiez que MongoDB est démarré
 - Vérifiez l'URL de connexion dans `.env`
 - Vérifiez les permissions réseau
@@ -236,11 +251,13 @@ backend/
 ## 🚀 Déploiement
 
 ### Backend
+
 1. **Heroku** : Utilisez le Procfile fourni
 2. **DigitalOcean** : Utilisez PM2 pour la gestion des processus
 3. **MongoDB Atlas** : Pour la base de données en production
 
 ### Flutter
+
 1. **Android** : `flutter build apk --release`
 2. **iOS** : `flutter build ios --release`
 3. **Web** : `flutter build web`
@@ -248,8 +265,9 @@ backend/
 ## 📞 Support
 
 En cas de problème :
+
 1. Vérifiez les logs du backend : `npm run dev`
 2. Vérifiez les logs Flutter : `flutter run --verbose`
 3. Consultez la documentation de l'API dans `backend/README.md`
 
-Votre application Finéa Académie est maintenant complètement intégrée avec un backend fonctionnel ! 🎉 
+Votre application Finéa Académie est maintenant complètement intégrée avec un backend fonctionnel ! 🎉

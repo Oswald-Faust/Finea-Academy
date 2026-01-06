@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'https://finea-academy-1.onrender.com/api ';
+const API_BASE_URL = 'https://finea-api.cloud/api';
 
 async function testDashboardAPI() {
   console.log('🧪 Test des routes du dashboard...\n');
