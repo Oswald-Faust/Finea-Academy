@@ -586,6 +586,51 @@ class ApiService {
     }
   }
 
+  /// Récupérer le gagnant en position 1 avec l'adresse ETH conditionnelle
+  Future<ApiResponse<Map<String, dynamic>>> getFirstPlaceWinner(String? currentUserId) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (currentUserId != null) {
+        queryParams['userId'] = currentUserId;
+      }
+      
+      final response = await _dio.get(
+        '/standalone-winners/first-place',
+        queryParameters: queryParams,
+      );
+      
+      if (response.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          data: response.data['data'],
+          message: 'Gagnant récupéré avec succès',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          error: 'Erreur lors de la récupération du gagnant',
+        );
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Erreur de connexion';
+      if (e.response?.data != null) {
+        errorMessage = e.response!.data['error'] ?? 'Erreur lors de la récupération du gagnant';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      return ApiResponse(
+        success: false,
+        error: errorMessage,
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        error: 'Erreur inattendue: $e',
+      );
+    }
+  }
+
   // ==================== NEWS API METHODS ====================
 
   /// Récupérer la dernière actualité publiée

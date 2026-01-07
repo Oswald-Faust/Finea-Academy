@@ -331,11 +331,75 @@ export const newsAPI = {
   // Récupérer une actualité par semaine
   getNewsByWeek: (year, week) => api.get(`/news/week/${year}/${week}`),
   
-  // Créer une nouvelle actualité
-  createNews: (data) => api.post('/news', data),
+  // Créer une nouvelle actualité avec support d'upload d'image
+  createNews: async (newsData) => {
+    const formData = new FormData();
+    
+    // Ajouter les données de base
+    formData.append('title', newsData.title);
+    formData.append('content', newsData.content);
+    if (newsData.summary) formData.append('summary', newsData.summary);
+    formData.append('status', newsData.status || 'draft');
+    
+    // Ajouter l'image de présentation si elle existe
+    if (newsData.coverImage && newsData.coverImage.startsWith('data:')) {
+      // Convertir base64 en fichier
+      const response = await fetch(newsData.coverImage);
+      const blob = await response.blob();
+      formData.append('coverImage', blob, 'cover-image.jpg');
+    } else if (newsData.coverImage) {
+      formData.append('coverImage', newsData.coverImage);
+    }
+    
+    // Ajouter les autres champs
+    if (newsData.tags && newsData.tags.length > 0) {
+      formData.append('tags', JSON.stringify(newsData.tags));
+    }
+    if (newsData.scheduledFor) formData.append('scheduledFor', newsData.scheduledFor);
+    if (newsData.priority !== undefined) formData.append('priority', newsData.priority);
+    if (newsData.targetRoles) formData.append('targetRoles', JSON.stringify(newsData.targetRoles));
+
+    return api.post('/news', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   
-  // Mettre à jour une actualité
-  updateNews: (id, data) => api.put(`/news/${id}`, data),
+  // Mettre à jour une actualité avec support d'upload d'image
+  updateNews: async (id, newsData) => {
+    const formData = new FormData();
+    
+    // Ajouter les données de base si elles existent
+    if (newsData.title) formData.append('title', newsData.title);
+    if (newsData.content) formData.append('content', newsData.content);
+    if (newsData.summary !== undefined) formData.append('summary', newsData.summary);
+    if (newsData.status) formData.append('status', newsData.status);
+    
+    // Ajouter l'image de présentation si elle existe
+    if (newsData.coverImage && newsData.coverImage.startsWith('data:')) {
+      // Convertir base64 en fichier
+      const response = await fetch(newsData.coverImage);
+      const blob = await response.blob();
+      formData.append('coverImage', blob, 'cover-image.jpg');
+    } else if (newsData.coverImage) {
+      formData.append('coverImage', newsData.coverImage);
+    }
+    
+    // Ajouter les autres champs
+    if (newsData.tags && newsData.tags.length > 0) {
+      formData.append('tags', JSON.stringify(newsData.tags));
+    }
+    if (newsData.scheduledFor) formData.append('scheduledFor', newsData.scheduledFor);
+    if (newsData.priority !== undefined) formData.append('priority', newsData.priority);
+    if (newsData.targetRoles) formData.append('targetRoles', JSON.stringify(newsData.targetRoles));
+
+    return api.put(`/news/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   
   // Supprimer une actualité
   deleteNews: (id) => api.delete(`/news/${id}`),
@@ -384,6 +448,30 @@ export const contestAPI = {
   post: (url, data) => api.post(url, data),
   put: (url, data) => api.put(url, data),
   delete: (url) => api.delete(url),
+};
+
+// API pour les gagnants indépendants
+export const standaloneWinnersAPI = {
+  // Récupérer tous les gagnants
+  getAll: (params = {}) => api.get('/standalone-winners', { params }),
+  
+  // Récupérer les gagnants de la semaine actuelle
+  getCurrentWeek: () => api.get('/standalone-winners/current-week'),
+  
+  // Récupérer les gagnants récents
+  getRecent: (limit = 10) => api.get(`/standalone-winners/recent?limit=${limit}`),
+  
+  // Créer des gagnants
+  create: (winners) => api.post('/standalone-winners', { winners }),
+  
+  // Mettre à jour un gagnant
+  update: (id, data) => api.put(`/standalone-winners/${id}`, data),
+  
+  // Supprimer un gagnant
+  delete: (id) => api.delete(`/standalone-winners/${id}`),
+  
+  // Supprimer tous les gagnants d'une semaine
+  clearWeek: (week) => api.delete(`/standalone-winners/week/${week}`),
 };
 
 // Service de santé de l'API

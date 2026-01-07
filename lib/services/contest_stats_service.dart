@@ -45,6 +45,23 @@ class ContestStatsService {
     }
   }
 
+  /// Récupérer le gagnant #1 avec l'adresse ETH visible uniquement pour le gagnant
+  Future<FirstPlaceWinner?> getFirstPlaceWinner(String? currentUserId) async {
+    try {
+      final response = await _apiService.getFirstPlaceWinner(currentUserId);
+      
+      if (response.success && response.data != null) {
+        return FirstPlaceWinner.fromJson(response.data!);
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur getFirstPlaceWinner: $e');
+      }
+      return null;
+    }
+  }
+
   /// Vider le cache
   static void clearCache() {
     _cachedStats = null;
@@ -95,6 +112,8 @@ class ContestWinner {
   final String lastName;
   final String prize;
   final double amount;
+  final String? username;
+  final String? ethAddress;
 
   ContestWinner({
     required this.contestTitle,
@@ -103,6 +122,8 @@ class ContestWinner {
     required this.lastName,
     required this.prize,
     required this.amount,
+    this.username,
+    this.ethAddress,
   });
 
   factory ContestWinner.fromJson(Map<String, dynamic> json) {
@@ -113,6 +134,8 @@ class ContestWinner {
       lastName: json['lastName'] ?? '',
       prize: json['prize'] ?? '',
       amount: (json['amount'] ?? 0).toDouble(),
+      username: json['username'],
+      ethAddress: json['ethAddress'],
     );
   }
 
@@ -124,11 +147,18 @@ class ContestWinner {
       'lastName': lastName,
       'prize': prize,
       'amount': amount,
+      'username': username,
+      'ethAddress': ethAddress,
     };
   }
 
-  /// Nom complet du gagnant
-  String get fullName => '$firstName $lastName'.trim();
+  /// Nom complet du gagnant ou username si disponible
+  String get fullName {
+    if (username != null && username!.isNotEmpty) {
+      return '@$username';
+    }
+    return '$firstName $lastName'.trim();
+  }
 
   /// Montant formaté
   String get formattedAmount => '${amount.toStringAsFixed(0)}€';
@@ -149,3 +179,66 @@ class ContestWinner {
     }
   }
 }
+
+/// Modèle pour le gagnant en position 1 (avec adresse ETH conditionnelle)
+class FirstPlaceWinner {
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String? username;
+  final String prize;
+  final double amount;
+  final DateTime drawDate;
+  final int position;
+  final String? ethAddress;
+  final bool isCurrentUser;
+
+  FirstPlaceWinner({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    this.username,
+    required this.prize,
+    required this.amount,
+    required this.drawDate,
+    required this.position,
+    this.ethAddress,
+    required this.isCurrentUser,
+  });
+
+  factory FirstPlaceWinner.fromJson(Map<String, dynamic> json) {
+    return FirstPlaceWinner(
+      id: json['id'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      username: json['username'],
+      prize: json['prize'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+      drawDate: DateTime.parse(json['drawDate']),
+      position: json['position'] ?? 1,
+      ethAddress: json['ethAddress'],
+      isCurrentUser: json['isCurrentUser'] ?? false,
+    );
+  }
+
+  /// Nom affiché (username ou nom complet)
+  String get displayName {
+    if (username != null && username!.isNotEmpty) {
+      return '@$username';
+    }
+    return '$firstName $lastName'.trim();
+  }
+
+  /// Montant formaté
+  String get formattedAmount => '${amount.toStringAsFixed(0)}€';
+
+  /// Adresse ETH tronquée pour l'affichage
+  String? get truncatedEthAddress {
+    if (ethAddress == null || ethAddress!.isEmpty) return null;
+    if (ethAddress!.length > 15) {
+      return '${ethAddress!.substring(0, 8)}...${ethAddress!.substring(ethAddress!.length - 6)}';
+    }
+    return ethAddress;
+  }
+}
+

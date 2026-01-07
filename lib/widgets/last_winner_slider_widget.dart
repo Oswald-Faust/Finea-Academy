@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/contest_stats_service.dart';
+import '../services/auth_service.dart';
 import 'contest_winner_card.dart';
 
 class LastWinnerSliderWidget extends StatefulWidget {
@@ -11,6 +13,7 @@ class LastWinnerSliderWidget extends StatefulWidget {
 }
 
 class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
+  FirstPlaceWinner? _firstPlaceWinner;
   ContestStats? _stats;
   bool _isLoading = true;
   PageController _pageController = PageController();
@@ -20,8 +23,7 @@ class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
   @override
   void initState() {
     super.initState();
-    _loadStats();
-    _startAutoSlide();
+    _loadData();
   }
 
   @override
@@ -32,82 +34,61 @@ class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
   }
 
   void _startAutoSlide() {
-    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
-      if (_stats != null && _stats!.recentWinners.isNotEmpty) {
-        _currentIndex = (_currentIndex + 1) % _stats!.recentWinners.length;
-        _pageController.animateToPage(
-          _currentIndex,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  Future<void> _loadStats() async {
-    try {
-      final stats = await ContestStatsService().getContestStats();
-      if (mounted) {
-        setState(() {
-          // Pour l'instant, utiliser toujours les données de test
-          _stats = stats ?? _createTestStats();
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      // En cas d'erreur, créer des données de test pour voir le slider
-      if (mounted) {
-        setState(() {
-          _stats = _createTestStats();
-          _isLoading = false;
-        });
-      }
-    }
-    
-    // Toujours utiliser les données de test pour l'instant
-    if (mounted && (_stats == null || _stats!.recentWinners.isEmpty)) {
-      setState(() {
-        _stats = _createTestStats();
-        _isLoading = false;
+    // Ne démarrer le timer que si on a des gagnants
+    if (_stats != null && _stats!.recentWinners.length > 1) {
+      _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+        if (_stats != null && _stats!.recentWinners.isNotEmpty) {
+          _currentIndex = (_currentIndex + 1) % _stats!.recentWinners.length;
+          if (_pageController.hasClients) {
+            _pageController.animateToPage(
+              _currentIndex,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+            );
+          }
+        }
       });
     }
   }
 
-  ContestStats _createTestStats() {
-    print('🎯 Création des données de test pour LastWinnerSliderWidget');
-    final testWinners = [
-      ContestWinner(
-        contestTitle: 'Concours Hebdomadaire #1',
-        drawDate: DateTime.now().subtract(Duration(days: 7)),
-        firstName: 'Jean',
-        lastName: 'Dupont',
-        prize: '58€',
-        amount: 58.0,
-      ),
-      ContestWinner(
-        contestTitle: 'Concours Hebdomadaire #2',
-        drawDate: DateTime.now().subtract(Duration(days: 14)),
-        firstName: 'Marie',
-        lastName: 'Martin',
-        prize: '125€',
-        amount: 125.0,
-      ),
-      ContestWinner(
-        contestTitle: 'Concours Hebdomadaire #3',
-        drawDate: DateTime.now().subtract(Duration(days: 21)),
-        firstName: 'Pierre',
-        lastName: 'Durand',
-        prize: '200€',
-        amount: 200.0,
-      ),
-    ];
+  Future<void> _loadData() async {
+    try {
+      // Récupérer l'ID de l'utilisateur connecté
+      String? currentUserId;
+      if (mounted) {
+        try {
+          final authService = Provider.of<AuthService>(context, listen: false);
+          currentUserId = authService.currentUser?.id;
+        } catch (e) {
+          // AuthService non disponible dans le contexte
+        }
+      }
 
-    return ContestStats(
-      totalGains: 383,
-      totalPlacesSold: 500,
-      totalWinners: 3,
-      recentWinners: testWinners,
-    );
+      // Charger le gagnant #1 avec l'adresse ETH
+      final contestService = ContestStatsService();
+      final firstPlace = await contestService.getFirstPlaceWinner(currentUserId);
+      
+      // Charger les statistiques générales
+      final stats = await contestService.getContestStats(forceRefresh: true);
+      
+      if (mounted) {
+        setState(() {
+          _firstPlaceWinner = firstPlace;
+          _stats = stats;
+          _isLoading = false;
+        });
+        // Démarrer l'auto-slide après le chargement des données
+        _startAutoSlide();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _firstPlaceWinner = null;
+          _stats = null;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -121,7 +102,7 @@ class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Container(
-        height: 200,
+        height: 140,
         child: Center(
           child: CircularProgressIndicator(
             color: Colors.white.withOpacity(0.7),
@@ -130,53 +111,113 @@ class _LastWinnerSliderWidgetState extends State<LastWinnerSliderWidget> {
       );
     }
 
-    // Si pas de gagnants, afficher une carte par défaut
-    if (_stats == null || _stats!.recentWinners.isEmpty) {
-      print('🎯 Aucun gagnant trouvé, affichage de la carte par défaut');
+    // Si on a un gagnant #1, l'afficher en priorité
+    if (_firstPlaceWinner != null) {
       return SizedBox(
         height: 140,
         child: ContestWinnerCard(
-          drawDate: "01/01/2025",
-          winner: "@username",
-          gains: "147€",
-          ethscanAddress: "0x1234...5678",
-          onTap: () {
-            print('Gagnant par défaut sélectionné');
+          drawDate: _formatDate(_firstPlaceWinner!.drawDate),
+          winner: _firstPlaceWinner!.displayName,
+          gains: _firstPlaceWinner!.formattedAmount,
+          ethAddress: _firstPlaceWinner!.ethAddress,
+          isCurrentUser: _firstPlaceWinner!.isCurrentUser,
+          onTap: () {},
+        ),
+      );
+    }
+
+    // Si pas de gagnant #1 mais des gagnants récents, les afficher en slider
+    if (_stats != null && _stats!.recentWinners.isNotEmpty) {
+      final allWinners = _stats!.recentWinners.toList();
+
+      return SizedBox(
+        height: 140,
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: allWinners.length,
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          itemBuilder: (context, index) {
+            final winner = allWinners[index];
+            return ContestWinnerCard(
+              drawDate: _formatDate(winner.drawDate),
+              winner: winner.fullName,
+              gains: winner.formattedAmount,
+              ethAddress: winner.ethAddress,
+              isCurrentUser: false,
+              onTap: () {},
+            );
           },
         ),
       );
     }
 
-    // Créer une liste avec le dernier gagnant en premier, puis les autres
-    final allWinners = _stats!.recentWinners.toList();
-    
-    print('🎯 LastWinnerSliderWidget: ${allWinners.length} gagnants trouvés');
-
+    // Si pas de gagnants, afficher une carte par défaut avec un message
     return SizedBox(
       height: 140,
-      child: PageView.builder(
-        controller: _pageController,
-        itemCount: allWinners.length,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        itemBuilder: (context, index) {
-          final winner = allWinners[index];
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            child: ContestWinnerCard(
-              drawDate: _formatDate(winner.drawDate),
-              winner: winner.fullName,
-              gains: winner.formattedAmount,
-              ethscanAddress: "0x1234...5678",
-              onTap: () {
-                print('Gagnant sélectionné: ${winner.fullName}');
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Le gagnant du dernier tirage !',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Aucun gagnant encore',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  Text(
+                    'Participez au prochain tirage !',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Image.asset(
+              'assets/images/gifttrophy.gif',
+              width: 80,
+              height: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.emoji_events,
+                  color: Colors.amber,
+                  size: 60,
+                );
               },
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }

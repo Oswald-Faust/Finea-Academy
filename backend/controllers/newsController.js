@@ -221,6 +221,7 @@ const getNewsByWeek = async (req, res) => {
 const createNews = async (req, res) => {
   try {
     console.log('Création d\'actualité - Données reçues:', req.body);
+    console.log('Fichier uploadé:', req.file);
     
     // Vérification des erreurs de validation
     const errors = validationResult(req);
@@ -236,7 +237,6 @@ const createNews = async (req, res) => {
     const {
       title,
       content,
-      coverImage,
       summary,
       status = 'draft',
       scheduledFor,
@@ -245,6 +245,27 @@ const createNews = async (req, res) => {
       targetRoles = [],
       priority = 0
     } = req.body;
+
+    // Traitement de l'image de couverture
+    let coverImageUrl = req.body.coverImage || null;
+    if (req.file) {
+      // Avec Cloudflare R2, construire l'URL publique
+      if (req.file.key) {
+        const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+        coverImageUrl = `${publicUrl}/${req.file.key}`;
+      } else if (req.file.location) {
+        coverImageUrl = req.file.location;
+      } else if (req.file.filename) {
+        coverImageUrl = `/uploads/articles/${req.file.filename}`;
+      }
+      
+      console.log('📸 Image de couverture uploadée:', {
+        key: req.file.key,
+        location: req.file.location,
+        filename: req.file.filename,
+        finalUrl: coverImageUrl
+      });
+    }
 
     // Vérifier qu'il n'y a pas déjà une actualité pour la semaine ciblée
     const targetDate = scheduledFor ? new Date(scheduledFor) : new Date();
@@ -259,18 +280,28 @@ const createNews = async (req, res) => {
       });
     }
 
+    // Parser les tags si c'est une chaîne JSON
+    let parsedTags = tags;
+    if (typeof tags === 'string') {
+      try {
+        parsedTags = JSON.parse(tags);
+      } catch (e) {
+        parsedTags = tags.split(',').map(t => t.trim()).filter(t => t);
+      }
+    }
+
     // Créer la nouvelle actualité
     const newsData = {
       title,
       content,
-      coverImage,
+      coverImage: coverImageUrl,
       summary,
       status,
       scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
-      tags,
+      tags: parsedTags,
       targetUsers,
       targetRoles,
-      priority,
+      priority: parseInt(priority) || 0,
       author: req.body.authorId || null, // ID de l'auteur fourni dans le body ou null
       weekOfYear
     };
@@ -313,6 +344,9 @@ const createNews = async (req, res) => {
 // @access  Private (Admin)
 const updateNews = async (req, res) => {
   try {
+    console.log('Mise à jour d\'actualité - Données reçues:', req.body);
+    console.log('Fichier uploadé:', req.file);
+    
     // Vérification des erreurs de validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -326,7 +360,6 @@ const updateNews = async (req, res) => {
     const {
       title,
       content,
-      coverImage,
       summary,
       status,
       scheduledFor,
@@ -342,6 +375,30 @@ const updateNews = async (req, res) => {
         success: false,
         error: 'Actualité non trouvée'
       });
+    }
+
+    // Traitement de l'image de couverture
+    let coverImageUrl = null;
+    if (req.file) {
+      // Avec Cloudflare R2, construire l'URL publique
+      if (req.file.key) {
+        const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+        coverImageUrl = `${publicUrl}/${req.file.key}`;
+      } else if (req.file.location) {
+        coverImageUrl = req.file.location;
+      } else if (req.file.filename) {
+        coverImageUrl = `/uploads/articles/${req.file.filename}`;
+      }
+      
+      console.log('📸 Image de couverture mise à jour:', {
+        key: req.file.key,
+        location: req.file.location,
+        filename: req.file.filename,
+        finalUrl: coverImageUrl
+      });
+    } else if (req.body.coverImage) {
+      // Si pas de nouveau fichier mais une URL existante dans le body
+      coverImageUrl = req.body.coverImage;
     }
 
     // Vérifier si le changement de semaine crée un conflit
@@ -362,6 +419,16 @@ const updateNews = async (req, res) => {
       }
     }
 
+    // Parser les tags si c'est une chaîne JSON
+    let parsedTags = tags;
+    if (typeof tags === 'string') {
+      try {
+        parsedTags = JSON.parse(tags);
+      } catch (e) {
+        parsedTags = tags.split(',').map(t => t.trim()).filter(t => t);
+      }
+    }
+
     // Mise à jour des champs
     const updateData = {
       lastModifiedBy: req.body.authorId || null,
@@ -371,11 +438,11 @@ const updateNews = async (req, res) => {
 
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content;
-    if (coverImage !== undefined) updateData.coverImage = coverImage;
+    if (coverImageUrl !== null) updateData.coverImage = coverImageUrl;
     if (summary !== undefined) updateData.summary = summary;
     if (status !== undefined) updateData.status = status;
     if (scheduledFor !== undefined) updateData.scheduledFor = scheduledFor ? new Date(scheduledFor) : null;
-    if (tags !== undefined) updateData.tags = tags;
+    if (parsedTags !== undefined) updateData.tags = parsedTags;
     if (targetUsers !== undefined) updateData.targetUsers = targetUsers;
     if (targetRoles !== undefined) updateData.targetRoles = targetRoles;
     if (priority !== undefined) updateData.priority = priority;

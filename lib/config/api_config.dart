@@ -6,7 +6,7 @@ class ApiConfig {
   // ⚠️ CONFIGURATION POUR LE DÉVELOPPEMENT
   // Pour tester sur un appareil physique, remplacez cette IP par celle de votre Mac
   // Trouvez votre IP avec : ifconfig | grep "inet " | grep -v 127.0.0.1
-  static const String _localDevMachineIP = '10.226.168.47'; // IP de votre Mac
+  static const String _localDevMachineIP = '192.168.100.58'; // IP de votre Mac
 // IP de votre Mac
   
   // Configuration intelligente de l'URL selon la plateforme
@@ -14,13 +14,13 @@ class ApiConfig {
     // 🚀 URL DE PRODUCTION (VPS HOSTINGER)
     const String productionUrl = 'https://finea-api.cloud';
 
-    // ⚠️ Si vous voulez tester la connexion au VPS même en mode debug,
-    // décommentez la ligne suivante :
+    // ✅ MODE PRODUCTION ACTIVÉ
+    // Pour tester en local, décommentez le bloc ci-dessous et commentez "return productionUrl;"
     return productionUrl;
-
+    
     /*
+    // ⚠️ MODE DÉVELOPPEMENT LOCAL
     if (kDebugMode) {
-      // En mode développement, on détecte si on est sur un émulateur Android
       if (Platform.isAndroid) {
         return 'http://10.0.2.2:5001';
       } else if (Platform.isIOS) {

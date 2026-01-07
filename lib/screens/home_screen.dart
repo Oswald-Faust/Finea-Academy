@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../widgets/finea_app_bar.dart';
 import '../widgets/alerts_section.dart';
-import '../widgets/contest_winner_card.dart';
+import '../widgets/last_winner_slider_widget.dart';
 import '../widgets/investor_profile_section.dart';
 import '../widgets/finea_vision_section.dart';
 import '../widgets/actus_section.dart';
@@ -266,20 +266,9 @@ class _HomeScreenState extends State<HomeScreen> {
             
             const SizedBox(height: 16),
             
-            ContestWinnerCard(
-              drawDate: "01/01/2025",
-              winner: "@username",
-              gains: "147€",
-              ethscanAddress: "0x1234...5678",
-              onTap: () {
-                // Navigation vers l'écran concours
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ConcoursScreen(),
-                  ),
-                );
-              },
-            ),
+            // Widget dynamique des gagnants
+            const LastWinnerSliderWidget(),
+            
             
             const SizedBox(height: 24),
             

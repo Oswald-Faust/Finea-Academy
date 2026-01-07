@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import '../models/news_model.dart';
 import '../services/api_service.dart';
 
@@ -400,14 +401,75 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
-          child: Text(
-            _extractTextFromContent(news!.content),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              height: 1.8,
-              fontFamily: 'Poppins',
-            ),
+          child: Html(
+            data: news!.content,
+            style: {
+              "body": Style(
+                color: Colors.white,
+                fontSize: FontSize(16),
+                lineHeight: LineHeight(1.8),
+                fontFamily: 'Poppins',
+                margin: Margins.zero,
+                padding: HtmlPaddings.zero,
+              ),
+              "p": Style(
+                color: Colors.white,
+                fontSize: FontSize(16),
+                lineHeight: LineHeight(1.8),
+                fontFamily: 'Poppins',
+                margin: Margins.only(bottom: 12),
+              ),
+              "br": Style(
+                margin: Margins.only(bottom: 8),
+              ),
+              "strong": Style(
+                fontWeight: FontWeight.bold,
+              ),
+              "em": Style(
+                fontStyle: FontStyle.italic,
+              ),
+              "h1": Style(
+                color: Colors.white,
+                fontSize: FontSize(24),
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+              "h2": Style(
+                color: Colors.white,
+                fontSize: FontSize(22),
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+              "h3": Style(
+                color: Colors.white,
+                fontSize: FontSize(20),
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+              "ul": Style(
+                color: Colors.white,
+                padding: HtmlPaddings.only(left: 16),
+              ),
+              "ol": Style(
+                color: Colors.white,
+                padding: HtmlPaddings.only(left: 16),
+              ),
+              "li": Style(
+                color: Colors.white,
+                margin: Margins.only(bottom: 8),
+              ),
+              "a": Style(
+                color: Colors.blue,
+                textDecoration: TextDecoration.underline,
+              ),
+              "blockquote": Style(
+                color: Colors.white70,
+                fontStyle: FontStyle.italic,
+                border: Border(left: BorderSide(color: Colors.blue, width: 3)),
+                padding: HtmlPaddings.only(left: 16),
+                margin: Margins.symmetric(vertical: 16),
+              ),
+            },
           ),
         ),
       ],
@@ -453,12 +515,6 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         ),
       ],
     );
-  }
-
-
-  String _extractTextFromContent(String content) {
-    // Le contenu est maintenant directement une String, on peut la retourner telle quelle
-    return content;
   }
 
   void _shareNews() {

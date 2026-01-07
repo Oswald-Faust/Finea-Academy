@@ -22,8 +22,8 @@ const {
 const { protect: auth } = require('../middleware/auth');
 const { uploadArticleImage, cloudflareUploadHandler } = require('../middleware/cloudflareUploads');
 
-// Validation pour la création/mise à jour d'actualités
-const newsValidation = [
+// Validation pour la création d'actualités (champs obligatoires)
+const newsCreateValidation = [
   body('title')
     .notEmpty()
     .withMessage('Le titre est requis')
@@ -47,9 +47,72 @@ const newsValidation = [
     .withMessage('Le statut doit être draft, scheduled ou published'),
   
   body('scheduledFor')
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === '' || value === undefined) return true;
+      const date = new Date(value);
+      return !isNaN(date.getTime());
+    })
+    .withMessage('La date de publication doit être valide'),
+  
+  body('tags')
     .optional()
-    .isISO8601()
-    .withMessage('La date de publication doit être au format ISO 8601'),
+    .isArray()
+    .withMessage('Les tags doivent être un tableau'),
+  
+  body('tags.*')
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Chaque tag ne peut pas dépasser 50 caractères'),
+  
+  body('priority')
+    .optional()
+    .isInt({ min: 0, max: 10 })
+    .withMessage('La priorité doit être un nombre entre 0 et 10'),
+  
+  body('targetRoles')
+    .optional()
+    .isArray()
+    .withMessage('Les rôles ciblés doivent être un tableau'),
+  
+  body('targetRoles.*')
+    .optional()
+    .isIn(['admin', 'user', 'premium', 'trial'])
+    .withMessage('Rôle invalide')
+];
+
+// Validation pour la mise à jour d'actualités (tous les champs optionnels)
+const newsUpdateValidation = [
+  body('title')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Le titre ne peut pas dépasser 200 caractères')
+    .trim(),
+  
+  body('content')
+    .optional(),
+  
+  body('summary')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Le résumé ne peut pas dépasser 500 caractères')
+    .trim(),
+  
+  body('status')
+    .optional()
+    .isIn(['draft', 'scheduled', 'published'])
+    .withMessage('Le statut doit être draft, scheduled ou published'),
+  
+  body('scheduledFor')
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === '' || value === undefined) return true;
+      const date = new Date(value);
+      return !isNaN(date.getTime());
+    })
+    .withMessage('La date de publication doit être valide'),
   
   body('tags')
     .optional()
@@ -160,12 +223,12 @@ router.get('/:id', idValidation, getNewsById);
 // @route   POST /api/news
 // @desc    Créer une nouvelle actualité
 // @access  Public
-router.post('/', newsValidation, createNews);
+router.post('/', cloudflareUploadHandler, uploadArticleImage.single('coverImage'), newsCreateValidation, createNews);
 
 // @route   PUT /api/news/:id
 // @desc    Mettre à jour une actualité
 // @access  Public
-router.put('/:id', idValidation, newsValidation, updateNews);
+router.put('/:id', cloudflareUploadHandler, uploadArticleImage.single('coverImage'), idValidation, newsUpdateValidation, updateNews);
 
 // @route   DELETE /api/news/:id
 // @desc    Supprimer une actualité

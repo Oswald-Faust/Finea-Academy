@@ -1,5 +1,6 @@
 const ContestStats = require('../models/ContestStats');
 const Contest = require('../models/Contest');
+const StandaloneWinner = require('../models/StandaloneWinner');
 
 // @desc    Récupérer les statistiques globales
 // @route   GET /api/contests/stats/global
@@ -289,27 +290,47 @@ const getDisplayStats = async (req, res) => {
   try {
     const stats = await ContestStats.getCurrentStats();
     
-    // Récupérer les derniers gagnants pour l'affichage
-    const contests = await Contest.find({
-      'winners.0': { $exists: true }
-    })
-    .sort({ drawDate: -1 })
-    .limit(3)
-    .select('title winners drawDate');
-
+    // Récupérer d'abord les gagnants indépendants (priorité)
+    const standaloneWinners = await StandaloneWinner.find({ isActive: true })
+      .sort({ drawDate: -1 })
+      .limit(10);
+    
     const recentWinners = [];
-    contests.forEach(contest => {
-      contest.winners.slice(0, 2).forEach(winner => { // Max 2 gagnants par concours
-        recentWinners.push({
-          contestTitle: contest.title,
-          drawDate: contest.drawDate,
-          firstName: winner.user?.firstName || winner.manualWinner?.firstName || 'Anonyme',
-          lastName: winner.user?.lastName || winner.manualWinner?.lastName || '',
-          prize: winner.prize,
-          amount: winner.amount || 0
-        });
+    
+    // Ajouter les gagnants indépendants
+    standaloneWinners.forEach(winner => {
+      recentWinners.push({
+        contestTitle: `Tirage du ${new Date(winner.drawDate).toLocaleDateString('fr-FR')}`,
+        drawDate: winner.drawDate,
+        firstName: winner.firstName,
+        lastName: winner.lastName,
+        prize: winner.prize,
+        amount: winner.amount || 0
       });
     });
+    
+    // Si pas assez de gagnants indépendants, compléter avec les gagnants des concours
+    if (recentWinners.length < 3) {
+      const contests = await Contest.find({
+        'winners.0': { $exists: true }
+      })
+      .sort({ drawDate: -1 })
+      .limit(3)
+      .select('title winners drawDate');
+
+      contests.forEach(contest => {
+        contest.winners.slice(0, 2).forEach(winner => { // Max 2 gagnants par concours
+          recentWinners.push({
+            contestTitle: contest.title,
+            drawDate: contest.drawDate,
+            firstName: winner.user?.firstName || winner.manualWinner?.firstName || 'Anonyme',
+            lastName: winner.user?.lastName || winner.manualWinner?.lastName || '',
+            prize: winner.prize,
+            amount: winner.amount || 0
+          });
+        });
+      });
+    }
 
     res.json({
       success: true,
@@ -317,7 +338,7 @@ const getDisplayStats = async (req, res) => {
         totalGains: stats?.totalGains || 0,
         totalPlacesSold: stats?.totalPlacesSold || 0,
         totalWinners: stats?.totalWinners || 0,
-        recentWinners: recentWinners.slice(0, 3) // Max 3 gagnants récents
+        recentWinners: recentWinners.slice(0, 10) // Max 10 gagnants récents
       }
     });
   } catch (error) {

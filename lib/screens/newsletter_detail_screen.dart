@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:flutter_html/flutter_html.dart';
 import '../models/newsletter_model.dart';
 import '../services/api_service.dart';
 import '../utils/image_utils.dart';
@@ -225,14 +226,75 @@ class _NewsletterDetailScreenState extends State<NewsletterDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (_fullArticle?.content != null && _fullArticle!.content.isNotEmpty)
-                            Text(
-                              _fullArticle!.content,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                height: 1.6,
-                                fontFamily: 'Poppins',
-                              ),
+                            Html(
+                              data: _fullArticle!.content,
+                              style: {
+                                "body": Style(
+                                  color: Colors.white,
+                                  fontSize: FontSize(16),
+                                  lineHeight: LineHeight(1.6),
+                                  fontFamily: 'Poppins',
+                                  margin: Margins.zero,
+                                  padding: HtmlPaddings.zero,
+                                ),
+                                "p": Style(
+                                  color: Colors.white,
+                                  fontSize: FontSize(16),
+                                  lineHeight: LineHeight(1.6),
+                                  fontFamily: 'Poppins',
+                                  margin: Margins.only(bottom: 12),
+                                ),
+                                "br": Style(
+                                  margin: Margins.only(bottom: 8),
+                                ),
+                                "strong": Style(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                "em": Style(
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                "h1": Style(
+                                  color: Colors.white,
+                                  fontSize: FontSize(24),
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Poppins',
+                                ),
+                                "h2": Style(
+                                  color: Colors.white,
+                                  fontSize: FontSize(22),
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Poppins',
+                                ),
+                                "h3": Style(
+                                  color: Colors.white,
+                                  fontSize: FontSize(20),
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Poppins',
+                                ),
+                                "ul": Style(
+                                  color: Colors.white,
+                                  padding: HtmlPaddings.only(left: 16),
+                                ),
+                                "ol": Style(
+                                  color: Colors.white,
+                                  padding: HtmlPaddings.only(left: 16),
+                                ),
+                                "li": Style(
+                                  color: Colors.white,
+                                  margin: Margins.only(bottom: 8),
+                                ),
+                                "a": Style(
+                                  color: Colors.blue,
+                                  textDecoration: TextDecoration.underline,
+                                ),
+                                "blockquote": Style(
+                                  color: Colors.white70,
+                                  fontStyle: FontStyle.italic,
+                                  border: Border(left: BorderSide(color: Colors.blue, width: 3)),
+                                  padding: HtmlPaddings.only(left: 16),
+                                  margin: Margins.symmetric(vertical: 16),
+                                ),
+                              },
                             )
                           else
                             Container(

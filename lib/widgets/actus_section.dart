@@ -191,8 +191,31 @@ class _ActusSectionState extends State<ActusSection> {
   }
 
   String _extractTextFromContent(String content) {
-    // Le contenu est maintenant directement une String, on peut la retourner telle quelle
-    return content;
+    // Nettoyer les balises HTML pour extraire le texte brut
+    String cleanedText = content;
+    
+    // Remplacer les balises de saut de ligne par des espaces
+    cleanedText = cleanedText.replaceAll(RegExp(r'<br\s*/?>'), ' ');
+    
+    // Remplacer les balises de paragraphe par des espaces
+    cleanedText = cleanedText.replaceAll(RegExp(r'</p>\s*<p>'), ' ');
+    
+    // Supprimer toutes les autres balises HTML
+    cleanedText = cleanedText.replaceAll(RegExp(r'<[^>]*>'), '');
+    
+    // Décoder les entités HTML courantes
+    cleanedText = cleanedText
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'");
+    
+    // Nettoyer les espaces multiples
+    cleanedText = cleanedText.replaceAll(RegExp(r'\s+'), ' ');
+    
+    return cleanedText.trim();
   }
 
   Widget _buildFeaturedActusCard(NewsArticle article) {
